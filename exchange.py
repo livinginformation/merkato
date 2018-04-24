@@ -93,10 +93,10 @@ class Exchange:
 
                 nonce = int(time.time()*1000)
                 tuxParams = {"method" : "getmybalances", "nonce":nonce}
-                post1 = urllib.parse.urlencode(tuxParams)
-                sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-                head1 = {'Key' : self.publickey, 'Sign' : sig1}
-                tuxbalances = requests.post(tuxURL, data=tuxParams, headers=head1).json()
+                post = urllib.parse.urlencode(tuxParams)
+                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+                header = {'Key' : self.publickey, 'Sign' : signature}
+                tuxbalances = requests.post(tuxURL, data=tuxParams, headers=header).json()
 
                 print("test?")
                 print(tuxbalances)
@@ -131,10 +131,10 @@ class Exchange:
 
                 query = { "method": "sell", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(ask), "nonce": int(time.time()*1000) }
 
-                post1 = urllib.parse.urlencode(query)
-                sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-                head1 = {'Key' : self.publickey, 'Sign' : sig1}
-                response = requests.post(tuxURL, data = query, headers = head1, timeout=15).json()
+                post = urllib.parse.urlencode(query)
+                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+                header = {'Key' : self.publickey, 'Sign' : signature}
+                response = requests.post(tuxURL, data = query, headers = header, timeout=15).json()
 
                 if response['success'] != 0:
                     if DEBUG: print("--> SELL INFO: Tuxexchange ask placed.")
@@ -171,10 +171,10 @@ class Exchange:
             try:
                 if DEBUG: print("--> Buying...")
                 query = { "method": "buy", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(bid), "nonce": int(time.time()*1000) }
-                post1 = urllib.parse.urlencode(query)
-                sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-                head1 = {'Key' : self.publickey, 'Sign' : sig1}
-                response = requests.post(tuxURL, data=query, headers=head1, timeout=15).json()
+                post = urllib.parse.urlencode(query)
+                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+                header = {'Key' : self.publickey, 'Sign' : signature}
+                response = requests.post(tuxURL, data=query, headers=header, timeout=15).json()
 
                 if response['success'] != 0:
                     if DEBUG: print("--> BUY INFO: Tuxexchange bid placed.")
@@ -202,10 +202,10 @@ class Exchange:
 
                 query = { "method": "getmyopenorders", "nonce": int(time.time()*1000) }
 
-                post1 = urllib.parse.urlencode(query)
-                sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-                head1 = {'Key' : self.publickey, 'Sign' : sig1}
-                response = requests.post(tuxURL, data=query, headers=head1).json()
+                post = urllib.parse.urlencode(query)
+                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+                header = {'Key' : self.publickey, 'Sign' : signature}
+                response = requests.post(tuxURL, data=query, headers=header).json()
 
                 return response
 
@@ -231,10 +231,10 @@ class Exchange:
                 else:
                     query = { "method": "getmytradehistory", "nonce": int(time.time()*1000) }
 
-                post1 = urllib.parse.urlencode(query)
-                sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-                head1 = {'Key' : self.publickey, 'Sign' : sig1}
-                response = requests.post(tuxURL, data=query, headers=head1).json()
+                post = urllib.parse.urlencode(query)
+                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+                header = {'Key' : self.publickey, 'Sign' : signature}
+                response = requests.post(tuxURL, data=query, headers=header).json()
 
                 return response
             except:
@@ -259,10 +259,10 @@ class Exchange:
                 return
 
             query = { "method": "cancelorder", "market": "BTC", "id": order_id, "nonce": int(time.time()*1000) }
-            post1 = urllib.parse.urlencode(query)
-            sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-            head1 = {'Key' : self.publickey, 'Sign' : sig1}
-            response = requests.post(tuxURL, data=query, headers=head1, timeout=15).json()
+            post = urllib.parse.urlencode(query)
+            signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+            header = {'Key' : self.publickey, 'Sign' : signature}
+            response = requests.post(tuxURL, data=query, headers=header, timeout=15).json()
 
             if response['success'] != 0:
                 if DEBUG: print("--> Cancel successful")
