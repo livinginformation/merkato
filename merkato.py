@@ -19,19 +19,6 @@ class Merkato:
         self.exchange   = configuration['exchange']
 
 
-    def getticker(self, coin="none"):
-        # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
-        params = { "method": "getticker" }
-        response = requests.get(tuxURL, params=params)
-
-        if coin == "none":
-            return json.loads(response.text)
-
-        response_json = json.loads(response.text)
-        print(response_json[coin])
-        return response_json[coin]
-
-
     def getticker_tux(self, coin="none"):
         params = { "method": "getticker" }
         response = requests.get(tuxURL, params=params)
@@ -44,7 +31,16 @@ class Merkato:
         return response_json[coin]
 
 
-    def get24hvolume(self, coin="none"):
+    def getticker(self, coin="none"):
+        # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
+        if self.exchange == "tux":
+            return self.getticker_tux(coin)
+
+        else:
+            print("Exchange currently not supported.")
+
+
+    def get24hvolume_tux(self, coin="none"):
         # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
 
         params = { "method": "get24hvolume" }
@@ -58,7 +54,16 @@ class Merkato:
         return response_json[coin]
 
 
-    def getorders(self, coin):
+    def get24hvolume(self, coin="none"):
+        # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
+        if self.exchange == "tux":
+            return self.get24hvolume_tux(coin)
+
+        else:
+            print("Exchange currently not supported."
+
+
+    def getorders_tux(self, coin):
         # Coin here is just the ticker XYZ, not BTC_XYZ
         # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
 
@@ -70,7 +75,18 @@ class Merkato:
         return response_json
 
 
-    def getBalances(self, coin='none'):
+    def getorders(self, coin):
+        # Coin here is just the ticker XYZ, not BTC_XYZ
+        # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
+
+        if self.exchange == "tux":
+            return self.getorders_tux(coin)
+
+        else:
+            print("Exchange currently not supported.")
+
+
+    def getBalances_tux(self, coin='none'):
         print("--> Checking Balances")
         while True:
             try:
@@ -92,6 +108,14 @@ class Merkato:
             except:
                 print("--> WARNING: Something went wrong when I was checking the balances. Let me try again in 30 seconds")
                 time.sleep(30)
+
+
+    def getBalances(self, coin='none'):
+        if self.exchange == "tux":
+            return self.getBalances_tux(coin)
+
+        else:
+            print("Exchange currently unsupported.")
 
 
     def sell(self, amount, ask, ticker):
@@ -384,11 +408,11 @@ class Merkato:
                 # Place a new order on the books with the sum
                 if existing_order_type == "buy":
                     print("Placing buy for", existing_order['total'], "bitcoins of", ticker, "at a price of", price)
-                    new_id = buy(float(existing_order['total'])/float(price), float(price), ticker)
+                    new_id = self.buy(float(existing_order['total'])/float(price), float(price), ticker)
 
                 else: # existing_order_type is sell
                     print("Placing sell for", existing_order['amount'], ticker, "at a price of", price)
-                    new_id = sell(float(existing_order['amount']), float(price), ticker)
+                    new_id = self.sell(float(existing_order['amount']), float(price), ticker)
 
                 if new_id == 0:
                     print("Something went wrong.")
