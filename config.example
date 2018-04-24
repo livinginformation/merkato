@@ -1,0 +1,18 @@
+{
+    "exchanges": { 
+        "tux": {
+            "PublicKey" : "",
+            "PrivateKey": ""
+        },
+        "poloniex": {
+            "PublicKey" : "",
+            "PrivateKey": ""
+        }
+        "bittrex": {
+            "PublicKey" : "",
+            "PrivateKey": ""
+        }
+    },
+    "DEBUG": true
+}
+
