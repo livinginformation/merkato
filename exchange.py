@@ -221,7 +221,7 @@ class Exchange:
             print("Exchange currently not supported")
 
 
-    def getmytradehistory(self, start=0, end=0):
+    def _getmytradehistory_tux(self, start=0, end=0):
         while True:
             try:
                 if DEBUG: print("--> Getting trade history...")
@@ -241,7 +241,16 @@ class Exchange:
                 print("ERROR")
 
 
-    def cancelorder(self, order_id):
+    def getmytradehistory(self, start=0, end=0):
+        if self.exchange == "tux":
+            return self._getmytradehistory_tux(start, end)
+
+        else:
+            print("Exchange currently not supported.")
+
+
+    def _cancelorder_tux(self, order_id):
+        # This function has a stack overflow risk, fix it. Don't use tail recursion.
         try:
             if DEBUG: print("--> Cancelling order...")
 
@@ -263,6 +272,14 @@ class Exchange:
             return self.cancelorder(order_id)
         except:
             print("ERROR")
+
+
+    def cancelorder(self, order_id):
+        if self.exchange == "tux":
+            return self._cancelorder_tux(order_id)
+
+        else:
+            print("Exchange currently not supported.")
 
 
     def ask_ladder(self, ticker, total_amount, low_price, high_price, increment):
