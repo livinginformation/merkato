@@ -12,7 +12,7 @@ import hmac
 import json
 import sqlite3
 import merkato_config as config
-from merkato import Merkato
+from exchange import Exchange
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
 
     else:
         print(configuration)
-        merkato = Merkato(configuration)
+        exchange = Exchange(configuration)
 
     # Market making range specifications
 #    polo_price     = input('What is the price on Poloniex? \n')
