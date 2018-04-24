@@ -13,7 +13,6 @@ def menu():
         print("3. Exit")
 
         selection = raw_input("Selection: ")
-
         if selection =='1':
             # Load existing config
             pass
@@ -33,7 +32,7 @@ def menu():
             print("3. Bittrex")
             exchange = raw_input("Selection: ")
 
-            if selection == '1':
+            if exchange == '1':
                 config['exchange'] = 'tux'
 
                 print("API Credentials needed")
@@ -42,14 +41,17 @@ def menu():
                 config['publickey'] = public_key
                 config['privatekey'] = private_key
 
-                with open("./"+filename) # TODO FIX THIS
+                with open("./"+filename, "w+") as file:
+                     json.dump(config, file)
+                     print("written, exiting")
+                     return
 
-            elif selection == '2':
-                print("Currently Unsupported")
+            elif exchange == '2':
+                print("Currently Unsupported1")
                 continue
 
-            elif selection == '3':
-                print("Currently Unsupported")
+            elif exchange == '3':
+                print("Currently Unsupported2")
                 continue
 
             else:
@@ -62,3 +64,6 @@ def menu():
 
         else:
             print("Unrecognized input.")
+
+
+menu()
