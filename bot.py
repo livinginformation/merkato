@@ -16,12 +16,12 @@ import merkato_config as config
 conn = sqlite3.connect('./tradebot')
 c = conn.cursor()
 
-
 # API Keys
-PublKey = "" # FILL THIS IN, TODO: CONFIG FILE
-PrivKey = "" # FILL THIS IN, TODO: CONFIG FILE
 tuxURL = "https://tuxexchange.com/api"
 DEBUG = True
+
+# Configuration file
+configuration = {}
 
 def getticker(coin="none"):
     # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
@@ -71,15 +71,17 @@ def getorders(coin):
 
 def getBalances(coin='none'):
     global balances
+    global configuration
+
     print("--> Checking Balances")
     while True:
         try:
 
-            nonce = int(time.time()*1000) 
+            nonce = int(time.time()*1000)
             tuxParams = {"method" : "getmybalances", "nonce":nonce}
             post1 = urllib.parse.urlencode(tuxParams)
-            sig1 = hmac.new(PrivKey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-            head1 = {'Key' : PublKey, 'Sign' : sig1}
+            sig1 = hmac.new(configuration['privatekey'].encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
+            head1 = {'Key' : configuration['publickey'], 'Sign' : sig1}
             tuxbalances = requests.post(tuxURL, data=tuxParams, headers=head1).json()
 
             print("test?")
@@ -101,6 +103,7 @@ def sell(amount, ask, ticker):
 
     Todo: Take arguments of other types, convert to applicable ones.
     '''
+    global configuration
 
     while True:
         try:
@@ -109,8 +112,8 @@ def sell(amount, ask, ticker):
             query = { "method": "sell", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(ask), "nonce": int(time.time()*1000) }
 
             post1 = urllib.parse.urlencode(query)
-            sig1 = hmac.new(PrivKey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-            head1 = {'Key' : PublKey, 'Sign' : sig1}
+            sig1 = hmac.new(configuration['privatekey'].encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
+            head1 = {'Key' : configuration['publickey'], 'Sign' : sig1}
             response = requests.post(tuxURL, data = query, headers = head1, timeout=15).json()
 
             if response['success'] != 0:
@@ -131,23 +134,22 @@ def buy(amount, bid, ticker):
     # Amount and bid are floats, ticker is a string
     #
     # Todo: Take arguments of other types, convert to applicable ones.
-
+    global configuration
     while True:
         try:
             if DEBUG: print("--> Buying...")
             query = { "method": "buy", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(bid), "nonce": int(time.time()*1000) }
             post1 = urllib.parse.urlencode(query)
-            sig1 = hmac.new(PrivKey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-            head1 = {'Key' : PublKey, 'Sign' : sig1}
+            sig1 = hmac.new(configuration['privatekey'].encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
+            head1 = {'Key' : configuration['publickey'], 'Sign' : sig1}
             response = requests.post(tuxURL, data=query, headers=head1, timeout=15).json()
 
             if response['success'] != 0:
                 if DEBUG: print("--> BUY INFO: Tuxexchange bid placed.")
                 return response['success'] # ID of the new order
 
-            else:
-                print("--> BUY ERROR: Tuxexchange bid failed. Retrying.")
-                time.sleep(5) # Wait to prevent flooding
+            print("--> BUY ERROR: Tuxexchange bid failed. Retrying.")
+            time.sleep(5) # Wait to prevent flooding
         except:
             print("ERROR")
 
@@ -221,6 +223,8 @@ def bid_ladder(ticker, total_btc, low_price, high_price, increment):
 
 
 def getmyopenorders():
+    global configuration
+
     while True:
 
         try:
@@ -229,8 +233,8 @@ def getmyopenorders():
             query = { "method": "getmyopenorders", "nonce": int(time.time()*1000) }
 
             post1 = urllib.parse.urlencode(query)
-            sig1 = hmac.new(PrivKey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-            head1 = {'Key' : PublKey, 'Sign' : sig1}
+            sig1 = hmac.new(configuration['privatekey'].encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
+            head1 = {'Key' : configuration['publickey'], 'Sign' : sig1}
             response = requests.post(tuxURL, data=query, headers=head1).json()
 
             return response
@@ -240,6 +244,7 @@ def getmyopenorders():
 
 
 def getmytradehistory(start=0, end=0):
+    global configuration
     while True:
         try:
             if DEBUG: print("--> Getting trade history...")
@@ -251,8 +256,8 @@ def getmytradehistory(start=0, end=0):
 
             #print("Query: " + str(query))
             post1 = urllib.parse.urlencode(query)
-            sig1 = hmac.new(PrivKey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-            head1 = {'Key' : PublKey, 'Sign' : sig1}
+            sig1 = hmac.new(configuration['privatekey'].encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
+            head1 = {'Key' : configuration['publickey'], 'Sign' : sig1}
             response = requests.post(tuxURL, data=query, headers=head1).json()
 
             return response
@@ -299,6 +304,8 @@ def maintain_window(spread, ticker):
 
 
 def cancelorder(order_id):
+    global configuration
+
     try:
         if DEBUG: print("--> Cancelling order...")
 
@@ -308,17 +315,16 @@ def cancelorder(order_id):
 
         query = { "method": "cancelorder", "market": "BTC", "id": order_id, "nonce": int(time.time()*1000) }
         post1 = urllib.parse.urlencode(query)
-        sig1 = hmac.new(PrivKey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-        head1 = {'Key' : PublKey, 'Sign' : sig1}
+        sig1 = hmac.new(configuration['privatekey'].encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
+        head1 = {'Key' : configuration['publickey'], 'Sign' : sig1}
         response = requests.post(tuxURL, data=query, headers=head1, timeout=15).json()
 
         if response['success'] != 0:
             if DEBUG: print("--> Cancel successful")
             return True
 
-        else:
-            print("--> Cancel error, retrying   ")
-            return cancelorder(order_id)
+        print("--> Cancel error, retrying   ")
+        return cancelorder(order_id)
     except:
         print("ERROR")
 
@@ -335,7 +341,7 @@ def cancelrange(start, end):
 
 
 def consolidate(ticker):
-    # Consider changing semantics from existing_order and order to order and new_order. 
+    # Consider changing semantics from existing_order and order to order and new_order.
     # That is, existing_order currently becomes order, and order becomes new_order.
     # Coin is a string
 
@@ -413,39 +419,44 @@ def consolidate(ticker):
 def main():
     print("Merkato Alpha v0.1.0\n")
     print("Monero-version")
+    global configuration
 
-    config.get_config()
+    configuration = config.get_config()
+    if configuration == "{}":
+        print("Failed")
+    else:
+        print(configuration)
 
     # Market making range specifications
-    polo_price     = input('What is the price on Poloniex? \n')
-    desired_spread = input('What spread would you like to use? (Recommended .0007-.0015) \n')
-    bid_ladder_min = input('What is the lowest the price could possibly go? (Recommend 0.005) \n') 
-    ask_ladder_max = input('What is the highest price to market make? (Recommend 0.025) \n')
-    total_btc      = input('How much BTC will you use for market making? \n')
-    total_xmr      = input('How much XMR will you use for market making? \n')
+#    polo_price     = input('What is the price on Poloniex? \n')
+#    desired_spread = input('What spread would you like to use? (Recommended .0007-.0015) \n')
+#    bid_ladder_min = input('What is the lowest the price could possibly go? (Recommend 0.005) \n') 
+#    ask_ladder_max = input('What is the highest price to market make? (Recommend 0.025) \n')
+#    total_btc      = input('How much BTC will you use for market making? \n')
+#    total_xmr      = input('How much XMR will you use for market making? \n')
 
-    spread = float(desired_spread)
+#    spread = float(desired_spread)
 
-    bid_ladder_max = str(float(polo_price) - spread/2)
-    print("Max: " + bid_ladder_max)
+#    bid_ladder_max = str(float(polo_price) - spread/2)
+#    print("Max: " + bid_ladder_max)
 
-    ask_ladder_min = str(float(polo_price) + spread/2)
-    print("Min: " + ask_ladder_min)
+#    ask_ladder_min = str(float(polo_price) + spread/2)
+#    print("Min: " + ask_ladder_min)
 
     # Cancel all existing orders
-    cancelrange(bid_ladder_min, ask_ladder_max)
+#    cancelrange(bid_ladder_min, ask_ladder_max)
 
     # Place a bid ladder
-    if float(total_btc) > 0:
-        bid_ladder("XMR", total_btc, bid_ladder_min, bid_ladder_max, '.00004')
+#    if float(total_btc) > 0:
+#        bid_ladder("XMR", total_btc, bid_ladder_min, bid_ladder_max, '.00004')
 
     # Place an ask ladder
-    if float(total_xmr) > 0:
-        ask_ladder("XMR", total_xmr, ask_ladder_min, ask_ladder_max, '.00004')
+#    if float(total_xmr) > 0:
+#        ask_ladder("XMR", total_xmr, ask_ladder_min, ask_ladder_max, '.00004')
 
     # Maintain the spread
-    print("Beginning spread maintainence.")
-    maintain_window(spread, "XMR")
+#    print("Beginning spread maintainence.")
+#    maintain_window(spread, "XMR")
 
 
 
