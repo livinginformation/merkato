@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import json
 import sqlite3
+import merkato_config as config
 
 conn = sqlite3.connect('./tradebot')
 c = conn.cursor()
@@ -412,6 +413,8 @@ def consolidate(ticker):
 def main():
     print("Merkato Alpha v0.1.0\n")
     print("Monero-version")
+
+    config.get_config()
 
     # Market making range specifications
     polo_price     = input('What is the price on Poloniex? \n')
