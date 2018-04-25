@@ -14,6 +14,16 @@ import sqlite3
 import merkato_config as config
 from exchange import Exchange
 
+conn = sqlite3.connect('merkato.db')
+
+c = conn.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS mutexes
+             (pair text, exchange text, owner text)''')
+
+conn.commit()
+conn.close()
+
+
 def main():
     print("Merkato Alpha v0.1.1\n")
 
