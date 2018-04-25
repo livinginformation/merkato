@@ -2,7 +2,7 @@
 
 import json
 import os.path
-from utils import updateConfigWithCredentials, getExchange, getConfigSelection
+from utils import update_config_with_credentials, get_exchange, get_config_selection
 
 def load_config():
     # Loads an existing configuration file

@@ -6,11 +6,9 @@ import hashlib
 import hmac
 import json
 import sqlite3
+from utils import get_ticker, get_24h_volume, getorders
 
-tuxURL  = "https://tuxexchange.com/api"
-poloURL = "https://poloniex.com/public"
 DEBUG = True
-
 
 class Exchange:
     '''Merkato Market Making Bot Exchange Interface'''
@@ -18,124 +16,6 @@ class Exchange:
         self.privatekey = configuration['privatekey']
         self.publickey  = configuration['publickey']
         self.exchange   = configuration['exchange']
-
-
-    def _getticker_tux(self, coin="none"):
-        params = { "method": "getticker" }
-        response = requests.get(tuxURL, params=params)
-
-        if coin == "none":
-            return json.loads(response.text)
-
-        response_json = json.loads(response.text)
-        print(response_json[coin])
-        return response_json[coin]
-
-
-    def _getticker_polo(self, coin="none"):
-        params = { "command": "returnTicker" }
-        response = requests.get(poloURL, params=params)
-
-        if coin == "none":
-            return json.loads(response.text)
-
-        response_json = json.loads(response.text)
-        print(response_json[coin])
-        return response_json[coin]
-
-        pass
-
-
-    def getticker(self, coin="none"):
-        # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
-        if self.exchange == "tux":
-            return self._getticker_tux(coin)
-
-        elif self.exchange == "poloniex":
-            return self._getticker_polo(coin)
-
-        else:
-            print("Exchange currently not supported.")
-
-
-    def _get24hvolume_tux(self, coin="none"):
-        # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
-
-        params = { "method": "get24hvolume" }
-        response = requests.get(tuxURL, params=params)
-
-        if coin == "none":
-            return json.loads(response.text)
-
-        response_json = json.loads(response.text)
-        print(response_json[coin])
-        return response_json[coin]
-
-
-    def _get24hvolume_polo(self, coin="none"):
-        # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
-
-        params = { "command": "return24hVolume" }
-        response = requests.get(poloURL, params=params)
-
-        if coin == "none":
-            return json.loads(response.text)
-
-        response_json = json.loads(response.text)
-        print(response_json[coin])
-        return response_json[coin]
-
-
-
-    def get24hvolume(self, coin="none"):
-        # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
-        if self.exchange == "tux":
-            return self._get24hvolume_tux(coin)
-
-        elif self.exchange == "poloniex":
-            return self._get24hvolume_polo(coin)
-
-        else:
-            print("Exchange currently not supported.")
-
-
-    def _getorders_tux(self, coin):
-        # Coin here is just the ticker XYZ, not BTC_XYZ
-        # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
-
-        params = { "method": "getorders", "coin": coin }
-        response = requests.get(tuxURL, params=params)
-
-        response_json = json.loads(response.text)
-        if DEBUG: print(response_json)
-        return response_json
-
-
-    def _getorders_polo(self, coin):
-        # Coin here is just the ticker XYZ, not BTC_XYZ
-        # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
-        coin = 'BTC_' + coin
-        params = { "command": "returnOrderBook", "currencyPair": coin }
-        response = requests.get(poloURL, params=params)
-
-        response_json = json.loads(response.text)
-        if DEBUG: print(response_json)
-        return response_json
-
-
-
-    def getorders(self, coin):
-        # Coin here is just the ticker XYZ, not BTC_XYZ
-        # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
-
-        if self.exchange == "tux":
-            return self._getorders_tux(coin)
-
-        elif self.exchange == "poloniex":
-            return self._getorders_polo(coin)
-
-        else:
-            print("Exchange currently not supported.")
 
 
     def _getBalances_tux(self, coin='none'):
