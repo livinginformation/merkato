@@ -1,6 +1,6 @@
 This is the Readme for the Merkato Exchange Bot
 
-The Exchange bot is designed to be a profitable way to arbitrage within cryptocurrency and is underdevelopment.
+The Exchange bot is designed for arbitrage and market making within the cryptocurrency ecosystem, and is under development.
 
 Working specification
 
