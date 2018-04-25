@@ -14,7 +14,6 @@ import sqlite3
 import merkato_config as config
 from exchange import Exchange
 
-
 def main():
     print("Merkato Alpha v0.1.1\n")
 
