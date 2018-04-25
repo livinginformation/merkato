@@ -98,7 +98,7 @@ def get_24h_volume(exchange, coin="none"):
 	else:
 		print("Exchange currently not supported.")
 
-def getorders_tux(coin):
+def get_orders_tux(coin):
 	# Coin here is just the ticker XYZ, not BTC_XYZ
 	# Todo: Accept BTC_XYZ by stripping BTC_ if it exists
 
@@ -110,7 +110,7 @@ def getorders_tux(coin):
 	return response_json
 
 
-def getorders_polo(coin):
+def get_orders_polo(coin):
 	# Coin here is just the ticker XYZ, not BTC_XYZ
 	# Todo: Accept BTC_XYZ by stripping BTC_ if it exists
 	coin = 'BTC_' + coin
@@ -128,10 +128,10 @@ def getorders(exchange, coin):
 	# Todo: Accept BTC_XYZ by stripping BTC_ if it exists
 
 	if exchange == "tux":
-		return getorders_tux(coin)
+		return get_orders_tux(coin)
 
 	elif exchange == "poloniex":
-		return getorders_polo(coin)
+		return get_orders_polo(coin)
 
 	else:
 		print("Exchange currently not supported.")
