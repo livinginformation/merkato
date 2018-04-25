@@ -7,6 +7,7 @@ import hmac
 import json
 import sqlite3
 from utils import get_ticker, get_24h_volume, getorders
+from constants import *
 
 DEBUG = True
 
