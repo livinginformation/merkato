@@ -46,7 +46,7 @@ def main():
 
     configuration = config.get_config()
 
-    if configuration == "{}":
+    if not configuration:
         print("Failed")
 
     else:
