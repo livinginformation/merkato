@@ -2,7 +2,7 @@
 
 import json
 import os.path
-from utils import updateConfigWithCredentials, getExchange, getConfigSelection
+from utils import update_config_with_credentials, get_exchange, get_config_selection
 
 def load_config():
     # Loads an existing configuration file
@@ -33,13 +33,13 @@ def create_config():
             print("Config already exists.")
             continue
 
-        exchange = getExchange()
+        exchange = get_exchange()
 
         if exchange == '1':
             config['exchange'] = 'tux'
 
             # Eventually break this part out into its own function
-            updateConfigWithCredentials(config)
+            update_config_with_credentials(config)
 
             with open("./"+filename, "w+") as file:
                  json.dump(config, file)
@@ -62,7 +62,7 @@ def create_config():
 def get_config():
     while True:
 
-        selection = getConfigSelection()
+        selection = get_config_selection()
         if selection =='1':
             # Create new config
             config = create_config()
