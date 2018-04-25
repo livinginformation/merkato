@@ -16,29 +16,47 @@ class Exchange:
         self.privatekey = configuration['privatekey']
         self.publickey  = configuration['publickey']
         self.exchange   = configuration['exchange']
+        
+        self.DEBUG = 100 # TODO: add to configuration
+        self.api = "https://tuxexchange.com/api" # TODO: add to configuration
+        
+    def debug(self, level, header, *args):
+        if level <= self.DEBUG:
+            print("-"*10)
+            print("{}---> {}:".format(level, header))
+            for i in args:
+                print("\t\t" + repr(i))
+            print("-" * 10)
 
+    def _signed_request(self, param, nonce=None, timeout=15):
+        # return response needing signature, nonce created if not supplied
+        if not nonce:
+            nonce = int(time.time() * 1000)
+
+        param.update({"nonce": nonce})
+        post1 = urllib.parse.urlencode(param)
+
+        sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
+        head1 = {'Key': self.publickey, 'Sign': sig1}
+
+        response = requests.post(self.api, data=param, headers=head1, timeout=timeout).json()
+        return response
 
     def _getBalances_tux(self, coin='none'):
-        print("--> Checking Balances")
         while True:
             try:
 
-                nonce = int(time.time()*1000)
-                tuxParams = {"method" : "getmybalances", "nonce":nonce}
-                post = urllib.parse.urlencode(tuxParams)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                tuxbalances = requests.post(tuxURL, data=tuxParams, headers=header).json()
+                tuxParams = {"method" : "getmybalances"}                
+                tuxbalances = self._signed_request(tuxParams)
 
-                print("test?")
-                print(tuxbalances)
-                for crypto in tuxbalances:
-                    print(str(crypto) + ": " + str(tuxbalances[crypto]))
+                self.debug(2, "getBalances_tux", tuxbalances)
+                #for crypto in tuxbalances:
+                #    print(str(crypto) + ": " + str(tuxbalances[crypto]))
 
                 return tuxbalances
 
-            except:
-                print("--> WARNING: Something went wrong when I was checking the balances. Let me try again in 30 seconds")
+            except Exception as e:
+                self.debug(2, "WARNING: getBalances_tux", str(e))
                 time.sleep(30)
 
 
@@ -47,7 +65,7 @@ class Exchange:
             return self._getBalances_tux(coin)
 
         else:
-            print("Exchange currently unsupported.")
+            self.debug(1, "getBalances", "Exchange currently unsupported")
 
 
     def _sell_tux(self, amount, ask, ticker):
@@ -59,23 +77,24 @@ class Exchange:
         '''
         while True:
             try:
-                if DEBUG: print("--> Selling...")
+                self.debug(2, "sell_tux", "selling...")
 
-                query = { "method": "sell", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(ask), "nonce": int(time.time()*1000) }
+                query = { "method": "sell", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(ask) }
 
-                post = urllib.parse.urlencode(query)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                response = requests.post(tuxURL, data = query, headers = header, timeout=15).json()
+                
+                response = self._signed_request(query)
 
-                if response['success'] != 0:
-                    if DEBUG: print("--> SELL INFO: Tuxexchange ask placed.")
+                if response['success']:
+                    self.debug(2, "sell_tux", "Tuxexchange ask placed")
+                    self.debug(3, "sell_tux",query,response)
                     return response['success']
-
-                print("--> SELL ERROR: Tuxexchange ask failed. Retrying.")
+                
+                self.debug(3, "sell_tux",query,response)
+                self.debug(2, "sell_tux", "ERROR: Tuxexchange ask failed. Retrying.") 
                 time.sleep(5)
-            except:
-                print("ERROR")
+            except Exception as e:
+                self.debug(1, "ERROR: _sell_tux", str(e))
+                
 
 
     def sell(self, amount, ask, ticker):
@@ -89,7 +108,8 @@ class Exchange:
             return self._sell_tux(amount, ask, ticker)
 
         else:
-            print("Exchange currently not supported.")
+            self.debug(1, "sell", "Exchange currently unsupported")
+
 
 
     def _buy_tux(self, amount, bid, ticker):
@@ -101,21 +121,20 @@ class Exchange:
         # Todo: Take arguments of other types, convert to applicable ones.
         while True:
             try:
-                if DEBUG: print("--> Buying...")
-                query = { "method": "buy", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(bid), "nonce": int(time.time()*1000) }
-                post = urllib.parse.urlencode(query)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                response = requests.post(tuxURL, data=query, headers=header, timeout=15).json()
+                self.debug(2, "buy_tux", "buying...")
+                query = { "method": "buy", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(bid) }
+                
+                response = self._signed_request(query)
 
-                if response['success'] != 0:
-                    if DEBUG: print("--> BUY INFO: Tuxexchange bid placed.")
+                if response['success']:
+                    self.debug(2, "buy_tux", "Tuxexchange bid placed")
+                    self.debug(3, "buy_tux",query,response)                    
                     return response['success'] # ID of the new order
 
                 print("--> BUY ERROR: Tuxexchange bid failed. Retrying.")
                 time.sleep(5) # Wait to prevent flooding
-            except:
-                print("ERROR")
+            except Exception as e:
+                self.debug(1, "ERROR: buy_tux", str(e))
 
 
     def buy(self, amount, bid, ticker):
@@ -123,7 +142,7 @@ class Exchange:
             return self._buy_tux(amount, bid, ticker)
 
         else:
-            print("Exchange currently not supported.")
+            self.debug(1, "ERROR: buy", "Exchange currently not supported.")
 
 
     def _getmyopenorders_tux(self):
@@ -132,45 +151,35 @@ class Exchange:
             try:
                 if DEBUG: print("--> Getting open orders...")
 
-                query = { "method": "getmyopenorders", "nonce": int(time.time()*1000) }
-
-                post = urllib.parse.urlencode(query)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                response = requests.post(tuxURL, data=query, headers=header).json()
-
+                query = { "method": "getmyopenorders"}                
+                response = self._signed_request(query)
+                self.debug(3,getmyopenorders_tux,response)
                 return response
 
-            except:
-                print("ERROR")
-
+            except Exception as e:
+                self.debug(1, "_getmyopenorders_tux", str(e))
 
     def getmyopenorders(self):
         if self.exchange == "tux":
             return self._getmyopenorders_tux()
 
         else:
-            print("Exchange currently not supported")
+            self.debug(1, "getmyopenorders", "Exchange currently unsupported")
 
 
     def _getmytradehistory_tux(self, start=0, end=0):
         while True:
             try:
                 if DEBUG: print("--> Getting trade history...")
-
-                if start != 0 and end != 0:
-                    query = { "method": "getmytradehistory", "start": start, "end": end, "nonce": int(time.time()*1000) }
-                else:
-                    query = { "method": "getmytradehistory", "nonce": int(time.time()*1000) }
-
-                post = urllib.parse.urlencode(query)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                response = requests.post(tuxURL, data=query, headers=header).json()
+                query = { "method": "getmytradehistory", }
+                if start and end:
+                    query.update({"start": start, "end": end})               
+                response = self._signed_request(query)
 
                 return response
-            except:
-                print("ERROR")
+            except Exception as e:
+                self.debug(1, "ERROR _getmytradehistory_tux", str(e))
+                
 
 
     def getmytradehistory(self, start=0, end=0):
@@ -178,32 +187,29 @@ class Exchange:
             return self._getmytradehistory_tux(start, end)
 
         else:
-            print("Exchange currently not supported.")
-
+            self.debug(1, "ERROR: getmytradehistory", "Exchange currently not supported.")
 
     def _cancelorder_tux(self, order_id):
         # This function has a stack overflow risk, fix it. Don't use tail recursion.
         try:
-            if DEBUG: print("--> Cancelling order...")
 
-            if order_id == 0:
-                if DEBUG: print("---> Order ID was zero, so bailing on function...")
+            if not order_id:
+                self.debug(2,"_cancelorder_tux","Order ID was zero, so bailing on function...")
                 return
 
-            query = { "method": "cancelorder", "market": "BTC", "id": order_id, "nonce": int(time.time()*1000) }
-            post = urllib.parse.urlencode(query)
-            signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-            header = {'Key' : self.publickey, 'Sign' : signature}
-            response = requests.post(tuxURL, data=query, headers=header, timeout=15).json()
+            query = { "method": "cancelorder", "market": "BTC", "id": order_id}
+            response = self._signed_request(query)
 
-            if response['success'] != 0:
-                if DEBUG: print("--> Cancel successful")
+            if response['success']:
+                self.debug(2,"_cancelorder_tux","Cancel successful",order_id)
+                self.debug(3,"_cancelorder_tux",query,response)
                 return True
 
-            print("--> Cancel error, retrying   ")
+            self.debug(2,"_cancelorder_tux","cancel error,retrying")
             return self.cancelorder(order_id)
-        except:
-            print("ERROR")
+        except Exception as e:
+            self.debug(1, "ERROR _cancelorder_tux", str(e))
+        
 
 
     def cancelorder(self, order_id):
