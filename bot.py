@@ -27,6 +27,17 @@ def main():
         print(configuration)
         exchange = Exchange(configuration)
 
+        response = exchange._getticker_polo()
+        print(response)
+
+#        nonce = int(time.time()*1000)
+#        response = exchange._sell_tux_nonce(nonce, float(1000), float(.00000450), 'PEPECASH')
+#        print("-----------")
+#        print(response)
+#        response = exchange._sell_tux_nonce(nonce, float(1000), float(.00000450), 'PEPECASH')
+#        print("-----------")
+#        print(response)
+
     # Market making range specifications
 #    polo_price     = input('What is the price on Poloniex? \n')
 #    desired_spread = input('What spread would you like to use? (Recommended .0007-.0015) \n')
