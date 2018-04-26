@@ -1,10 +1,10 @@
-# Project Title
+# Merkato
 
 Merkato is a Python cryptocurrency Market Making and Arbitrage bot
 
 ## Getting Started
 
-TODO
+Run python3 bot.py from the command line. Currently non-functional.
 
 ### Prerequisites
 
@@ -58,7 +58,7 @@ Add additional notes about how to deploy this on a live system
 
 ## Built With
 
-TBD
+Python 3, sqlite
 
 ## Contributing
 
