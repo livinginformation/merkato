@@ -10,7 +10,7 @@ class Merkato:
         self.spread = '15' # Take as parameter eventually
 
 
-    def rebalance_orders():
+    def rebalance_orders(self):
         pass
 
 
@@ -84,9 +84,14 @@ class Merkato:
         pass
 
 
-    def merge_orders():
+    def merge_orders(self):
         pass
 
 
-    def update_order_book():
+    def update_order_book(self):
+        pass
+
+
+    def modify_settings(self, settings):
+        # replace old settings with new settings
         pass
