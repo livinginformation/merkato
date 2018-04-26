@@ -23,23 +23,6 @@ c.execute('''CREATE TABLE IF NOT EXISTS mutexes
 conn.commit()
 conn.close()
 
-conn = sqlite3.connect('merkato.db')
-c = conn.cursor()
-
-tuple = ("XMRBTC", "tux", "1")
-c.execute("INSERT OR REPLACE INTO mutexes(pair, exchange, owner) VALUES(?,?,?)", tuple)
-conn.commit()
-conn.close()
-
-conn = sqlite3.connect('merkato.db')
-c = conn.cursor()
-
-c.execute('SELECT * from mutexes')
-mutexes = c.fetchall()
-
-print(mutexes)
-
-
 
 def main():
     print("Merkato Alpha v0.1.1\n")
