@@ -7,6 +7,7 @@ import hmac
 import json
 import sqlite3
 from utils.utils import get_ticker, get_24h_volume, get_orders, get_balances
+from constants import *
 
 DEBUG = True
 
@@ -201,7 +202,7 @@ class Exchange:
         ask_price = float(low_price)
 
         # Sanity check
-        orders = getorders(ticker)
+        orders = get_orders(self.exchange, ticker)
         highest_bid = orders['bids'][0][0]
 
         if ask_price <= float(highest_bid):
@@ -234,7 +235,7 @@ class Exchange:
         bid_price = float(low_price)
 
         # Sanity check
-        orders = getorders(ticker)
+        orders = get_orders(self.exchange, ticker)
         lowest_ask = orders['asks'][0][0]
 
         if float(high_price) >= float(lowest_ask):

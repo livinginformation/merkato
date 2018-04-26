@@ -1,5 +1,5 @@
 from tux import get_ticker_tux, get_24h_volume_tux, get_orders_tux, get_balances_tux
-from pol import get_ticker_polo, get_24h_volume_polo, get_orders_polo
+from polo import get_ticker_polo, get_24h_volume_polo, get_orders_polo
 
 def update_config_with_credentials(config):
 	print("API Credentials needed")
@@ -62,7 +62,7 @@ def get_orders(exchange, coin):
 
 def get_balances(exchange, private_key, public_key, coin='none'):
 		if exchange == "tux":
-				return getBalances_tux(private_key, public_key, coin)
+				return get_balances_tux(private_key, public_key, coin)
 
 		else:
 				print("Exchange currently unsupported.")
