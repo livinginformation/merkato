@@ -17,7 +17,11 @@ class Exchange:
         self.privatekey = configuration['privatekey']
         self.publickey  = configuration['publickey']
         self.exchange   = configuration['exchange']
-
+        self.DEBUG = 100 # TODO: move to configuration object
+        if self.exchange == "tux":
+            self.api = tuxURL
+        else:
+            raise Exception("ERROR: unsupported exchange: {}".format(self.exchange))
 
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
