@@ -135,3 +135,35 @@ def getorders(exchange, coin):
 
 	else:
 		print("Exchange currently not supported.")
+
+    def _getBalances_tux(self, coin='none'):
+        print("--> Checking Balances")
+        while True:
+            try:
+
+                nonce = int(time.time()*1000)
+                tuxParams = {"method" : "getmybalances", "nonce":nonce}
+                post = urllib.parse.urlencode(tuxParams)
+                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+                header = {'Key' : self.publickey, 'Sign' : signature}
+                tuxbalances = requests.post(tuxURL, data=tuxParams, headers=header).json()
+
+                print("test?")
+                print(tuxbalances)
+                for crypto in tuxbalances:
+                    print(str(crypto) + ": " + str(tuxbalances[crypto]))
+
+                return tuxbalances
+
+            except:
+                print("--> WARNING: Something went wrong when I was checking the balances. Let me try again in 30 seconds")
+                time.sleep(30)
+
+
+    def getBalances(self, coin='none'):
+        if self.exchange == "tux":
+            return self._getBalances_tux(coin)
+
+        else:
+            print("Exchange currently unsupported.")
+
