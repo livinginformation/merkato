@@ -1,14 +1,14 @@
 import time
 import json
 from exchange import Exchange
-
+from utils.utils import create_price_data
+from constants import BUY, SELL, ID, PRICE
 
 class Merkato:
     def __init__(self, exchange):
         self.exchange = exchange
         self.distribution_strategy = 1
         self.spread = '15' # Take as parameter eventually
-
 
     def rebalance_orders(self):
         pass
@@ -96,9 +96,7 @@ class Merkato:
 
         for order in orders:
 
-            price    = orders[order]["price"]
-            order_id = orders[order]["id"]
-            type     = orders[order]["type"]
+            price    = orders[order][PRICE]
             coin     = orders[order]["coin"]
             amount   = float(orders[order]["amount"]) # Amount in asset
             total    = float(orders[order]["total"])  # Total in BTC
@@ -110,12 +108,7 @@ class Merkato:
 
             if price not in orderbook:
 
-                price_data             = {}
-
-                price_data['total']    = total
-                price_data['amount']   = amount
-                price_data['order_id'] = order_id
-                price_data['type']     = type
+                price_data = create_price_data(orders, order)
 
                 orderbook[price] = price_data
                 if DEBUG: print("Found new bid at", price)
@@ -181,16 +174,16 @@ class Merkato:
 
                 for tx in new_history[:new_txes]:
 
-                    if tx['type'] == 'sell':
-                        if DEBUG: print("sell")
+                    if tx['type'] == SELL:
+                        if DEBUG: print(SELL)
                         amount = tx['amount']
-                        price = tx['price']
+                        price = tx[PRICE]
                         self.buy(amount, float(price) - spread, ticker)
 
-                    if tx['type'] == 'buy':
-                        print("buy")
+                    if tx['type'] == BUY:
+                        print(BUY)
                         amount = tx['amount']
-                        price = tx['price']
+                        price = tx[PRICE]
                         self.sell(amount, float(price) + spread, ticker)
 
                 hist_len = new_hist_len
@@ -204,8 +197,8 @@ class Merkato:
     def cancelrange(self, start, end):
         open_orders = self.exchange.getmyopenorders()
         for order in open_orders:
-            price = open_orders[order]["price"]
-            order_id = open_orders[order]["id"]
+            price = open_orders[order][PRICE]
+            order_id = open_orders[order][ID]
             if float(price) >= float(start) and float(price) <= float(end):
                 self.exchange.cancelorder(order_id)
                 if DEBUG: print("price: " + str(price))
