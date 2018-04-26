@@ -17,6 +17,7 @@ class Exchange:
         self.privatekey = configuration['privatekey']
         self.publickey  = configuration['publickey']
         self.exchange   = configuration['exchange']
+        self.orders = {}
         self.DEBUG = 100 # TODO: move to configuration object
         if self.exchange == "tux":
             self.api = tuxURL

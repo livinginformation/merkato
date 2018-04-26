@@ -67,3 +67,10 @@ def get_balances(exchange, private_key, public_key, coin='none'):
 		else:
 				print("Exchange currently unsupported.")
 
+def create_price_data(orders, order):
+	price_data             = {}
+	price_data['total']    = float(orders[order]["total"])
+	price_data['amount']   = float(orders[order]["amount"])
+	price_data['order_id'] = orders[order]["id"]
+	price_data['type']     = orders[order]["type"]
+	return price_data
