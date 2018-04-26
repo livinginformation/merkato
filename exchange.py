@@ -19,6 +19,30 @@ class Exchange:
         self.exchange   = configuration['exchange']
 
 
+    def debug(self, level, header, *args):
+        if level <= self.DEBUG:
+            print("-"*10)
+            print("{}---> {}:".format(level, header))
+            for arg in args:
+                print("\t\t" + repr(arg))
+            print("-" * 10)
+
+
+    def _signed_request(self, param, nonce=None, timeout=15):
+        # return response needing signature, nonce created if not supplied
+        if not nonce:
+            nonce = int(time.time() * 1000)
+
+        param.update({"nonce": nonce})
+        post1 = urllib.parse.urlencode(param)
+
+        sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
+        head1 = {'Key': self.publickey, 'Sign': sig1}
+
+        response = requests.post(self.api, data=param, headers=head1, timeout=timeout).json()
+        return response
+
+
     def _sell_tux(self, amount, ask, ticker):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
 
