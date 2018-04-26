@@ -28,18 +28,18 @@ class Exchange:
             print("-" * 10)
 
 
-    def _create_signed_request(self, param, nonce=None, timeout=15):
+    def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
         # return response needing signature, nonce created if not supplied
         if not nonce:
             nonce = int(time.time() * 1000)
 
-        param.update({"nonce": nonce})
-        post1 = urllib.parse.urlencode(param)
+        query_parameters.update({"nonce": nonce})
+        post = urllib.parse.urlencode(query_parameters)
 
-        sig1 = hmac.new(self.privatekey.encode('utf-8'), post1.encode('utf-8'), hashlib.sha512).hexdigest()
-        head1 = {'Key': self.publickey, 'Sign': sig1}
+        signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+        head = {'Key': self.publickey, 'Sign': signature}
 
-        response = requests.post(self.api, data=param, headers=head1, timeout=timeout).json()
+        response = requests.post(self.api, data=query_parameters, headers=head, timeout=timeout).json()
         return response
 
 
@@ -54,12 +54,9 @@ class Exchange:
             try:
                 if DEBUG: print("--> Selling...")
 
-                query = { "method": "sell", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(ask), "nonce": int(time.time()*1000) }
+                query_parameters = { "method": "sell", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(ask), "nonce": int(time.time()*1000) }
+                response = self._create_signed_request(query_parameters)
 
-                post = urllib.parse.urlencode(query)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                response = requests.post(tuxURL, data = query, headers = header, timeout=15).json()
 
                 if response['success'] != 0:
                     if DEBUG: print("--> SELL INFO: Tuxexchange ask placed.")
@@ -95,11 +92,8 @@ class Exchange:
         while True:
             try:
                 if DEBUG: print("--> Buying...")
-                query = { "method": "buy", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(bid), "nonce": int(time.time()*1000) }
-                post = urllib.parse.urlencode(query)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                response = requests.post(tuxURL, data=query, headers=header, timeout=15).json()
+                query_parameters = { "method": "buy", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(bid), "nonce": int(time.time()*1000) }
+                response = self._create_signed_request(query_parameters)
 
                 if response['success'] != 0:
                     if DEBUG: print("--> BUY INFO: Tuxexchange bid placed.")
@@ -125,14 +119,9 @@ class Exchange:
             try:
                 if DEBUG: print("--> Getting open orders...")
 
-                query = { "method": "getmyopenorders", "nonce": int(time.time()*1000) }
+                query_parameters = { "method": "getmyopenorders", "nonce": int(time.time()*1000) }
 
-                post = urllib.parse.urlencode(query)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                response = requests.post(tuxURL, data=query, headers=header).json()
-
-                return response
+                return self._create_signed_request(query_parameters)
 
             except:
                 print("ERROR")
@@ -152,16 +141,11 @@ class Exchange:
                 if DEBUG: print("--> Getting trade history...")
 
                 if start != 0 and end != 0:
-                    query = { "method": "getmytradehistory", "start": start, "end": end, "nonce": int(time.time()*1000) }
+                    query_parameters = { "method": "getmytradehistory", "start": start, "end": end, "nonce": int(time.time()*1000) }
                 else:
-                    query = { "method": "getmytradehistory", "nonce": int(time.time()*1000) }
-
-                post = urllib.parse.urlencode(query)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                response = requests.post(tuxURL, data=query, headers=header).json()
-
-                return response
+                    query_parameters = { "method": "getmytradehistory", "nonce": int(time.time()*1000) }
+                
+                return self._create_signed_request(query_parameters)
             except:
                 print("ERROR")
 
@@ -183,11 +167,8 @@ class Exchange:
                 if DEBUG: print("---> Order ID was zero, so bailing on function...")
                 return
 
-            query = { "method": "cancelorder", "market": "BTC", "id": order_id, "nonce": int(time.time()*1000) }
-            post = urllib.parse.urlencode(query)
-            signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-            header = {'Key' : self.publickey, 'Sign' : signature}
-            response = requests.post(tuxURL, data=query, headers=header, timeout=15).json()
+            query_parameters = { "method": "cancelorder", "market": "BTC", "id": order_id, "nonce": int(time.time()*1000) }
+            response = self._create_signed_request(query_parameters)
 
             if response['success'] != 0:
                 if DEBUG: print("--> Cancel successful")
