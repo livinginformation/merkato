@@ -6,7 +6,7 @@ import hashlib
 import hmac
 import json
 import sqlite3
-from utils import get_ticker, get_24h_volume, getorders
+from utils.utils import get_ticker, get_24h_volume, get_orders, get_balances
 from constants import *
 
 DEBUG = True
@@ -17,38 +17,6 @@ class Exchange:
         self.privatekey = configuration['privatekey']
         self.publickey  = configuration['publickey']
         self.exchange   = configuration['exchange']
-
-
-    def _getBalances_tux(self, coin='none'):
-        print("--> Checking Balances")
-        while True:
-            try:
-
-                nonce = int(time.time()*1000)
-                tuxParams = {"method" : "getmybalances", "nonce":nonce}
-                post = urllib.parse.urlencode(tuxParams)
-                signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-                header = {'Key' : self.publickey, 'Sign' : signature}
-                tuxbalances = requests.post(tuxURL, data=tuxParams, headers=header).json()
-
-                print("test?")
-                print(tuxbalances)
-                for crypto in tuxbalances:
-                    print(str(crypto) + ": " + str(tuxbalances[crypto]))
-
-                return tuxbalances
-
-            except:
-                print("--> WARNING: Something went wrong when I was checking the balances. Let me try again in 30 seconds")
-                time.sleep(30)
-
-
-    def getBalances(self, coin='none'):
-        if self.exchange == "tux":
-            return self._getBalances_tux(coin)
-
-        else:
-            print("Exchange currently unsupported.")
 
 
     def _sell_tux(self, amount, ask, ticker):
@@ -234,7 +202,7 @@ class Exchange:
         ask_price = float(low_price)
 
         # Sanity check
-        orders = self.getorders(ticker)
+        orders = get_orders(self.exchange, ticker)
         highest_bid = orders['bids'][0][0]
 
         if ask_price <= float(highest_bid):
@@ -267,7 +235,7 @@ class Exchange:
         bid_price = float(low_price)
 
         # Sanity check
-        orders = self.getorders(ticker)
+        orders = get_orders(self.exchange, ticker)
         lowest_ask = orders['asks'][0][0]
 
         if float(high_price) >= float(lowest_ask):
