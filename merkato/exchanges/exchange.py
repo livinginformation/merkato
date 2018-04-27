@@ -33,14 +33,14 @@ class Exchange(object):
             try:
                 success = self.interface.sell(amount, ask, ticker)
                 if success:
-                    self.debug("SELL {} {} at {} on {}".format(amount, ticker, ask, self.exchange))
+                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, ticker, ask, self.exchange))
                     return success
                 else:
-                    self.debug("SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, self.exchange, attempt, self.retries))
+                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, self.exchange, attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
-                self.debug("ERROR", e)
+                self.debug(0, "sell", ""ERROR", e)
                 break
 
 
@@ -50,14 +50,14 @@ class Exchange(object):
             try:
                 success = self.interface.buy(amount, bid, ticker)
                 if success:
-                    self.debug("BUY {} {} at {} on {}".format(amount, ticker, bid, self.exchange))
+                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, ticker, bid, self.exchange))
                     return success
                 else:
-                    self.debug("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, bid, self.exchange, attempt, self.retries))
+                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, bid, self.exchange, attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
-                self.debug("ERROR", e)
+                self.debug(0, "buy", "ERROR", e)
                 break
 
 

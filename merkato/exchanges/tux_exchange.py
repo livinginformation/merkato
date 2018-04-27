@@ -124,6 +124,8 @@ class TuxExchange(ExchangeBase):
 
 
     def get_balances(self, privatekey, publickey, coin='none'):
+        # TODO: not exposed to base exchange class
+        # also keys go unused, also coin...
         tuxParams = {"method" : "getmybalances"}
         
         response = self._create_signed_request(tuxParams)
