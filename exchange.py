@@ -55,7 +55,8 @@ class Exchange:
 
         Todo: Take arguments of other types, convert to applicable ones.
         '''
-        while True:
+        attempt_number = 0
+        while attempt_number < 3:
             try:
                 if DEBUG: print("--> Selling...")
 
@@ -66,6 +67,7 @@ class Exchange:
                 if response['success'] != 0:
                     if DEBUG: print("--> SELL INFO: Tuxexchange ask placed.")
                     return response['success']
+                else: attempt_number += 1
 
                 print("--> SELL ERROR: Tuxexchange ask failed. Retrying.")
                 time.sleep(5)
@@ -94,7 +96,8 @@ class Exchange:
         # Amount and bid are floats, ticker is a string
         #
         # Todo: Take arguments of other types, convert to applicable ones.
-        while True:
+        attempt_number = 0
+        while attempt_number < 3:
             try:
                 if DEBUG: print("--> Buying...")
                 query_parameters = { "method": "buy", "market": "BTC", "coin": ticker, "amount": "{:.8f}".format(amount), "price": "{:.8f}".format(bid), "nonce": int(time.time()*1000) }
@@ -102,8 +105,10 @@ class Exchange:
 
                 if response['success'] != 0:
                     if DEBUG: print("--> BUY INFO: Tuxexchange bid placed.")
-                    return response['success'] # ID of the new order
 
+                    return response['success'] # ID of the new order
+                else: attempt_number += 1
+                
                 print("--> BUY ERROR: Tuxexchange bid failed. Retrying.")
                 time.sleep(5) # Wait to prevent flooding
             except:
@@ -119,17 +124,15 @@ class Exchange:
 
 
     def _getmyopenorders_tux(self):
-        while True:
+        try:
+            if DEBUG: print("--> Getting open orders...")
 
-            try:
-                if DEBUG: print("--> Getting open orders...")
+            query_parameters = { "method": "getmyopenorders", "nonce": int(time.time()*1000) }
 
-                query_parameters = { "method": "getmyopenorders", "nonce": int(time.time()*1000) }
+            return self._create_signed_request(query_parameters)
 
-                return self._create_signed_request(query_parameters)
-
-            except:
-                print("ERROR")
+        except:
+            print("ERROR")
 
 
     def getmyopenorders(self):
@@ -141,18 +144,17 @@ class Exchange:
 
 
     def _getmytradehistory_tux(self, start=0, end=0):
-        while True:
-            try:
-                if DEBUG: print("--> Getting trade history...")
+        try:
+            if DEBUG: print("--> Getting trade history...")
 
-                if start != 0 and end != 0:
-                    query_parameters = { "method": "getmytradehistory", "start": start, "end": end, "nonce": int(time.time()*1000) }
-                else:
-                    query_parameters = { "method": "getmytradehistory", "nonce": int(time.time()*1000) }
-                
-                return self._create_signed_request(query_parameters)
-            except:
-                print("ERROR")
+            if start != 0 and end != 0:
+                query_parameters = { "method": "getmytradehistory", "start": start, "end": end, "nonce": int(time.time()*1000) }
+            else:
+                query_parameters = { "method": "getmytradehistory", "nonce": int(time.time()*1000) }
+            
+            return self._create_signed_request(query_parameters)
+        except:
+            print("ERROR")
 
 
     def getmytradehistory(self, start=0, end=0):
