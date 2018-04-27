@@ -8,9 +8,15 @@ import urllib.parse
 
 from merkato.exchanges.exchange_base import ExchangeBase
 
+DEBUG = True
+
 
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
+
+    def __init__(self, auth):
+        self.privatekey = auth['privatekey']
+        self.publickey  = auth['publickey']
 
     def sell(self, amount, ask, ticker):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
@@ -53,7 +59,7 @@ class TuxExchange(ExchangeBase):
         # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
 
         params = { "method": "getorders", "coin": coin }
-        response = requests.get(tuxURL, params=params)
+        response = requests.get(self.url, params=params)
 
         response_json = json.loads(response.text)
         if DEBUG: print(response_json)
@@ -93,7 +99,7 @@ class TuxExchange(ExchangeBase):
 
     def get_ticker(self, coin="none"):
         params = { "method": "getticker" }
-        response = requests.get(tuxURL, params=params)
+        response = requests.get(self.url, params=params)
 
         if coin == "none":
             return json.loads(response.text)
@@ -107,7 +113,7 @@ class TuxExchange(ExchangeBase):
         # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
 
         params = { "method": "get24hvolume" }
-        response = requests.get(tuxURL, params=params)
+        response = requests.get(self.url, params=params)
 
         if coin == "none":
             return json.loads(response.text)

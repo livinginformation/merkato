@@ -1,27 +1,16 @@
-# INSTRUCTIONS
-# 
-# Put Tuxexchange public/private keys in the API keys section
-# Run this program from command line with python 3.
+from merkato import merkato_config as config
+from merkato.merkato import Merkato
 
-import requests
-import urllib.parse
-import time
-import math
-import hashlib
-import hmac
-import json
-import sqlite3
-import merkato_config as config
-from exchange import Exchange
 
-conn = sqlite3.connect('merkato.db')
+def create_mutex_table():
+    conn = sqlite3.connect('merkato.db')
 
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS mutexes
-             (pair text, exchange text, owner text)''')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS mutexes
+                 (pair text, exchange text, owner text)''')
 
-conn.commit()
-conn.close()
+    conn.commit()
+    conn.close()
 
 
 def main():
@@ -30,14 +19,12 @@ def main():
     configuration = config.get_config()
 
     if not configuration:
-        print("Failed")
+        raise Exception("Failed to get configuration.")
 
-    else:
-        print(configuration)
-        exchange = Exchange(configuration)
+    print(configuration)
+    merkato = Merkato(configuration)
 
-        response = exchange._getticker_polo()
-        print(response)
+    merkato.exchange.get_all_orders()
 
 #        nonce = int(time.time()*1000)
 #        response = exchange._sell_tux_nonce(nonce, float(1000), float(.00000450), 'PEPECASH')

@@ -8,14 +8,12 @@ class Exchange(object):
         handling delegation to the proper exchange interface (tux, polo, etc), retry logic, etc.
     '''
     def __init__(self, configuration):
-        self.privatekey = configuration['privatekey']
-        self.publickey  = configuration['publickey']
         self.exchange   = configuration['exchange']
         self.DEBUG = 100 # TODO: move to configuration object
 
         self.interface = None
         if self.exchange == "tux":
-            self.interface = TuxExchange()
+            self.interface = TuxExchange(configuration)
         else:
             raise Exception("ERROR: unsupported exchange: {}".format(self.exchange))
 
@@ -63,8 +61,8 @@ class Exchange(object):
                 break
 
 
-    def get_all_open_orders(self, ticker):
-        return self.interface.get_all_open_orders(ticker)
+    def get_all_orders(self, ticker):
+        return self.interface.get_all_orders(ticker)
         
 
     def get_my_open_orders(self):

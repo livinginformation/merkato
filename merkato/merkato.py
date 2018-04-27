@@ -39,7 +39,7 @@ class Merkato(object):
         bid_price = float(low_price)
 
         # Sanity check
-        orders = get_orders(self.exchange.exchange, ticker)
+        orders = self.exchange.get_all_orders(ticker)
         lowest_ask = orders['asks'][0][0]
 
         if float(high_price) >= float(lowest_ask):
@@ -91,11 +91,13 @@ class Merkato(object):
 
 
     def merge_orders(self):
+        # TODO still broken post-refactor!
         # Consider changing semantics from existing_order and order to order and new_order.
         # That is, existing_order currently becomes order, and order becomes new_order.
         # Coin is a string
 
         orders = self.exchange.get_my_open_orders()
+        print(orders)
 
         # Create a dictionary to store our desired orderbook
         orderbook = dict()
