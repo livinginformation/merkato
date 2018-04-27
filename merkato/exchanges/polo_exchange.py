@@ -1,6 +1,6 @@
 from merkato.exchanges.exchange_base import ExchangeBase
 
-def PoloExchange(ExchangeBase):
+class PoloExchange(ExchangeBase):
 	url = "https://poloniex.com/public"
 
 	def get_ticker(coin="none"):
