@@ -20,7 +20,25 @@ from operator import itemgetter
 LARGE_FONT= ("Verdana", 12)
 style.use("ggplot")
 
+"""
+expected bot data format from merkato
 
+{
+"open_orders" : { "buy" : [(0.022, 0.5), 
+                           (0.018, 1.5) ],
+                  "sell"  : [(0.027, 0.5), 
+                             (0.033,1.5) ]},
+"filled_orders" :  {"buy" : [(0.022, 0.5, DD-MM-YY_HH:MM:SS), 
+                             (0.018, 1.5, DD-MM-YY_HH:MM:SS) ],
+                    "sell"  : [(0.027, 0.5 ,DD-MM-YY_HH:MM:SS), 
+                              (0.033,1.5, DD-MM-YY_HH:MM:SS) ]},                          
+"balances" : {"BTC" : 0.5121,
+              "XMR": 15.2039},
+"market" : (00.24,0.026),
+"price"  : 0.025
+                    
+}
+"""
 
 class Graph(tk.Frame):
 
