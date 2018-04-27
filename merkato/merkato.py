@@ -10,7 +10,6 @@ DEBUG = True
 
 class Merkato(object):
     def __init__(self, configuration):
-        self.configuration = configuration
         self.exchange = Exchange(configuration)
         self.distribution_strategy = 1
         self.spread = '15' # Take as parameter eventually
