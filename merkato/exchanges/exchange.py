@@ -40,7 +40,7 @@ class Exchange(object):
                     attempt += 1
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
-                self.debug(0, "sell", ""ERROR", e)
+                self.debug(0, "sell", "ERROR", e)
                 break
 
 
