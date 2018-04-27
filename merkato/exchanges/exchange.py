@@ -11,7 +11,6 @@ class Exchange(object):
         self.privatekey = configuration['privatekey']
         self.publickey  = configuration['publickey']
         self.exchange   = configuration['exchange']
-        self.orders = {}
         self.DEBUG = 100 # TODO: move to configuration object
 
         self.interface = None
@@ -51,7 +50,7 @@ class Exchange(object):
         attempt = 0
         while attempt < self.retries:
             try:
-                success = self.interface.sell(amount, ask, ticker)
+                success = self.interface.buy(amount, bid, ticker)
                 if success:
                     self.debug("BUY {} {} at {} on {}".format(amount, ticker, bid, self.exchange))
                     return success
@@ -63,6 +62,10 @@ class Exchange(object):
                 self.debug("ERROR", e)
                 break
 
+
+    def get_all_open_orders(self, ticker):
+        return self.interface.get_all_open_orders(ticker)
+        
 
     def get_my_open_orders(self):
         return self.interface.get_my_open_orders()

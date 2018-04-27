@@ -1,14 +1,20 @@
 import time
 import json
-from exchange import Exchange
-from utils.utils import create_price_data
-from constants import BUY, SELL, ID, PRICE
 
-class Merkato:
-    def __init__(self, exchange):
-        self.exchange = exchange
+from merkato.exchanges.exchange import Exchange
+from merkato.utils import create_price_data
+from merkato.constants import BUY, SELL, ID, PRICE
+
+DEBUG = True
+
+
+class Merkato(object):
+    def __init__(self, configuration):
+        self.configuration = configuration
+        self.exchange = Exchange(configuration)
         self.distribution_strategy = 1
         self.spread = '15' # Take as parameter eventually
+
 
     def rebalance_orders(self):
         pass
@@ -68,7 +74,7 @@ class Merkato:
         ask_price = float(low_price)
 
         # Sanity check
-        orders = get_orders(self.exchange.exchange, ticker)
+        orders = self.exchange.get_all_orders(ticker)
         highest_bid = orders['bids'][0][0]
 
         if ask_price <= float(highest_bid):
@@ -89,7 +95,7 @@ class Merkato:
         # That is, existing_order currently becomes order, and order becomes new_order.
         # Coin is a string
 
-        orders = self.exchange.getmyopenorders()
+        orders = self.exchange.get_my_open_orders()
 
         # Create a dictionary to store our desired orderbook
         orderbook = dict()
@@ -155,8 +161,8 @@ class Merkato:
 
 
     def update_order_book(self):
-               # Get current state of trade history before placing orders
-        history = self.exchange.getmytradehistory()
+        # Get current state of trade history before placing orders
+        history = self.exchange.get_my_trade_history()
         hist_len = len(history)
 
         # Loop every 30 seconds, check tx history, see if orders were hit
@@ -193,6 +199,7 @@ class Merkato:
     def modify_settings(self, settings):
         # replace old settings with new settings
         pass
+
 
     def cancelrange(self, start, end):
         open_orders = self.exchange.getmyopenorders()

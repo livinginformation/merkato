@@ -1,4 +1,13 @@
+import hashlib
+import hmac
+import json
+import math
+import requests
+import time
+import urllib.parse
+
 from merkato.exchanges.exchange_base import ExchangeBase
+
 
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
@@ -37,6 +46,18 @@ class TuxExchange(ExchangeBase):
         response = self._create_signed_request(query_parameters)
 
         return response['success']
+
+
+    def get_all_orders(self, coin):
+        # Coin here is just the ticker XYZ, not BTC_XYZ
+        # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
+
+        params = { "method": "getorders", "coin": coin }
+        response = requests.get(tuxURL, params=params)
+
+        response_json = json.loads(response.text)
+        if DEBUG: print(response_json)
+        return response_json
 
 
     def get_my_open_orders(self):
@@ -94,18 +115,6 @@ class TuxExchange(ExchangeBase):
         response_json = json.loads(response.text)
         print(response_json[coin])
         return response_json[coin]
-
-
-    def get_orders(self, coin):
-        # Coin here is just the ticker XYZ, not BTC_XYZ
-        # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
-
-        params = { "method": "getorders", "coin": coin }
-        response = requests.get(tuxURL, params=params)
-
-        response_json = json.loads(response.text)
-        if DEBUG: print(response_json)
-        return response_json
 
 
     def get_balances(self, privatekey, publickey, coin='none'):

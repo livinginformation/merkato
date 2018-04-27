@@ -17,7 +17,15 @@ class ExchangeBase(ABC):
 		pass
 
 	@abstractmethod
+	def get_all_orders(self, ticket):
+		pass
+
+	@abstractmethod
 	def get_my_open_orders(self):
+		pass
+
+	@abstractmethod
+	def get_my_trade_history(self):
 		pass
 
 	@abstractmethod
