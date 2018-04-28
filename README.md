@@ -12,7 +12,10 @@ See [requirements.txt](https://github.com/livinginformation/merkato/blob/master/
 
 ### Installing
 
-Install all dependencies, and then run bot.py from the command line.
+Install all dependencies, and then run the following from the top level directory:
+```
+python3 bot.py
+```
 
 ## Running the tests
 
