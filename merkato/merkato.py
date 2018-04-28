@@ -18,6 +18,8 @@ class Merkato(object):
         self.bid_profile = [(-1, 5), (-2, 5), (-3, 10), (-4, 15), (-5, 20), (-6, 25), (-10, 30)]  # (% change in price, % balance allocation)
         self.ask_budget = ask_budget
         self.bid_budget = bid_budget
+        self.original_ask = None
+        self.original_bid = None
 
     def rebalance_orders(self):
         pass
@@ -27,7 +29,10 @@ class Merkato(object):
 
         # get market price to make ladder relative from
         orders = self.exchange.get_all_orders(self.ticker)
-        lowest_ask = orders['asks'][0][0]
+        if self.original_ask is None:
+            lowest_ask = orders['asks'][0][0]
+        else:
+            lowest_ask = self.original_ask
 
         for level, allocation in self.bid_profile:
             new_price = lowest_ask * (1 + (float(level) / 100.0))
@@ -44,7 +49,10 @@ class Merkato(object):
 
         # get market price to make ladder relative from
         orders = self.exchange.get_all_orders(self.ticker)
-        highest_bid = orders['bids'][0][0]
+        if self.original_bid is None:
+            highest_bid = orders['bids'][0][0]
+        else:
+            highest_bid = self.original_bid
 
         for level, allocation in self.ask_profile:
             new_price = highest_bid * (1 + (float(level) / 100.0))
