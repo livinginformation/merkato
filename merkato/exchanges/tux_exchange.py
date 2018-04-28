@@ -115,7 +115,10 @@ class TuxExchange(ExchangeBase):
 
 
     def get_24h_volume(coin="none"):
-        # Coin is of the form BTC_XYZ, where XYZ is the alt ticker
+        ''' Returns the 24 hour volume for the given coin.
+            If no coin is given, returns for all coins.
+            :param coin string (of the form BTC_XYZ where XYZ is the alt ticker)
+        '''
 
         params = { "method": "get24hvolume" }
         response = requests.get(self.url, params=params)
@@ -159,6 +162,12 @@ class TuxExchange(ExchangeBase):
 
 
     def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
+        ''' Signs provided query parameters with API keys
+            :param query_parameters: dictionary
+            :param nonce: int
+            :param timeout: int
+        '''
+
         # return response needing signature, nonce created if not supplied
         if not nonce:
             nonce = int(time.time() * 1000)
