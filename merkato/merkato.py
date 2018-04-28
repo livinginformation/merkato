@@ -31,8 +31,9 @@ class Merkato(object):
         orders = self.exchange.get_all_orders(self.ticker)
         if self.original_ask is None:
             lowest_ask = orders['asks'][0][0]
-        else:
-            lowest_ask = self.original_ask
+            self.original_ask = lowest_ask
+            
+        lowest_ask = self.original_ask
 
         for level, allocation in self.bid_profile:
             new_price = lowest_ask * (1 + (float(level) / 100.0))
@@ -51,8 +52,9 @@ class Merkato(object):
         orders = self.exchange.get_all_orders(self.ticker)
         if self.original_bid is None:
             highest_bid = orders['bids'][0][0]
-        else:
-            highest_bid = self.original_bid
+            self.original_bid = highest_bid
+
+        highest_bid = self.original_bid
 
         for level, allocation in self.ask_profile:
             new_price = highest_bid * (1 + (float(level) / 100.0))
