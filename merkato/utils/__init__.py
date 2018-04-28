@@ -1,3 +1,5 @@
+from merkato.constants import known_exchanges
+
 def update_config_with_credentials(config):
 	print("API Credentials needed")
 	public_key  = input("Public Key: ")
@@ -8,10 +10,14 @@ def update_config_with_credentials(config):
 
 def get_exchange():
 	print("What exchange is this config file for?")
-	print("1. TuxExchange")
-	print("2. Poloniex")
-	print("3. Bittrex")
-	return input("Selection: ")
+	print("1. for TuxExchange type 'tux'")
+	print("2. for Poloniex type 'polo'")
+	print("3. for Bittrex type 'bit'")
+	selection = input("Selection: ")
+	if selection not in known_exchanges:
+		print('selected exchange not supported, try again')
+		return get_exchange()
+	return selection
 
 
 def get_config_selection():
