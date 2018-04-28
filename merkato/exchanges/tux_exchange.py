@@ -21,14 +21,14 @@ class TuxExchange(ExchangeBase):
     def sell(self, amount, ask, ticker):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
-            :param ask: float 
+            :param ask: float
             :param ticker: string
         '''
         query_parameters = {
-            "method": "sell", 
-            "market": "BTC", 
-            "coin": ticker, 
-            "amount": "{:.8f}".format(amount), 
+            "method": "sell",
+            "market": "BTC",
+            "coin": ticker,
+            "amount": "{:.8f}".format(amount),
             "price": "{:.8f}".format(ask)
         }
         response = self._create_signed_request(query_parameters)
@@ -39,14 +39,14 @@ class TuxExchange(ExchangeBase):
     def buy(self, amount, bid, ticker):
         ''' Places a buy for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
-            :param bid: float 
+            :param bid: float
             :param ticker: string
         '''
-        query_parameters = { 
-            "method": "buy", 
-            "market": "BTC", 
-            "coin": ticker, 
-            "amount": "{:.8f}".format(amount), 
+        query_parameters = {
+            "method": "buy",
+            "market": "BTC",
+            "coin": ticker,
+            "amount": "{:.8f}".format(amount),
             "price": "{:.8f}".format(bid)
         }
         response = self._create_signed_request(query_parameters)
@@ -82,9 +82,9 @@ class TuxExchange(ExchangeBase):
             if DEBUG: print("---> Order ID was zero, so bailing on function...")
             return
 
-        query_parameters = { 
-            "method": "cancelorder", 
-            "market": "BTC", 
+        query_parameters = {
+            "method": "cancelorder",
+            "market": "BTC",
             "id": order_id
         }
         response = self._create_signed_request(query_parameters)
@@ -127,7 +127,7 @@ class TuxExchange(ExchangeBase):
         # TODO: not exposed to base exchange class
         # also keys go unused, also coin...
         tuxParams = {"method" : "getmybalances"}
-        
+
         response = self._create_signed_request(tuxParams)
         print(response)
         for crypto in response:
@@ -140,16 +140,16 @@ class TuxExchange(ExchangeBase):
         if DEBUG: print("--> Getting trade history...")
 
         if start != 0 and end != 0:
-            query_parameters = { 
-                "method": "getmytradehistory", 
-                "start": start, 
-                "end": end, 
+            query_parameters = {
+                "method": "getmytradehistory",
+                "start": start,
+                "end": end,
             }
         else:
-            query_parameters = { 
+            query_parameters = {
                 "method": "getmytradehistory"
             }
-        
+
         return self._create_signed_request(query_parameters)
 
 
