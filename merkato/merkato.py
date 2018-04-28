@@ -9,14 +9,54 @@ DEBUG = True
 
 
 class Merkato(object):
-    def __init__(self, configuration, ticker, spread):
+    def __init__(self, configuration, ticker, spread, ask_budget, bid_budget):
         self.exchange = Exchange(configuration)
         self.distribution_strategy = 1
         self.ticker = ticker # i.e. 'XMR_BTC'
         self.spread = spread # i.e '15
+        self.ask_profile = [(1, 5), (2, 5), (3, 10), (4, 15), (5, 20), (6, 25), (10, 30)] # (% change in price, % balance allocation)
+        self.bid_profile = [(-1, 5), (-2, 5), (-3, 10), (-4, 15), (-5, 20), (-6, 25), (-10, 30)]  # (% change in price, % balance allocation)
+        self.ask_budget = ask_budget
+        self.bid_budget = bid_budget
 
     def rebalance_orders(self):
         pass
+
+    def create_relative_bid_ladder(self,):
+        # a ladder that can be user configured (via gui)
+
+        # get market price to make ladder relative from
+        orders = self.exchange.get_all_orders(self.ticker)
+        lowest_ask = orders['asks'][0][0]
+
+        for level, allocation in self.bid_profile:
+            new_price = lowest_ask * (1 + (float(level) / 100.0))
+            new_amount = float(self.bid_budget) * (float(allocation) / 100.0)
+            if new_price < lowest_ask and new_amount < self.bid_budget:   # sanity check
+                self.exchange.buy(new_amount, new_price, self.ticker)
+                time.sleep(.3)
+            else:
+                # TODO: add more meaningful error text
+                raise Exception("ERROR in create_relative_bid_ladder: faulty logic or inputs")
+
+    def create_relative_ask_ladder(self,):
+        # a ladder that can be user configured (via gui)
+
+        # get market price to make ladder relative from
+        orders = self.exchange.get_all_orders(self.ticker)
+        highest_bid = orders['bids'][0][0]
+
+        for level, allocation in self.ask_profile:
+            new_price = highest_bid * (1 + (float(level) / 100.0))
+            new_amount = float(self.ask_budget) * (float(allocation) / 100.0)
+            if new_price > highest_bid and new_amount < self.ask_budget:   # sanity check
+                self.exchange.sell(new_amount, new_price, self.ticker)
+                time.sleep(.3)
+            else:
+                # TODO: add more meaningful error text
+                raise Exception("ERROR in create_relative_ask_ladder: faulty logic or inputs")
+
+
 
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
         # TODO: this is currently unused in merkato
