@@ -1,3 +1,5 @@
+import time
+
 from merkato.exchanges.tux_exchange import TuxExchange
 
 DEBUG = True
@@ -58,7 +60,7 @@ class Exchange(object):
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
                 self.debug(0, "buy", "ERROR", e)
-                break
+                return False
 
 
     def get_all_orders(self, ticker):
