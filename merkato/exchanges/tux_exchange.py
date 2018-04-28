@@ -55,8 +55,10 @@ class TuxExchange(ExchangeBase):
 
 
     def get_all_orders(self, coin):
-        # Coin here is just the ticker XYZ, not BTC_XYZ
-        # Todo: Accept BTC_XYZ by stripping BTC_ if it exists
+        ''' Returns all open orders for the ticker XYZ (not BTC_XYZ)
+            :param coin: string
+        '''
+        # TODO: Accept BTC_XYZ by stripping BTC_ if it exists
 
         params = { "method": "getorders", "coin": coin }
         response = requests.get(self.url, params=params)
@@ -67,6 +69,8 @@ class TuxExchange(ExchangeBase):
 
 
     def get_my_open_orders(self):
+        ''' Returns all open orders for the authenticated user '''
+
         query_parameters = {
             "method": "getmyopenorders"
         }
@@ -75,29 +79,30 @@ class TuxExchange(ExchangeBase):
 
 
     def cancel_order(self, order_id):
-        # This function has a stack overflow risk, fix it. Don't use tail recursion.
+        ''' Cancels the order with the specified order ID
+            :param order_id: string
+        '''
+
         if DEBUG: print("--> Cancelling order...")
 
         if order_id == 0:
             if DEBUG: print("---> Order ID was zero, so bailing on function...")
-            return
+            return False
 
         query_parameters = {
             "method": "cancelorder",
             "market": "BTC",
             "id": order_id
         }
-        response = self._create_signed_request(query_parameters)
-
-        if response['success'] != 0:
-            if DEBUG: print("--> Cancel successful")
-            return True
-
-        print("--> Cancel error, retrying   ")
-        return self.cancel_order(order_id)
+        return self._create_signed_request(query_parameters)
 
 
     def get_ticker(self, coin="none"):
+        ''' Returns the current ticker data for the given coin. If no coin is given,
+            it will return the ticker data for all coins.
+            :param coin: string (of the format BTC_XYZ)
+        '''
+
         params = { "method": "getticker" }
         response = requests.get(self.url, params=params)
 
