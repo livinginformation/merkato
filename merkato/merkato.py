@@ -15,8 +15,25 @@ class Merkato(object):
         self.ticker = ticker # i.e. 'XMR_BTC'
         self.spread = spread # i.e '15
 
-    def rebalance_orders(self):
-        pass
+    def rebalance_orders(self, new_history, new_txes):
+        sold = []
+        bought = []
+        newTransactionHistory = new_history[new_txes]
+        for tx in newTransactionHistory:
+
+            if tx['type'] == SELL:
+                if DEBUG: print(SELL)
+                amount = tx['amount']
+                price = tx[PRICE]
+                sold.append(tx)
+                self.buy(amount, float(price) - self.spread, self.ticker)
+
+            if tx['type'] == BUY:
+                print(BUY)
+                amount = tx['amount']
+                price = tx[PRICE]
+                bought.append(tx)
+                self.sell(amount, float(price) + self.spread, self.ticker)
 
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
         # TODO: this is currently unused in merkato
@@ -178,25 +195,7 @@ class Merkato(object):
             # We have new transactions
             new_txes = new_hist_len - hist_len
             if DEBUG: print("New transactions: " + str(new_txes))
-            sold = []
-            bought = []
-            for tx in new_history[:new_txes]:
-
-                if tx['type'] == SELL:
-                    if DEBUG: print(SELL)
-                    amount = tx['amount']
-                    price = tx[PRICE]
-                    sold.append(tx)
-                    self.buy(amount, float(price) - self.spread, self.ticker)
-
-                if tx['type'] == BUY:
-                    print(BUY)
-                    amount = tx['amount']
-                    price = tx[PRICE]
-                    bought.append(tx)
-                    self.sell(amount, float(price) + self.spread, self.ticker)
-
-            hist_len = new_hist_len
+            self.rebalance_orders(new_history, new_txes)
             self.merge_orders(self.ticker)
 
         # context to be used for GUI plotting
