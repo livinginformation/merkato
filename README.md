@@ -8,29 +8,11 @@ Run python3 bot.py from the command line. Currently non-functional.
 
 ### Prerequisites
 
-TODO
-
-```
-Give examples
-```
+See [requirements.txt](https://github.com/livinginformation/merkato/blob/master/requirements.txt) for the full list of prerequisites.
 
 ### Installing
 
-A step by step series of examples that tell you have to get a development env running
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
+Install all dependencies, and then run bot.py from the command line.
 
 ## Running the tests
 
@@ -38,10 +20,6 @@ from top level directory:
 ```
 ./run_tests.sh
 ```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
 
 ## Built With
 
@@ -56,7 +34,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 * **Livinginformation (Needmoney90)** - *Initial work* - [Livinginformation](https://github.com/Livinginformation)
 
-See also the list of [contributors](https://github.com/livinginformation/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/livinginformation/merkato/graphs/contributors) who participated in this project.
 
 ## License
 
