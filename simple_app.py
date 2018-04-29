@@ -11,14 +11,17 @@ import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.lines import Line2D
 
+import tkinter
+import tkinter.ttk
 import tkinter as tk
 from tkinter import ttk
 
 from operator import itemgetter
 import random
 
-LARGE_FONT= ("Verdana", 12)
-style.use("ggplot")
+LARGE_FONT= ("Liberation Mono", 12)
+print(style.available)
+style.use("dark_background")
 
 """
 expected bot data format from merkato
@@ -44,7 +47,7 @@ class Graph(tk.Frame):
 
     def __init__(self, app, parent, stub=False, price_x=[], price_y=[], bought_x=[], bought_y=[], sold_x=[], sold_y=[],
                  x_lowest_sell_order=[], y_lowest_sell_order=[], x_highest_buy_order=[], y_highest_buy_order=[]):
-        tk.Frame.__init__(self, parent)
+        tk.Frame.__init__(self, parent, bg="gray80")
         self.app = app
         self.parent = parent
         self.stub = stub
@@ -52,7 +55,7 @@ class Graph(tk.Frame):
         self.x_axis_window_size = 31  # todo: button for changing this
 
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
-        self.label = tk.Label(self, text="XMR_BTC", font=LARGE_FONT)
+        self.label = tk.Label(self, text="XMR_BTC", font=LARGE_FONT, bg="gray80")
 
         self.label.pack(pady=10, padx=10)
 
@@ -65,26 +68,27 @@ class Graph(tk.Frame):
 
         self.x_bought = bought_x
         self.y_bought = bought_y
-        self.boughtScatter = self.ax.scatter(self.x_bought, self.y_bought, color="green")
+        self.boughtScatter = self.ax.scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
 
         self.x_sold = sold_x
         self.y_sold = sold_y
-        self.scatter_sold = self.ax.scatter(self.x_sold, self.y_sold, color="red")
+        self.scatter_sold = self.ax.scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
 
         self.x_lowest_sell_order = x_lowest_sell_order
         self.y_lowest_sell_order = y_lowest_sell_order
-        self.line_lowest_sell_order = Line2D(self.x_lowest_sell_order, self.y_lowest_sell_order, color="salmon")
+        self.line_lowest_sell_order = Line2D(self.x_lowest_sell_order, self.y_lowest_sell_order, color="red")
         self.ax.add_line(self.line_lowest_sell_order)
 
         self.x_highest_buy_order = x_highest_buy_order
         self.y_highest_buy_order = y_highest_buy_order
-        self.line_highest_buy_order = Line2D(self.x_highest_buy_order, self.y_highest_buy_order, color="lime")
+        self.line_highest_buy_order = Line2D(self.x_highest_buy_order, self.y_highest_buy_order, color="green")
         self.ax.add_line(self.line_highest_buy_order)
 
         #self.fig = Figure(figsize=(5, 5), dpi=100)
         #self.graph = self.fig.add_subplot(111)
 
         self.canvas = FigureCanvasTkAgg(self.fig, self)
+        self.ax.grid(color='gray', linestyle='--', linewidth=.5)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
@@ -99,8 +103,11 @@ class Graph(tk.Frame):
 
 
     def fake_data(self):
+        x_this = self.x_price[-1] + 1
         data = {
-                "price": (self.x_price[-1] + 1, self.y_price[-1] + random.randint(-5, 5))
+                "price": (x_this, self.y_price[-1] + random.randint(-5, 5)),
+                "open_orders": {"buy":[(241, 0.5, x_this)],
+                                "sell": [(258, 0.5, x_this)]},
 
                 }
         print(repr(data))
@@ -138,7 +145,7 @@ class Graph(tk.Frame):
             if self.x_bought and self.y_bought:
                 print(self.x_bought, self.y_bought)
                 #self.boughtScatter.set_offsets((self.x_bought, self.y_bought))
-                self.boughtScatter = self.ax.scatter(self.x_bought, self.y_bought, color="green")
+                self.boughtScatter = self.ax.scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
 
             # -----------------------------------------------------
             if "filled_orders" in data:
@@ -150,7 +157,7 @@ class Graph(tk.Frame):
                         self.y_sold.append(sy)
             if self.x_sold and self.y_sold:
                 #self.scatter_sold.set_offsets((self.x_sold, self.y_sold))
-                self.scatter_sold = self.ax.scatter(self.x_sold, self.y_sold, color="red")
+                self.scatter_sold = self.ax.scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
             # -----------------------------------------------------
             order_price_index = 0  # sort on first element of tuple which should be price (for now)
             order_time_index = 2
@@ -185,10 +192,12 @@ class Graph(tk.Frame):
             # -----------------------------------------------------
             if self.x_axis_refresh:
                 if len(self.x_price) > self.x_axis_window_size:
-                    plt.xlim(self.x_price[-1 * self.x_axis_window_size + 1], self.x_price[-1])
-                    plt.autoscale(axis="y")
+                    self.ax.xlim(self.x_price[-1 * self.x_axis_window_size + 1], self.x_price[-1])
+                    self.ax.autoscale(axis="y")
                 else:
-                    plt.autoscale()
+                    self.ax.autoscale()
+
+            self.ax.grid(color='gray', linestyle='--', linewidth=.5)
             self.canvas.draw()
 
         except Exception as e:
@@ -202,20 +211,56 @@ class Graph(tk.Frame):
 
 
 class Bot(ttk.Frame):
-    def __init__(self,app, parent, exchange_config={}, pair="", *args, **kwargs):
+    def __init__(self,app, parent, exchange_config={}, stub = False, title = "merkato",pair="", auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
         ttk.Frame.__init__(self, parent, style="app.TFrame", *args, **kwargs)
         self.app = app
         self.parent = parent
+        self.stub = stub
         # if background and not self.app.light:
         #     self.bg = tk.PhotoImage(file = background)
         #     self.bglabel = tk.Label(self, image=self.bg)
         #     self.bglabel.place(x=0, y=0, relwidth=1, relheight=1)
-        self.pair = pair
-        if not exchange_config:
-            # get args via gui
-            pass
+        self.pair = pair # TODO: unused for now
+        self.title  = title
+        self.heading = ttk.Label(self, text=self.title, style="heading.TLabel")
+
+        # merkato args
+        self.auth_frame = ttk.Frame(self, style="app.TFrame")
+        self.public_key = MyWidget(self.app, self.auth_frame, handle="public key", choices="entry")
+        self.private_key = MyWidget(self.app, self.auth_frame, handle="private key", is_password=True, choices="entry" )
+        self.public_key.grid(row = 0, column = 0,sticky=tk.NE, padx=(10,10), pady=(5,5))
+        self.private_key.grid(row=1, column=0, sticky=tk.NE, padx=(10,10), pady=(5,5))
+        # --------------------
+        self.exchange_frame = ttk.Frame(self, style="app.TFrame")
+        self.exchange_name = MyWidget(self.app, self.exchange_frame, handle="exchange", choices= ["tux", "polo", "kraken", "gdax"])
+        self.ticker = MyWidget(self.app, self.exchange_frame, handle="ticker", choices= ["BTC_XMR", "BTC_LTC", "BTC_PEPE"])
+        self.ask_budget =  MyWidget(self.app, self.exchange_frame, handle="ask (sell) budget", startVal= 0.0, choices="entry")
+        self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="bid (buy) budget", startVal=0.0, choices="entry")
+        self.execute = ttk.Button(self.exchange_frame, text = "Launch", cursor = "shuttle", command= self.start)
+
+        self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
+        self.ticker.grid(row=1, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
+        self.ask_budget.grid(row=2, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
+        self.bid_budget.grid(row=3, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
+        self.execute.grid(row=4, column=0, sticky=tk.NE, padx=(10,10), pady=(5,5))
+        # --------------------
+        self.graph = Graph(self.app,self,stub=self.stub, **starting_stats)
+
+        self.graph.grid(row = 0, column=0, rowspan=3, padx=(5,10))
+        self.auth_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
+        self.exchange_frame.grid(row = 1, column=1, sticky=tk.NE, padx=(10,10))
+
+
+
+    def start(self):
+        for widget in [self.public_key, self.private_key, self.exchange_name,  self.ticker,  self.ask_budget, self.bid_budget]:
+            print("{}:\t\t{}".format(widget.handle,widget.get()[0]))
+
+        # if not exchange_config:
+        #     # get args via gui
+        #     pass
         #self.bot = Merkato(exchange_config)
-        self.heading = ttk.Label(self,text = self.pair,style = "heading.TLabel")
+
         """
         #self.body = VSFrame(self,fheight = 430,nobar = True)
         self.dest = Destination(self.app,self,name = "",cwidth = 40,select_handle = "Subaddress Book",background = "misc/genericspace.gif",mode = "receive")
@@ -248,21 +293,173 @@ class Bot(ttk.Frame):
         self.qr.grid(row=3,column=0,sticky = tk.W+tk.E,padx=(140,0),pady= (15,80),columnspan = 3)
         """
 
+class MyWidget(ttk.Frame):
+    def __init__(self,app, parent,handle,choices=None,subs = {}, is_password = False,startVal = None,allowEntry = False,static = False,
+                 cipadx = 0,optional = False,activeStart=1,ewidth = 8,cwidth = None, cmd = None, *args, **kwargs):
+        ttk.Frame.__init__(self, parent,style = "app.TFrame", *args, **kwargs)
+        self.app = app
+        self.parent = parent
+        self.handle = handle
+        self.choices = choices
+        self.optional = optional
+        self.allowEntry = allowEntry
+        self.startVal = startVal
+        self.cmd = cmd
+        self.subs = subs
+        self.sub = None
+
+        # if background and not self.app.light:
+        #     self.bg = tk.PhotoImage(file = background)
+        #     self.bglabel = tk.Label(self, image=self.bg)
+        #     self.bglabel.place(x=0, y=0, relwidth=1, relheight=1)
+
+        if self.optional:
+            self.optState = tk.IntVar()
+            self.optBut = ttk.Checkbutton(self,variable = self.optState,onvalue = 1,offvalue=0,command = self._grey,style = "app.TCheckbutton")
+            self.optBut.pack(side="left")
+        if isinstance(self.choices,__builtins__.list):
+            if not allowEntry:
+                state = "readonly"
+            else:
+                state = "enabled"
+            if not cwidth: cwidth = len(max(self.choices,key=len))
+            self.value = ttk.Combobox(self,values = self.choices,state = state,width=cwidth,postcommand = self.wideMenu,style = "app.TCombobox")
+            self.value.bind('<<ComboboxSelected>>',self.findSubs)
+            #self.value.bind('<Configure>', self.wideMenu)
+        if self.choices == "entry":
+            state = "enabled" if not static else "readonly"
+            if not is_password:
+                self.value = ttk.Entry(self,width=ewidth,style = "app.TEntry",state = state)
+            else:
+                self.value = ttk.Entry(self, width=ewidth, style="app.TEntry", state=state, show="*")
+            self._root().after(0,self.findSubs,None,False)
+
+        self.title = ttk.Label(self, text = self.handle,style = "app.TLabel")
+        self.title.pack(anchor = tk.W)
+        if self.choices:
+            self.value.pack(anchor = tk.E,ipadx = cipadx)
+            if not self.startVal is None:
+                if not self.choices == "entry":
+                    self.value.set(self.startVal)
+                    self._root().after(0,self.findSubs,None,False)
+                else:
+                    self.value.insert(0,startVal)
+                    self._root().after(0,self.findSubs,None,False)
+        if self.optional:
+            if activeStart:
+                self.optState.set(1)
+
+    def wideMenu(self,event = None):
+        try:
+            global mystyle
+            if self.handle in ["Account"]:
+                #print("got Account wideMenu")
+                mystyle.configure("TCombobox",postoffset = (0,0,150,0))
+                self.value.config(style = "TCombobox")
+            elif self.handle in ["Subaddress Book"]:
+                mystyle.configure("TCombobox",postoffset = (0,0,100,0))
+                self.value.config(style = "TCombobox")
+            else:
+                mystyle.configure("TCombobox",postoffset = (0,0,0,0))
+        except Exception as e:
+            print(str(e))
+
+
+    def get(self):
+        #print(self.handle,self.sub,bool(self.sub))
+        if self.choices:
+            if self.sub:
+                val = [self.value.get()]
+                try:
+                    val.extend(self.sub.get())
+                except TypeError:
+                    print(self.handle,self.sub,bool(self.sub))
+                return val
+            return [self.value.get()]
+        elif self.optional:
+            if self.optState.get():
+                if self.sub:
+                    val = [self.value.get()]
+                    try:
+                        val.extend(self.sub.get())
+                    except TypeError:
+                        print(self.handle,self.sub,bool(self.sub))
+                    return val
+                return [self.handle]
+            else:
+                return None
+        else:
+            print("tried to get:%s" %self.handle)
+            return #[self.value.get()]
+
+    def findSubs(self,event = None,not_init = True):
+        if self.sub:
+            self.sub.destroy()
+            self.sub = None
+        if self.subs:
+            if self.value.get() in self.subs and not self.choices == "entry":
+                self.sub = MyWidget(self.app,self,**self.subs[self.value.get()])
+                self.sub.pack(anchor = tk.E,pady=3)
+            elif self.choices == "entry":
+                self.sub = MyWidget(self.app,self,**self.subs["entry"])
+                self.sub.pack(anchor = tk.E,pady=3)
+            else:
+                pass
+        if self.cmd and not_init:
+            self.cmd()
+
+    def _grey(self,override = False):
+        if self.optional and self.choices:
+            if not self.optState.get():
+                self.value.config(state="disabled")
+            else:
+                if isinstance(self.value,tkinter.ttk.Combobox):
+                    if self.allowEntry:
+                        self.value.config(state="enabled")
+                    else:
+                        self.value.config(state="readonly")
+                else:
+                    self.value.config(state="enabled")
+        if self.sub:
+            self.sub._grey()
+
+
+
+
 if __name__ == "__main__":
     root = tk.Tk()
+    mystyle = ttk.Style()
+    mystyle.theme_use('clam')  # ('clam', 'alt', 'default', 'classic')
+    mystyle.configure("app.TLabel", foreground="white", background="black",
+                      font=('Liberation Mono', '12', 'normal'))  # "#4C4C4C")
+    mystyle.configure("unlocked.TLabel", foreground="light green", background="black",
+                      font=('Liberation Mono', '12', 'normal'))  # "#4C4C4C")
+    mystyle.configure("smaller.TLabel", foreground="white", background="black",
+                      font=('Liberation Mono', '10', 'normal'))  # "#4C4C4C")
+    mystyle.configure("heading.TLabel", foreground="white", background="black",
+                      font=('Liberation Mono', '36', 'normal'))  # "#4C4C4C")
+    mystyle.configure("app.TFrame", foreground="gray55", background="black")  # "#4C4C4C",)
+    mystyle.configure("app.TButton", foreground="gray55", background="#D15101", activeforeground="#F2681C")  # F2681C
+    mystyle.configure("app.TCheckbutton", foreground="gray55", background="black")  # "#4C4C4C")
+    mystyle.configure("app.TCombobox", background="#F2681C", selectbackground="#D15101")  # postoffset = (0,0,500,0))
+    mystyle.configure("app.TEntry", foreground="black", background="gray55")
+    mystyle.configure("pass.TEntry", foreground="gray55", background="gray55", insertofftime=5000)
+    root.option_add("*TCombobox*Listbox*selectBackground", "#D15101")
+
+
     targs = {
             "price_x" : [1,2,3,4,5,6,7,8,9,10],
             "price_y" : [250,250,240,240,250,260,260,240,230,260,],
-            "bought_x" : [3,4,8,9],
-            "bought_y" : [241,241,241,241],
-            "sold_x" : [6,7,10],
-            "sold_y" : [258,258,258],
+            "bought_x" : [3,8,],
+            "bought_y" : [241,241,],
+            "sold_x" : [5.85,10],
+            "sold_y" : [258,258],
             "x_lowest_sell_order" : [1,2,3,4,5,6,7,8,9,10],
             "y_lowest_sell_order" : [258, 258, 258, 258, 258, 258, 258, 258, 258, 258, ],
             "x_highest_buy_order" : [1,2,3,4,5,6,7,8,9,10],
             "y_highest_buy_order" : [241, 241, 241, 241, 241, 241, 241, 241, 241, 241, ],
             }
-    test = Graph(root, root,stub = True, **targs)
+    test = Bot(root, root, stub = True, title="Stub GUI (very raw)", starting_stats=targs)
     test.pack()
 
     root.mainloop()
