@@ -192,10 +192,10 @@ class Graph(tk.Frame):
             # -----------------------------------------------------
             if self.x_axis_refresh:
                 if len(self.x_price) > self.x_axis_window_size:
-                    self.ax.xlim(self.x_price[-1 * self.x_axis_window_size + 1], self.x_price[-1])
-                    self.ax.autoscale(axis="y")
+                    plt.xlim(self.x_price[-1 * self.x_axis_window_size + 1], self.x_price[-1])
+                    plt.autoscale(axis="y")
                 else:
-                    self.ax.autoscale()
+                    plt.autoscale()
 
             self.ax.grid(color='gray', linestyle='--', linewidth=.5)
             self.canvas.draw()
