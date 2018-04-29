@@ -14,6 +14,7 @@ class Merkato(object):
         self.distribution_strategy = 1
         self.ticker = ticker # i.e. 'XMR_BTC'
         self.spread = spread # i.e '15
+        #The Balance Allocation below totals 110% not 100%
         self.ask_profile = [(1, 5), (2, 5), (3, 10), (4, 15), (5, 20), (6, 25), (10, 30)] # (% change in price, % balance allocation)
         self.bid_profile = [(-1, 5), (-2, 5), (-3, 10), (-4, 15), (-5, 20), (-6, 25), (-10, 30)]  # (% change in price, % balance allocation)
         self.ask_budget = ask_budget
