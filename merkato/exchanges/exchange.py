@@ -20,6 +20,7 @@ class Exchange(object):
             raise Exception("ERROR: unsupported exchange: {}".format(self.exchange))
 
         self.retries = 5
+        self.limit_only = True
 
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
@@ -32,6 +33,10 @@ class Exchange(object):
     def sell(self, amount, ask, ticker):
         attempt = 0
         while attempt < self.retries:
+            if self.limit_only:
+                # Get current highest bid on the orderbook
+                # If ask price is lower than the highest bid, return.
+                pass
             try:
                 success = self.interface.sell(amount, ask, ticker)
                 if success:
@@ -49,6 +54,11 @@ class Exchange(object):
     def buy(self, amount, bid, ticker):
         attempt = 0
         while attempt < self.retries:
+            if self.limit_only:
+                # Get current lowest ask on the orderbook
+                # If bid price is higher than the lowest ask, return.
+                pass
+
             try:
                 success = self.interface.buy(amount, bid, ticker)
                 if success:
@@ -65,7 +75,7 @@ class Exchange(object):
 
     def get_all_orders(self, ticker):
         return self.interface.get_all_orders(ticker)
-        
+
 
     def get_my_open_orders(self):
         return self.interface.get_my_open_orders()
