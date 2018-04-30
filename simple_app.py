@@ -11,6 +11,9 @@ import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.lines import Line2D
 
+import tkinter.filedialog as FileDialog
+import tkinter.messagebox as MessageBox
+
 import tkinter
 import tkinter.ttk
 import tkinter as tk
@@ -18,6 +21,7 @@ from tkinter import ttk
 
 from operator import itemgetter
 import random
+import time
 
 LARGE_FONT= ("Liberation Mono", 12)
 print(style.available)
@@ -31,10 +35,10 @@ expected bot data format from merkato
                            (0.018, 1.5) ],
                   "sell"  : [(0.027, 0.5), 
                              (0.033,1.5) ]},
-"filled_orders" :  {"buy" : [(0.022, 0.5, DD-MM-YY_HH:MM:SS), 
-                             (0.018, 1.5, DD-MM-YY_HH:MM:SS) ],
-                    "sell"  : [(0.027, 0.5 ,DD-MM-YY_HH:MM:SS), 
-                              (0.033,1.5, DD-MM-YY_HH:MM:SS) ]},                          
+"filled_orders" :  {"buy" : [(0.022, 0.5, 2016-08-26 18:53:38), 
+                             (0.018, 1.5, 2016-08-26 18:53:38) ],
+                    "sell"  : [(0.027, 0.5 ,2016-08-26 18:53:38), 
+                              (0.033,1.5, YYYY-MM-DD HH:MM:SS) ]},                          
 "balances" : {"BTC" : 0.5121,
               "XMR": 15.2039},
 "market" : (00.24,0.026),
@@ -45,19 +49,19 @@ expected bot data format from merkato
 
 class Graph(tk.Frame):
 
-    def __init__(self, app, parent, stub=False, price_x=[], price_y=[], bought_x=[], bought_y=[], sold_x=[], sold_y=[],
+    def __init__(self, app, parent, delay = 5000, stub=False, price_x=[], price_y=[], bought_x=[], bought_y=[], sold_x=[], sold_y=[],
                  x_lowest_sell_order=[], y_lowest_sell_order=[], x_highest_buy_order=[], y_highest_buy_order=[]):
-        tk.Frame.__init__(self, parent, bg="gray80")
+        tk.Frame.__init__(self, parent, bg="black")
         self.app = app
         self.parent = parent
         self.stub = stub
-        self.x_axis_refresh = True # todo: button to turn this off
+        self.delay = delay
         self.x_axis_window_size = 31  # todo: button for changing this
 
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
-        self.label = tk.Label(self, text="XMR_BTC", font=LARGE_FONT, bg="gray80")
+        self.label = ttk.Label(self, text="Merkato", style="app.TLabel")
 
-        self.label.pack(pady=10, padx=10)
+
 
         self.fig, self.ax = plt.subplots()
 
@@ -84,17 +88,35 @@ class Graph(tk.Frame):
         self.line_highest_buy_order = Line2D(self.x_highest_buy_order, self.y_highest_buy_order, color="green")
         self.ax.add_line(self.line_highest_buy_order)
 
+        plt.tight_layout()
         #self.fig = Figure(figsize=(5, 5), dpi=100)
         #self.graph = self.fig.add_subplot(111)
 
         self.canvas = FigureCanvasTkAgg(self.fig, self)
         self.ax.grid(color='gray', linestyle='--', linewidth=.5)
+        self.ax.set_title("merkato")
         self.canvas.draw()
-        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
-        self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
+
+        self.toolbar_frame = tk.Frame(self)
+        self.toolbar = NavigationToolbar2TkAgg(self.canvas, self.toolbar_frame,)
         self.toolbar.update()
+
+        # --------------------------------------
+        self.options_frame = tk.Frame(self,bg = "black")
+        self.x_axis_auto_scroll = MyWidget(self.app, self.options_frame, optional=True, handle="auto scroll")
+        self.x_axis_auto_scroll.grid(row=0, column=0, sticky=tk.NE)
+        # --------------------------------------
+
+        self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W )
+        #self.label.pack(pady=(20,0), padx=10, side=tk.TOP)
+        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.options_frame.pack(side=tk.TOP, anchor=tk.W, fill=tk.BOTH, expand=True)
+
+        # --------------------------------------
+        self.x_low, self.x_hi = self.ax.get_xlim()
+        self.y_low, self.y_hi = self.ax.get_ylim()
 
         #self.loop = animation.FuncAnimation(f, self.refresh,fargs = , interval=1000)
 
@@ -122,6 +144,9 @@ class Graph(tk.Frame):
         :param data: a dictionary that comes from bot update method.  todo: agree on format for data
         :return:
         """
+        self.x_low, self.x_hi = self.ax.get_xlim()
+        self.y_low, self.y_hi = self.ax.get_ylim()
+        start = time.time()
         self.ax.clear()
         print("cleared self.ax")
         try:
@@ -190,22 +215,33 @@ class Graph(tk.Frame):
                 self.line_highest_buy_order.set_data(self.x_highest_buy_order, self.y_highest_buy_order)
                 self.ax.add_line(self.line_highest_buy_order)
             # -----------------------------------------------------
-            if self.x_axis_refresh:
+
+            print("------->",self.x_axis_auto_scroll.optState.get())
+            if self.x_axis_auto_scroll.optState.get():
                 if len(self.x_price) > self.x_axis_window_size:
-                    plt.xlim(self.x_price[-1 * self.x_axis_window_size + 1], self.x_price[-1])
-                    plt.autoscale(axis="y")
+                    self.ax.set_xlim(self.x_price[-1 * self.x_axis_window_size + 1], self.x_price[-1])
+                    self.ax.autoscale(axis="y")
                 else:
-                    plt.autoscale()
+                    self.ax.autoscale(axis="y")
+
+            else:
+                print("trying:  ", self.x_low, self.x_hi, self.y_low, self.y_hi)
+                self.ax.set_xlim(self.x_low, self.x_hi)
+                self.ax.set_ylim(self.y_low, self.y_hi)
 
             self.ax.grid(color='gray', linestyle='--', linewidth=.5)
             self.canvas.draw()
+
+
 
         except Exception as e:
             print(str(e))
             raise
         finally:
             if self.stub:
-                self._root().after(5000, self.refresh, self.fake_data())
+                duration = time.time() - start
+                this_delay = int(max((self.delay - duration * 1000), 100))  # be at least 100 ms, assumes past behavior predicts future ;)
+                self._root().after(this_delay, self.refresh, self.fake_data())
 
 
 
@@ -225,35 +261,39 @@ class Bot(ttk.Frame):
         self.heading = ttk.Label(self, text=self.title, style="heading.TLabel")
 
         # merkato args
-        self.auth_frame = ttk.Frame(self, style="app.TFrame")
-        self.public_key = MyWidget(self.app, self.auth_frame, handle="public key", choices="entry")
-        self.private_key = MyWidget(self.app, self.auth_frame, handle="private key", is_password=True, choices="entry" )
-        self.public_key.grid(row = 0, column = 0,sticky=tk.NE, padx=(10,10), pady=(5,5))
-        self.private_key.grid(row=1, column=0, sticky=tk.NE, padx=(10,10), pady=(5,5))
+        #self.auth_frame = ttk.Frame(self, style="app.TFrame")
+
         # --------------------
         self.exchange_frame = ttk.Frame(self, style="app.TFrame")
         self.exchange_name = MyWidget(self.app, self.exchange_frame, handle="exchange", choices= ["tux", "polo", "kraken", "gdax"])
-        self.ticker = MyWidget(self.app, self.exchange_frame, handle="ticker", choices= ["BTC_XMR", "BTC_LTC", "BTC_PEPE"])
-        self.ask_budget =  MyWidget(self.app, self.exchange_frame, handle="ask (sell) budget", startVal= 0.0, choices="entry")
-        self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="bid (buy) budget", startVal=0.0, choices="entry")
+        self.coin = MyWidget(self.app, self.exchange_frame, handle="coin", choices= ["XMR", "LTC", "PEPE"])
+        self.base = MyWidget(self.app, self.exchange_frame, handle="base", choices= ["BTC","USDT"])
+        self.public_key = MyWidget(self.app, self.exchange_frame, handle="pub. key", choices="entry")
+        self.private_key = MyWidget(self.app, self.exchange_frame, handle="priv. key", is_password=True, choices="entry")
+
+        self.ask_budget = MyWidget(self.app, self.exchange_frame, handle="sell budget", startVal=0.0, choices="entry")
+        self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="buy budget", startVal=0.0, choices="entry")
         self.execute = ttk.Button(self.exchange_frame, text = "Launch", cursor = "shuttle", command= self.start)
 
         self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
-        self.ticker.grid(row=1, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
-        self.ask_budget.grid(row=2, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
+        self.coin.grid(row=0, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
+        self.base.grid(row=1, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
+        self.public_key.grid(row=2, column=0, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
+        self.private_key.grid(row=2, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
+        self.ask_budget.grid(row=3, column=1,sticky=tk.NE, padx=(10,10), pady=(5,5))
         self.bid_budget.grid(row=3, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
-        self.execute.grid(row=4, column=0, sticky=tk.NE, padx=(10,10), pady=(5,5))
+        self.execute.grid(row=4, column=1, sticky=tk.NE, padx=(10,10), pady=(15,5))
         # --------------------
         self.graph = Graph(self.app,self,stub=self.stub, **starting_stats)
 
         self.graph.grid(row = 0, column=0, rowspan=3, padx=(5,10))
-        self.auth_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
-        self.exchange_frame.grid(row = 1, column=1, sticky=tk.NE, padx=(10,10))
+        #self.auth_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
+        self.exchange_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
 
 
 
     def start(self):
-        for widget in [self.public_key, self.private_key, self.exchange_name,  self.ticker,  self.ask_budget, self.bid_budget]:
+        for widget in [self.public_key, self.private_key, self.exchange_name,self.coin, self.base, self.ask_budget, self.bid_budget]:
             print("{}:\t\t{}".format(widget.handle,widget.get()[0]))
 
         # if not exchange_config:
@@ -431,7 +471,7 @@ if __name__ == "__main__":
     mystyle = ttk.Style()
     mystyle.theme_use('clam')  # ('clam', 'alt', 'default', 'classic')
     mystyle.configure("app.TLabel", foreground="white", background="black",
-                      font=('Liberation Mono', '12', 'normal'))  # "#4C4C4C")
+                      font=('Liberation Mono', '10', 'normal'))  # "#4C4C4C")
     mystyle.configure("unlocked.TLabel", foreground="light green", background="black",
                       font=('Liberation Mono', '12', 'normal'))  # "#4C4C4C")
     mystyle.configure("smaller.TLabel", foreground="white", background="black",
@@ -448,8 +488,8 @@ if __name__ == "__main__":
 
 
     targs = {
-            "price_x" : [1,2,3,4,5,6,7,8,9,10],
-            "price_y" : [250,250,240,240,250,260,260,240,230,260,],
+            "price_x" : [1,2,3,4,5,6,7,8,9,10, 11],
+            "price_y" : [250,250,240,240,250,260,260,240,230,260,250],
             "bought_x" : [3,8,],
             "bought_y" : [241,241,],
             "sold_x" : [5.85,10],
