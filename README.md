@@ -2,17 +2,17 @@
 
 Merkato is a Python cryptocurrency Market Making and Arbitrage bot
 
-## Getting Started
-
-Run python3 bot.py from the command line. Currently non-functional.
-
 ### Prerequisites
 
 See [requirements.txt](https://github.com/livinginformation/merkato/blob/master/requirements.txt) for the full list of prerequisites.
 
 ### Installing
 
-Install all dependencies, and then run the following from the top level directory:
+Install all dependencies.
+
+## Getting Started
+
+Run the following from the top level directory: *Currently non-functional.*
 ```
 python3 bot.py
 ```
