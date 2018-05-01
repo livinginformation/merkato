@@ -5,9 +5,9 @@ import math
 import requests
 import time
 import urllib.parse
-
+from merkato.exchanges.tux_exchange.utils import getQueryParameters
 from merkato.exchanges.exchange_base import ExchangeBase
-
+from merkato.constants import BUY, SELL
 DEBUG = True
 
 
@@ -24,13 +24,7 @@ class TuxExchange(ExchangeBase):
             :param ask: float
             :param ticker: string
         '''
-        query_parameters = {
-            "method": "sell",
-            "market": "BTC",
-            "coin": ticker,
-            "amount": "{:.8f}".format(amount),
-            "price": "{:.8f}".format(ask)
-        }
+        query_parameters = getQueryParameters(SELL, ticker, amount, ask)
         response = self._create_signed_request(query_parameters)
 
         return response['success']
@@ -42,13 +36,7 @@ class TuxExchange(ExchangeBase):
             :param bid: float
             :param ticker: string
         '''
-        query_parameters = {
-            "method": "buy",
-            "market": "BTC",
-            "coin": ticker,
-            "amount": "{:.8f}".format(amount),
-            "price": "{:.8f}".format(bid)
-        }
+        query_parameters = getQueryParameters(BUY, ticker, amount, bid)
         response = self._create_signed_request(query_parameters)
 
         return response['success']
@@ -71,9 +59,7 @@ class TuxExchange(ExchangeBase):
     def get_my_open_orders(self):
         ''' Returns all open orders for the authenticated user '''
 
-        query_parameters = {
-            "method": "getmyopenorders"
-        }
+        query_parameters = { "method": "getmyopenorders" }
 
         return self._create_signed_request(query_parameters)
 
