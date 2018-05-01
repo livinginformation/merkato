@@ -14,10 +14,10 @@ DEBUG = True
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
-    def __init__(self, auth, config):
-        self.privatekey = auth['privatekey']
-        self.publickey  = auth['publickey']
-        self.limit_only = config.limit_only
+    def __init__(self, config):
+        self.privatekey = config['privatekey']
+        self.publickey  = config['publickey']
+        self.limit_only = config['limit_only']
         self.retries = 5
 
     def debug(self, level, header, *args):

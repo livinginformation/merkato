@@ -5,8 +5,8 @@ from merkato.merkato import Merkato
 
 class MerkatoTestCase(unittest.TestCase):
 	def setUp(self):
-		configuration = {"exchange": "tux", "privatekey": "abc123", "publickey": "def456"}
-		self.merkato = Merkato(configuration, ticker='XMR', spread='15')
+		configuration = {"exchange": "tux", "privatekey": "abc123", "publickey": "def456", "limit_only": False}
+		self.merkato = Merkato(configuration, ticker='XMR', spread='15', ask_budget=10, bid_budget=10)
 
 	def test_create_bid_ladder(self):
 		pass
