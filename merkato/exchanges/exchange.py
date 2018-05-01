@@ -4,6 +4,8 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 
 DEBUG = True
 
+# This class is for documentation only to show examples of what the 
+# public methods should look like on exchange specific classes
 class Exchange(object):
     '''Merkato Market Making Bot Exchange Interface
         This class acts as an entry point for all exchange interfaces.

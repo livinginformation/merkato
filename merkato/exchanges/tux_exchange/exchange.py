@@ -182,17 +182,12 @@ class TuxExchange(ExchangeBase):
 
     def get_my_trade_history(self, start=0, end=0):
         if DEBUG: print("--> Getting trade history...")
-
+        
+        query_parameters = { "method": "getmytradehistory" }
+        
         if start != 0 and end != 0:
-            query_parameters = {
-                "method": "getmytradehistory",
-                "start": start,
-                "end": end,
-            }
-        else:
-            query_parameters = {
-                "method": "getmytradehistory"
-            }
+            query_parameters["start"] = start
+            query_parameters["end"] = end 
 
         return self._create_signed_request(query_parameters)
 
