@@ -21,6 +21,7 @@ class Merkato(object):
         self.bid_budget = bid_budget
         self.original_ask = None
         self.original_bid = None
+        self.history =  self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
 
     def rebalance_orders(self, new_history, new_txes):
         sold = []
@@ -41,49 +42,6 @@ class Merkato(object):
                 price = tx[PRICE]
                 bought.append(tx)
                 self.exchange.sell(amount, float(price) + self.spread, self.ticker)
-
-    def create_relative_bid_ladder(self,):
-        # a ladder that can be user configured (via gui)
-
-        # get market price to make ladder relative from
-        orders = self.exchange.get_all_orders(self.ticker)
-        if self.original_ask is None:
-            lowest_ask = orders['asks'][0][0]
-            self.original_ask = lowest_ask
-            
-        lowest_ask = self.original_ask
-
-        for level, allocation in self.bid_profile:
-            new_price = lowest_ask * (1 + (float(level) / 100.0))
-            new_amount = float(self.bid_budget) * (float(allocation) / 100.0)
-            if new_price < lowest_ask and new_amount < self.bid_budget:   # sanity check
-                self.exchange.buy(new_amount, new_price, self.ticker)
-                time.sleep(.3)
-            else:
-                # TODO: add more meaningful error text
-                raise Exception("ERROR in create_relative_bid_ladder: faulty logic or inputs")
-
-    def create_relative_ask_ladder(self,):
-        # a ladder that can be user configured (via gui)
-
-        # get market price to make ladder relative from
-        orders = self.exchange.get_all_orders(self.ticker)
-        if self.original_bid is None:
-            highest_bid = orders['bids'][0][0]
-            self.original_bid = highest_bid
-
-        highest_bid = self.original_bid
-
-        for level, allocation in self.ask_profile:
-            new_price = highest_bid * (1 + (float(level) / 100.0))
-            new_amount = float(self.ask_budget) * (float(allocation) / 100.0)
-            if new_price > highest_bid and new_amount < self.ask_budget:   # sanity check
-                self.exchange.sell(new_amount, new_price, self.ticker)
-                time.sleep(.3)
-            else:
-                # TODO: add more meaningful error text
-                raise Exception("ERROR in create_relative_ask_ladder: faulty logic or inputs")
-
 
 
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
@@ -232,8 +190,7 @@ class Merkato(object):
 
     def update_order_book(self):
         # Get current state of trade history before placing orders
-        history = self.exchange.get_my_trade_history()
-        hist_len = len(history)
+        hist_len = len(self.history)
         now = str(time.time())
         last_trade_price = self.exchange.interface.get_ticker(coin=self.ticker)["last"] # at least for tux api...
 
@@ -248,6 +205,8 @@ class Merkato(object):
             if DEBUG: print("New transactions: " + str(new_txes))
             self.rebalance_orders(new_history, new_txes)
             self.merge_orders(self.ticker)
+            
+            self.history = new_history
 
         # context to be used for GUI plotting
         context = {"price": (now, last_trade_price),
