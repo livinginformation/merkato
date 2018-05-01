@@ -59,7 +59,7 @@ class Graph(tk.Frame):
         self.x_axis_window_size = 31  # todo: button for changing this
 
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
-        self.label = ttk.Label(self, text="Merkato", style="app.TLabel")
+        self.label = ttk.Label(self, text=self.parent.title, style="app.TLabel")
 
 
 
@@ -94,7 +94,7 @@ class Graph(tk.Frame):
 
         self.canvas = FigureCanvasTkAgg(self.fig, self)
         self.ax.grid(color='gray', linestyle='--', linewidth=.5)
-        self.ax.set_title("merkato")
+        self.ax.set_title(self.parent.title)
         self.canvas.draw()
 
 
@@ -108,7 +108,7 @@ class Graph(tk.Frame):
         self.x_axis_auto_scroll.grid(row=0, column=0, sticky=tk.NE)
         # --------------------------------------
 
-        self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W )
+        self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W, pady=(4,10))
         #self.label.pack(pady=(20,0), padx=10, side=tk.TOP)
         self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -126,12 +126,32 @@ class Graph(tk.Frame):
 
     def fake_data(self):
         x_this = self.x_price[-1] + 1
-        data = {
-                "price": (x_this, self.y_price[-1] + random.randint(-5, 5)),
-                "open_orders": {"buy":[(241, 0.5, x_this)],
-                                "sell": [(258, 0.5, x_this)]},
+        old_price = self.y_price[-1]
 
-                }
+        price = old_price + random.randint(-5, 5)
+        data = {
+            "price": (x_this, price),
+            "open_orders": {"buy": [(241, 0.5, x_this)],
+                            "sell": [(258, 0.5, x_this)]},
+
+        }
+
+        trigger_buy = old_price > 241 and price < 241
+        trigger_sell = old_price < 258 and price > 258
+        print(old_price, price,trigger_buy,trigger_sell)
+        if trigger_buy or trigger_sell:
+            print("#------------\nORDER ALERT:")
+            closed = {"filled_orders":{"buy":[],
+                                       "sell":[]}}
+            if trigger_sell:
+                self.fake_prev_order = "sell"
+                closed["filled_orders"]["sell"].append((258, 0.5, x_this-1))
+            if trigger_buy:
+                closed["filled_orders"]["buy"].append((241, 0.5, x_this-1))
+            print(data)
+            data.update(closed)
+
+
         print(repr(data))
         return data
 
@@ -230,6 +250,7 @@ class Graph(tk.Frame):
                 self.ax.set_ylim(self.y_low, self.y_hi)
 
             self.ax.grid(color='gray', linestyle='--', linewidth=.5)
+            self.ax.set_title(self.parent.title, fontsize=10)
             self.canvas.draw()
 
 
@@ -241,6 +262,7 @@ class Graph(tk.Frame):
             if self.stub:
                 duration = time.time() - start
                 this_delay = int(max((self.delay - duration * 1000), 100))  # be at least 100 ms, assumes past behavior predicts future ;)
+                print("duration of graph refresh: ", duration)
                 self._root().after(this_delay, self.refresh, self.fake_data())
 
 
@@ -257,7 +279,7 @@ class Bot(ttk.Frame):
         #     self.bglabel = tk.Label(self, image=self.bg)
         #     self.bglabel.place(x=0, y=0, relwidth=1, relheight=1)
         self.pair = pair # TODO: unused for now
-        self.title  = title
+        self.title = title
         self.heading = ttk.Label(self, text=self.title, style="heading.TLabel")
 
         # merkato args
@@ -468,6 +490,7 @@ class MyWidget(ttk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.title("merkato (pre-release)")
     mystyle = ttk.Style()
     mystyle.theme_use('clam')  # ('clam', 'alt', 'default', 'classic')
     mystyle.configure("app.TLabel", foreground="white", background="black",
@@ -499,7 +522,7 @@ if __name__ == "__main__":
             "x_highest_buy_order" : [1,2,3,4,5,6,7,8,9,10],
             "y_highest_buy_order" : [241, 241, 241, 241, 241, 241, 241, 241, 241, 241, ],
             }
-    test = Bot(root, root, stub = True, title="Stub GUI (very raw)", starting_stats=targs)
+    test = Bot(root, root, stub = 1, title="Stub GUI (very raw)", starting_stats=targs)
     test.pack()
 
     root.mainloop()
