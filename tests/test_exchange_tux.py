@@ -7,7 +7,7 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 class TuxExchangeTestCase(unittest.TestCase):
 	def setUp(self):
 		 = {"privatekey": "abc123", "publickey": "456def", "limit_only": False}
-		self.exchange = TuxExchange(configuration)
+		self.exchange = TuxExchange(config)
 
 	@freeze_time('2001-01-01T12:00:00.0000')
 	@patch('merkato.exchanges.tux_exchange.requests.post')
