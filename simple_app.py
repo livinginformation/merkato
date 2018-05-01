@@ -94,7 +94,7 @@ class Graph(tk.Frame):
 
         self.canvas = FigureCanvasTkAgg(self.fig, self)
         self.ax.grid(color='gray', linestyle='--', linewidth=.5)
-        self.ax.set_title(self.parent.title)
+        self.ax.set_title(self.parent.title, fontsize=10)
         self.canvas.draw()
 
 
@@ -120,7 +120,11 @@ class Graph(tk.Frame):
 
         #self.loop = animation.FuncAnimation(f, self.refresh,fargs = , interval=1000)
 
+        self.fake_prev_order = "sell"
         if self.stub:
+            x_this = self.x_price[-1] + 1
+            self.fake_orders = {"buy": [(241, 0.5, x_this),(236, 0.5, x_this),(231, 0.5, x_this),(226, 0.5, x_this),(221, 0.5, x_this),(216, 0.5, x_this)],
+                               "sell": [(258, 0.5, x_this), (263, 0.5, x_this), (263, 0.5, x_this), (268, 0.5, x_this), (273, 0.5, x_this), (278, 0.5, x_this)]}
             self._root().after(5000, self.refresh, self.fake_data())
 
 
@@ -129,15 +133,17 @@ class Graph(tk.Frame):
         old_price = self.y_price[-1]
 
         price = old_price + random.randint(-5, 5)
+
+
+
         data = {
             "price": (x_this, price),
-            "open_orders": {"buy": [(241, 0.5, x_this)],
-                            "sell": [(258, 0.5, x_this)]},
+            "open_orders": dict(self.fake_orders)
 
         }
 
-        trigger_buy = old_price > 241 and price < 241
-        trigger_sell = old_price < 258 and price > 258
+        trigger_buy = old_price > 241 and price < 241 and self.fake_prev_order == "sell"
+        trigger_sell = old_price < 258 and price > 258 and self.fake_prev_order == "buy"
         print(old_price, price,trigger_buy,trigger_sell)
         if trigger_buy or trigger_sell:
             print("#------------\nORDER ALERT:")
@@ -147,6 +153,7 @@ class Graph(tk.Frame):
                 self.fake_prev_order = "sell"
                 closed["filled_orders"]["sell"].append((258, 0.5, x_this-1))
             if trigger_buy:
+                self.fake_prev_order = "buy"
                 closed["filled_orders"]["buy"].append((241, 0.5, x_this-1))
             print(data)
             data.update(closed)
@@ -211,7 +218,7 @@ class Graph(tk.Frame):
                     sell_data = data["open_orders"]["sell"]
                     if sell_data:
                         lowest_sell = sorted(sell_data, key=itemgetter(order_price_index))[0]
-                        self.x_lowest_sell_order.append(self.date_formatter(lowest_sell[order_time_index]))
+                        self.x_lowest_sell_order.append(self.date_formatter(self.x_price[-1]))
                         self.y_lowest_sell_order.append(lowest_sell[order_price_index])
                         if len(sell_data) > 1:   # then we have a meaningful "high" order
                             # todo: something with this data
@@ -221,7 +228,7 @@ class Graph(tk.Frame):
                     buy_data = data["open_orders"]["buy"]
                     if buy_data:
                         highest_buy = sorted(buy_data, key=itemgetter(order_price_index))[-1]
-                        self.x_highest_buy_order.append(self.date_formatter(highest_buy[order_time_index]))
+                        self.x_highest_buy_order.append(self.date_formatter(self.x_price[-1]))
                         self.y_highest_buy_order.append(highest_buy[order_price_index])
                         if len(buy_data) > 1:   # then we have a meaningful "low" order
                             # todo: something with this data
