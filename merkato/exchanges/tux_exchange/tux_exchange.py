@@ -14,11 +14,21 @@ DEBUG = True
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
-    def __init__(self, auth):
+    def __init__(self, auth, config):
         self.privatekey = auth['privatekey']
         self.publickey  = auth['publickey']
+        self.limit_only = config.limit_only
+        self.retries = 5
 
-    def sell(self, amount, ask, ticker):
+    def debug(self, level, header, *args):
+        if level <= self.DEBUG:
+            print("-"*10)
+            print("{}---> {}:".format(level, header))
+            for arg in args:
+                print("\t\t" + repr(arg))
+            print("-" * 10)
+
+    def _sell(self, amount, ask, ticker):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
             :param ask: float
@@ -29,8 +39,27 @@ class TuxExchange(ExchangeBase):
 
         return response['success']
 
+    def sell(self, amount, ask, ticker):
+        attempt = 0
+        while attempt < self.retries:
+            if self.limit_only:
+                # Get current highest bid on the orderbook
+                # If ask price is lower than the highest bid, return.
+                pass
+            try:
+                success = self.sell(amount, ask, ticker)
+                if success:
+                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, ticker, ask, self.exchange))
+                    return success
+                else:
+                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, self.exchange, attempt, self.retries))
+                    attempt += 1
+                    time.sleep(5)
+            except Exception as e:  # TODO - too broad exception handling
+                self.debug(0, "sell", "ERROR", e)
+                break
 
-    def buy(self, amount, bid, ticker):
+    def _buy(self, amount, bid, ticker):
         ''' Places a buy for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
             :param bid: float
@@ -40,6 +69,27 @@ class TuxExchange(ExchangeBase):
         response = self._create_signed_request(query_parameters)
 
         return response['success']
+
+    def buy(self, amount, bid, ticker):
+        attempt = 0
+        while attempt < self.retries:
+            if self.limit_only:
+                # Get current lowest ask on the orderbook
+                # If bid price is higher than the lowest ask, return.
+                pass
+
+            try:
+                success = self.buy(amount, bid, ticker)
+                if success:
+                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, ticker, bid, self.exchange))
+                    return success
+                else:
+                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, bid, self.exchange, attempt, self.retries))
+                    attempt += 1
+                    time.sleep(5)
+            except Exception as e:  # TODO - too broad exception handling
+                self.debug(0, "buy", "ERROR", e)
+                return False
 
 
     def get_all_orders(self, coin):
