@@ -47,7 +47,7 @@ class TuxExchange(ExchangeBase):
                 # If ask price is lower than the highest bid, return.
                 pass
             try:
-                success = self.sell(amount, ask, ticker)
+                success = self._sell(amount, ask, ticker)
                 if success:
                     self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, ticker, ask, self.exchange))
                     return success
@@ -79,7 +79,7 @@ class TuxExchange(ExchangeBase):
                 pass
 
             try:
-                success = self.buy(amount, bid, ticker)
+                success = self._buy(amount, bid, ticker)
                 if success:
                     self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, ticker, bid, self.exchange))
                     return success
