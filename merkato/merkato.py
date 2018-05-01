@@ -1,7 +1,7 @@
 import time
 import json
 
-from merkato.exchanges.tux_exchange import TuxExchange
+from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
 from merkato.constants import BUY, SELL, ID, PRICE
 

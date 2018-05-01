@@ -1,6 +1,6 @@
 import time
 
-from merkato.exchanges.tux_exchange import TuxExchange
+from merkato.exchanges.tux_exchange.exchange import TuxExchange
 
 DEBUG = True
 
