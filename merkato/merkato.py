@@ -1,7 +1,7 @@
 import time
 import json
 
-from merkato.exchanges.exchange import Exchange
+from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
 from merkato.constants import BUY, SELL, ID, PRICE
 
@@ -10,7 +10,7 @@ DEBUG = True
 
 class Merkato(object):
     def __init__(self, configuration, ticker, spread, ask_budget, bid_budget):
-        self.exchange = Exchange(configuration)
+        self.exchange = TuxExchange(configuration)
         self.distribution_strategy = 1
         self.ticker = ticker # i.e. 'XMR_BTC'
         self.spread = spread # i.e '15
@@ -33,14 +33,14 @@ class Merkato(object):
                 amount = tx['amount']
                 price = tx[PRICE]
                 sold.append(tx)
-                self.buy(amount, float(price) - self.spread, self.ticker)
+                self.exchange.buy(amount, float(price) - self.spread, self.ticker)
 
             if tx['type'] == BUY:
                 print(BUY)
                 amount = tx['amount']
                 price = tx[PRICE]
                 bought.append(tx)
-                self.sell(amount, float(price) + self.spread, self.ticker)
+                self.exchange.sell(amount, float(price) + self.spread, self.ticker)
 
     def create_relative_bid_ladder(self,):
         # a ladder that can be user configured (via gui)

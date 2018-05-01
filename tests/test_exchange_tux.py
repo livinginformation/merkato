@@ -2,7 +2,7 @@ import unittest
 from mock import mock, patch, call
 from freezegun import freeze_time
 
-from merkato.exchanges.tux_exchange import TuxExchange
+from merkato.exchanges.tux_exchange.exchange import TuxExchange
 
 class TuxExchangeTestCase(unittest.TestCase):
 	def setUp(self):
