@@ -35,10 +35,9 @@ def create_config():
 
         exchange = get_exchange()
 
-        if exchange == '1':
+        if exchange == 'tux':
             config['exchange'] = 'tux'
 
-            # Eventually break this part out into its own function
             update_config_with_credentials(config)
 
             with open("./"+filename, "w+") as file:
@@ -46,11 +45,11 @@ def create_config():
                  print("written")
                  return config
 
-        elif exchange == '2':
+        elif exchange == 'polo':
             print("Currently Unsupported")
             continue
 
-        elif exchange == '3':
+        elif exchange == 'bit':
             print("Currently Unsupported")
             continue
 
