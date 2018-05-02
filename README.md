@@ -9,7 +9,14 @@ See [requirements.txt](https://github.com/livinginformation/merkato/blob/master/
 ### Installing
 
 Install all dependencies.
-
+For Python2
+```
+ pip install -r requirements.txt
+```
+For Python3
+```
+ pip3 install -r requirements.txt
+```
 ## Getting Started
 
 Run the following from the top level directory: *Currently non-functional.*

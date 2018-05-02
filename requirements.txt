@@ -1,3 +1,5 @@
 freezegun
 mock
 requests
+nose
+tornado
