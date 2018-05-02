@@ -122,6 +122,7 @@ class Graph(tk.Frame):
 
         self.fake_prev_order = "sell"
         if self.stub:
+            self.fake_spread = 4
             x_this = self.x_price[-1] + 1
             self.fake_orders = {"buy": [(241, 0.5, x_this),(236, 0.5, x_this),(231, 0.5, x_this),(226, 0.5, x_this),(221, 0.5, x_this),(216, 0.5, x_this)],
                                "sell": [(258, 0.5, x_this), (263, 0.5, x_this), (263, 0.5, x_this), (268, 0.5, x_this), (273, 0.5, x_this), (278, 0.5, x_this)]}
@@ -144,20 +145,41 @@ class Graph(tk.Frame):
 
         trigger_buy = old_price > 241 and price < 241 and self.fake_prev_order == "sell"
         trigger_sell = old_price < 258 and price > 258 and self.fake_prev_order == "buy"
-        print(old_price, price,trigger_buy,trigger_sell)
-        if trigger_buy or trigger_sell:
-            print("#------------\nORDER ALERT:")
-            closed = {"filled_orders":{"buy":[],
-                                       "sell":[]}}
-            if trigger_sell:
-                self.fake_prev_order = "sell"
-                closed["filled_orders"]["sell"].append((258, 0.5, x_this-1))
-            if trigger_buy:
-                self.fake_prev_order = "buy"
-                closed["filled_orders"]["buy"].append((241, 0.5, x_this-1))
-            print(data)
-            data.update(closed)
+        # ----------
+        closed = {"filled_orders": {"buy": [],
+                                    "sell": []}}
 
+        this_fake_orders = self.fake_orders.copy()
+
+        for order in this_fake_orders["buy"]:
+            if price < order[0]:
+                closed["filled_orders"]["buy"].append((order[0], order[1], x_this - .5))
+                self.fake_orders["sell"].append((order[0] + self.fake_spread, order[1], x_this - .5))
+                self.fake_orders["buy"].remove(order)
+        for order in self.fake_orders["sell"]:
+            if price > order[0]:
+                closed["filled_orders"]["sell"].append((order[0], order[1], x_this - .5))
+                self.fake_orders["buy"].append((order[0] - self.fake_spread, order[1], x_this - .5))
+                self.fake_orders["sell"].remove(order)
+        # -----------
+
+        # print(old_price, price,trigger_buy,trigger_sell)
+        # if trigger_buy or trigger_sell:
+        #     print("#------------\nORDER ALERT:")
+        #     closed = {"filled_orders":{"buy":[],
+        #                                "sell":[]}}
+        #     if trigger_sell:
+        #         self.fake_prev_order = "sell"
+        #         closed["filled_orders"]["sell"].append((258, 0.5, x_this-1))
+        #     if trigger_buy:
+        #         self.fake_prev_order = "buy"
+        #         closed["filled_orders"]["buy"].append((241, 0.5, x_this-1))
+        #     print(data)
+        #     data.update(closed)
+
+        if closed["filled_orders"]["buy"] or closed["filled_orders"]["sell"]:
+            print("#------------\nORDER ALERT:")
+            data.update(closed)
 
         print(repr(data))
         return data
