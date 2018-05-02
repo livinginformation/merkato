@@ -49,7 +49,7 @@ expected bot data format from merkato
 
 class Graph(tk.Frame):
 
-    def __init__(self, app, parent, delay = 5000, stub=False, price_x=[], price_y=[], bought_x=[], bought_y=[], sold_x=[], sold_y=[],
+    def __init__(self, app, parent, delay = 1000, stub=False, price_x=[], price_y=[], bought_x=[], bought_y=[], sold_x=[], sold_y=[],
                  x_lowest_sell_order=[], y_lowest_sell_order=[], x_highest_buy_order=[], y_highest_buy_order=[]):
         tk.Frame.__init__(self, parent, bg="black")
         self.app = app
@@ -124,8 +124,8 @@ class Graph(tk.Frame):
         if self.stub:
             self.fake_spread = 4
             x_this = self.x_price[-1] + 1
-            self.fake_orders = {"buy": [(241, 0.5, x_this),(236, 0.5, x_this),(231, 0.5, x_this),(226, 0.5, x_this),(221, 0.5, x_this),(216, 0.5, x_this)],
-                               "sell": [(258, 0.5, x_this), (263, 0.5, x_this), (263, 0.5, x_this), (268, 0.5, x_this), (273, 0.5, x_this), (278, 0.5, x_this)]}
+            self.fake_orders = {"buy": [(244, 0.5, x_this), (241, 0.5, x_this),(236, 0.5, x_this),(231, 0.5, x_this),(226, 0.5, x_this),(221, 0.5, x_this),(216, 0.5, x_this)],
+                               "sell": [(253, 0.5, x_this),(258, 0.5, x_this), (263, 0.5, x_this), (263, 0.5, x_this), (268, 0.5, x_this), (273, 0.5, x_this), (278, 0.5, x_this)]}
             self._root().after(5000, self.refresh, self.fake_data())
 
 
@@ -152,12 +152,16 @@ class Graph(tk.Frame):
         this_fake_orders = self.fake_orders.copy()
 
         for order in this_fake_orders["buy"]:
-            if price < order[0]:
+            if price <= order[0]:
                 closed["filled_orders"]["buy"].append((order[0], order[1], x_this - .5))
+                self.parent.alt_balance.set(str(float(self.parent.alt_balance.get()) + order[1]))
+                self.parent.base_balance.set(str(float(self.parent.base_balance.get()) - (order[1]*order[0])))
                 self.fake_orders["sell"].append((order[0] + self.fake_spread, order[1], x_this - .5))
                 self.fake_orders["buy"].remove(order)
         for order in self.fake_orders["sell"]:
-            if price > order[0]:
+            if price >= order[0]:
+                self.parent.alt_balance.set(str(float(self.parent.alt_balance.get()) - order[1]))
+                self.parent.base_balance.set(str(float(self.parent.base_balance.get()) + (order[1] * order[0])))
                 closed["filled_orders"]["sell"].append((order[0], order[1], x_this - .5))
                 self.fake_orders["buy"].append((order[0] - self.fake_spread, order[1], x_this - .5))
                 self.fake_orders["sell"].remove(order)
@@ -303,6 +307,10 @@ class Bot(ttk.Frame):
         self.app = app
         self.parent = parent
         self.stub = stub
+        self.alt_balance = tk.StringVar()
+        self.base_balance = tk.StringVar()
+        self.alt_balance.set("0")
+        self.base_balance.set("0")
         # if background and not self.app.light:
         #     self.bg = tk.PhotoImage(file = background)
         #     self.bglabel = tk.Label(self, image=self.bg)
@@ -326,6 +334,12 @@ class Bot(ttk.Frame):
         self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="buy budget", startVal=0.0, choices="entry")
         self.execute = ttk.Button(self.exchange_frame, text = "Launch", cursor = "shuttle", command= self.start)
 
+        self.profit_base = tk.Label(self.exchange_frame, text="base profit:")
+        self.profit_base2 = tk.Label(self.exchange_frame, textvariable=self.base_balance)
+        self.profit_alt = tk.Label(self.exchange_frame, text="alt profit:")
+        self.profit_alt2 = tk.Label(self.exchange_frame, textvariable=self.alt_balance)
+
+
         self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
         self.coin.grid(row=0, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
         self.base.grid(row=1, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
@@ -334,6 +348,11 @@ class Bot(ttk.Frame):
         self.ask_budget.grid(row=3, column=1,sticky=tk.NE, padx=(10,10), pady=(5,5))
         self.bid_budget.grid(row=3, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
         self.execute.grid(row=4, column=1, sticky=tk.NE, padx=(10,10), pady=(15,5))
+        self.profit_base.grid(row=5, column=1, sticky=tk.NE, padx=(10,10), pady=(40,5))
+        self.profit_base2.grid(row=6, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
+        self.profit_alt.grid(row=7, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
+        self.profit_alt2.grid(row=8, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
+
         # --------------------
         self.graph = Graph(self.app,self,stub=self.stub, **starting_stats)
 
@@ -541,15 +560,15 @@ if __name__ == "__main__":
 
     targs = {
             "price_x" : [1,2,3,4,5,6,7,8,9,10, 11],
-            "price_y" : [250,250,240,240,250,260,260,240,230,260,250],
+            "price_y" : [250,250,240,240,250,255,250,240,240,250,250],
             "bought_x" : [3,8,],
-            "bought_y" : [241,241,],
+            "bought_y" : [244,244,],
             "sold_x" : [5.85,10],
-            "sold_y" : [258,258],
+            "sold_y" : [253,253],
             "x_lowest_sell_order" : [1,2,3,4,5,6,7,8,9,10],
-            "y_lowest_sell_order" : [258, 258, 258, 258, 258, 258, 258, 258, 258, 258, ],
+            "y_lowest_sell_order" : [253, 253, 253, 253, 253, 253, 253, 253, 253, 253, ],
             "x_highest_buy_order" : [1,2,3,4,5,6,7,8,9,10],
-            "y_highest_buy_order" : [241, 241, 241, 241, 241, 241, 241, 241, 241, 241, ],
+            "y_highest_buy_order" : [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
             }
     test = Bot(root, root, stub = 1, title="Stub GUI (very raw)", starting_stats=targs)
     test.pack()
