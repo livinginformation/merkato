@@ -26,7 +26,8 @@ class Merkato(object):
     def rebalance_orders(self, new_history, new_txes):
         sold = []
         bought = []
-        newTransactionHistory = new_history[-1*new_txes:]
+        index = -1*new_txes # Pop this many elements off the back of the transaction history
+        newTransactionHistory = new_history[index:]
         for tx in newTransactionHistory:
 
             if tx['type'] == SELL:
