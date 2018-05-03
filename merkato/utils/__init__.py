@@ -22,9 +22,9 @@ def get_exchange():
 
 def get_config_selection():
 	print("Please make a selection:")
-	print("1. Create new configuration")
-	print("2. Load existing configuration")
-	print("3. Exit")
+	print("1 -> Create new configuration")
+	print("2 -> Load existing configuration")
+	print("3 -> Exit")
 	return input("Selection: ")
 
 
