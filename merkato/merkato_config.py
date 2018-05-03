@@ -2,7 +2,7 @@
 
 import json
 import os.path
-from utils import update_config_with_credentials, get_exchange, get_config_selection
+from merkato.utils import write_to_file, update_config_with_credentials, get_exchange, get_config_selection
 
 def load_config():
     # Loads an existing configuration file
@@ -25,7 +25,7 @@ def load_config():
 
 def create_config():
     # Create new config
-    config = {}
+    config = { "limit_only": True }
     while True:
         filename = input("Config file name? ")
 
@@ -39,11 +39,8 @@ def create_config():
             config['exchange'] = 'tux'
 
             update_config_with_credentials(config)
-
-            with open("./"+filename, "w+") as file:
-                 json.dump(config, file)
-                 print("written")
-                 return config
+            write_to_file(filename, config)
+            return config
 
         elif exchange == 'polo':
             print("Currently Unsupported")
