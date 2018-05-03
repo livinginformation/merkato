@@ -1,6 +1,7 @@
 from merkato.merkato_config import load_config, get_config, create_config
 from merkato.merkato import Merkato
 from merkato.parser import parse
+import sqlite3
 
 def create_mutex_table():
     try:
