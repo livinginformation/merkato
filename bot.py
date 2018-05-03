@@ -1,13 +1,14 @@
 from merkato.merkato_config import load_config, get_config, create_config
 from merkato.merkato import Merkato
-
+from merkato.parser import parse
+import sqlite3
 
 def create_mutex_table():
     try:
         conn = sqlite3.connect('merkato.db')
         print("connected to db", sqlite3.version)
-    except Error as e:
-        print(e)
+    except Exception as e:
+        print(str(e))
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS mutexes
@@ -18,7 +19,11 @@ def create_mutex_table():
 def main():
     print("Merkato Alpha v0.1.1\n")
 
-    configuration = get_config()
+
+    configuration = parse()
+    if not configuration:
+        configuration= config.get_config()
+
 
     if not configuration:
         raise Exception("Failed to get configuration.")
