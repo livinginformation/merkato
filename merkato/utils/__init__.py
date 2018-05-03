@@ -1,3 +1,4 @@
+import json
 from merkato.constants import known_exchanges
 
 def update_config_with_credentials(config):
@@ -35,3 +36,8 @@ def create_price_data(orders, order):
 	price_data['order_id'] = orders[order]["id"]
 	price_data['type']     = orders[order]["type"]
 	return price_data
+
+def write_to_file(filename, config):
+	with open("./"+filename, "w+") as file:
+		json.dump(config, file)
+		print("written")

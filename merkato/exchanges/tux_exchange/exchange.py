@@ -10,7 +10,6 @@ from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 DEBUG = True
 
-
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
