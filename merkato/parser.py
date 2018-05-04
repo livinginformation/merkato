@@ -1,5 +1,5 @@
 import argparse
-from constants import known_exchanges, implemented_exchanges
+from merkato.constants import known_exchanges, implemented_exchanges
 import json
 import os.path
 
