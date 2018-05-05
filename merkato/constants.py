@@ -10,3 +10,4 @@ known_exchanges = {
     'bit': 'bit'
 }
 implemented_exchanges = ["tux"]
+LAST_ORDER = 'last_order'

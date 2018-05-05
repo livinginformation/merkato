@@ -3,7 +3,8 @@ import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
-from merkato.constants import BUY, SELL, ID, PRICE
+from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER
+from merkato.bot import update_mutex
 
 DEBUG = True
 
@@ -11,6 +12,7 @@ DEBUG = True
 class Merkato(object):
     def __init__(self, configuration, ticker, spread, ask_budget, bid_budget):
         self.exchange = TuxExchange(configuration)
+        self.mutex_UUID = configuration['exchange'] + ticker
         self.distribution_strategy = 1
         self.ticker = ticker # i.e. 'XMR_BTC'
         self.spread = spread # i.e '15
@@ -35,15 +37,19 @@ class Merkato(object):
                 amount = tx['amount']
                 price = tx[PRICE]
                 sold.append(tx)
-                self.exchange.buy(amount, float(price) - self.spread, self.ticker)
+                buy_price = float(price) - self.spread
+                response = self.exchange.buy(amount, buy_price, self.ticker)
 
             if tx['type'] == BUY:
                 print(BUY)
                 amount = tx['amount']
                 price = tx[PRICE]
                 bought.append(tx)
-                self.exchange.sell(amount, float(price) + self.spread, self.ticker)
+                sell_price = float(price) + self.spread
+                self.exchange.sell(amount, sell_price, self.ticker)
+                response = self.exchange.buy(amount, buy_price, self.ticker)
 
+            update_mutex(mutex_UUID, LAST_ORDER, response)
 
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
         # TODO: this is currently unused in merkato
@@ -76,9 +82,10 @@ class Merkato(object):
             if DEBUG: print("setting bid at " + "{:.8f}".format(bid_price))
             buy_amount = bid_amount/bid_price
             if DEBUG: print("Buy amount: " + str(buy_amount))
-            self.exchange.buy(buy_amount, bid_price, self.ticker)
+            response = self.exchange.buy(buy_amount, bid_price, self.ticker)
             bid_price += float(increment)
             time.sleep(.3)
+            update_mutex(self.mutex_UUID, LAST_ORDER, response)
 
 
     def create_ask_ladder(self, total_amount, low_price, high_price, increment):
@@ -110,9 +117,10 @@ class Merkato(object):
 
         while ask_price <= float(high_price):
             if DEBUG: print("setting ask at " + "{:.8f}".format(ask_price))
-            self.exchange.sell(ask_amount, ask_price, self.ticker)
+            response = self.exchange.sell(ask_amount, ask_price, self.ticker)
             ask_price += float(increment)
             time.sleep(.3)
+            update_mutex(self.mutex_UUID, LAST_ORDER, response)
 
         pass
 
@@ -178,6 +186,7 @@ class Merkato(object):
                 if new_id == 0:
                     print("Something went wrong.")
                     return 1
+                else: update_mutex(mutex_UUID, LAST_ORDER, new_id)
 
                 if DEBUG: print("consolidation successful")
                 existing_order['order_id'] = new_id
