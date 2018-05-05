@@ -13,11 +13,59 @@ DEBUG = True
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
-    def __init__(self, config):
+    def __init__(self, config, coin, base):
         self.privatekey = config['privatekey']
         self.publickey  = config['publickey']
         self.limit_only = config['limit_only']
         self.retries = 5
+        self.coin = coin
+        self.base = base
+        self.ticker = self.translate_ticker()
+
+    def translate_ticker(self):
+        if self.base == "BTC":
+            if self.coin == "ZEC":
+                return "BTC_ZEC"
+            if self.coin == "PPC":
+                return "BTC_PPC"
+            if self.coin == "EMC":
+                return "BTC_EMC"
+            if self.coin == "ICN":
+                return "BTC_ICN"
+            if self.coin == "POT":
+                return "BTC_POT"
+            if self.coin == "NMC":
+                return "BTC_NMC"
+            if self.coin == "DOGE":
+                return "BTC_DOGE"
+            if self.coin == "BCY":
+                return "BTC_BCY"
+            if self.coin == "LTC":
+                return "BTC_LTC"
+            if self.coin == "DASH":
+                return "BTC_DASH"
+            if self.coin == "ETH":
+                return "BTC_ETH"
+            if self.coin == "BLK":
+                return "BTC_BLK"
+            if self.coin == "DTB":
+                return "BTC_DTB"
+            if self.coin == "DCR":
+                return "BTC_DCR"
+            if self.coin == "GNT":
+                return "BTC_GNT"
+            if self.coin == "PEPECASH":
+                return "BTC_PEPECASH"
+            if self.coin == "SYS":
+                return "BTC_SYS"
+            if self.coin == "XCP":
+                return "BTC_XCP"
+            if self.coin == "XMR":
+                return "BTC_XMR"
+
+        raise NotImplementedError("Unknown pair: coin={}, base={}".format(self.coin,self.base))
+
+
 
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
@@ -27,18 +75,18 @@ class TuxExchange(ExchangeBase):
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
-    def _sell(self, amount, ask, ticker):
+    def _sell(self, amount, ask,):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
             :param ask: float
             :param ticker: string
         '''
-        query_parameters = getQueryParameters(SELL, ticker, amount, ask)
+        query_parameters = getQueryParameters(SELL, self.ticker, amount, ask)
         response = self._create_signed_request(query_parameters)
 
         return response['success']
 
-    def sell(self, amount, ask, ticker):
+    def sell(self, amount, ask):
         attempt = 0
         while attempt < self.retries:
             if self.limit_only:
@@ -46,9 +94,9 @@ class TuxExchange(ExchangeBase):
                 # If ask price is lower than the highest bid, return.
                 pass
             try:
-                success = self._sell(amount, ask, ticker)
+                success = self._sell(amount, ask)
                 if success:
-                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, ticker, ask, self.exchange))
+                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, self.exchange))
                     return success
                 else:
                     self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, self.exchange, attempt, self.retries))
@@ -58,18 +106,18 @@ class TuxExchange(ExchangeBase):
                 self.debug(0, "sell", "ERROR", e)
                 break
 
-    def _buy(self, amount, bid, ticker):
+    def _buy(self, amount, bid):
         ''' Places a buy for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
             :param bid: float
             :param ticker: string
         '''
-        query_parameters = getQueryParameters(BUY, ticker, amount, bid)
+        query_parameters = getQueryParameters(BUY, self.ticker, amount, bid)
         response = self._create_signed_request(query_parameters)
 
         return response['success']
 
-    def buy(self, amount, bid, ticker):
+    def buy(self, amount, bid):
         attempt = 0
         while attempt < self.retries:
             if self.limit_only:
@@ -78,12 +126,12 @@ class TuxExchange(ExchangeBase):
                 pass
 
             try:
-                success = self._buy(amount, bid, ticker)
+                success = self._buy(amount, bid)
                 if success:
-                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, ticker, bid, self.exchange))
+                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, self.exchange))
                     return success
                 else:
-                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, bid, self.exchange, attempt, self.retries))
+                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, self.exchange, attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
@@ -91,13 +139,13 @@ class TuxExchange(ExchangeBase):
                 return False
 
 
-    def get_all_orders(self, coin):
+    def get_all_orders(self):
         ''' Returns all open orders for the ticker XYZ (not BTC_XYZ)
             :param coin: string
         '''
         # TODO: Accept BTC_XYZ by stripping BTC_ if it exists
 
-        params = { "method": "getorders", "coin": coin }
+        params = {"method": "getorders", "coin": self.coin}
         response = requests.get(self.url, params=params)
 
         response_json = json.loads(response.text)
@@ -126,13 +174,13 @@ class TuxExchange(ExchangeBase):
 
         query_parameters = {
             "method": "cancelorder",
-            "market": "BTC",
+            "market": self.base,
             "id": order_id
         }
         return self._create_signed_request(query_parameters)
 
 
-    def get_ticker(self, coin="none"):
+    def get_ticker(self, coin=None):
         ''' Returns the current ticker data for the given coin. If no coin is given,
             it will return the ticker data for all coins.
             :param coin: string (of the format BTC_XYZ)
@@ -141,7 +189,7 @@ class TuxExchange(ExchangeBase):
         params = { "method": "getticker" }
         response = requests.get(self.url, params=params)
 
-        if coin == "none":
+        if not coin:
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
@@ -149,7 +197,7 @@ class TuxExchange(ExchangeBase):
         return response_json[coin]
 
 
-    def get_24h_volume(coin="none"):
+    def get_24h_volume(self, coin=None):
         ''' Returns the 24 hour volume for the given coin.
             If no coin is given, returns for all coins.
             :param coin string (of the form BTC_XYZ where XYZ is the alt ticker)
@@ -158,7 +206,7 @@ class TuxExchange(ExchangeBase):
         params = { "method": "get24hvolume" }
         response = requests.get(self.url, params=params)
 
-        if coin == "none":
+        if not coin:
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
@@ -166,8 +214,7 @@ class TuxExchange(ExchangeBase):
         return response_json[coin]
 
 
-    def get_balances(self, privatekey, publickey, coin='none'):
-        # TODO: not exposed to base exchange class
+    def get_balances(self):
         # also keys go unused, also coin...
         tuxParams = {"method" : "getmybalances"}
 
@@ -175,8 +222,12 @@ class TuxExchange(ExchangeBase):
         print(response)
         for crypto in response:
                 print(str(crypto) + ": " + str(response[crypto]))
-
-        return response
+        pair_balances = {"base" : {"amount": response[self.base],
+                                   "name" : self.base},
+                         "coin": {"amount": response[self.coin],
+                                  "name": self.coin},
+                        }
+        return
 
 
     def get_my_trade_history(self, start=0, end=0):
@@ -190,6 +241,14 @@ class TuxExchange(ExchangeBase):
 
         return self._create_signed_request(query_parameters)
 
+    def get_last_trade_price(self):
+        return self.get_ticker(self.ticker)["last"]
+
+    def get_lowest_ask(self):
+        return self.get_ticker(self.ticker)["lowestAsk"]
+
+    def get_highest_bid(self):
+        return self.get_ticker(self.ticker)["highestBid"]
 
     def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
         ''' Signs provided query parameters with API keys

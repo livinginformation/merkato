@@ -10,19 +10,13 @@ DEBUG = True
 
 
 class Merkato(object):
-    def __init__(self, configuration, ticker, spread, ask_budget, bid_budget):
-        self.exchange = TuxExchange(configuration)
-        self.mutex_UUID = configuration['exchange'] + ticker
+    def __init__(self, configuration, coin, base, spread, ask_budget, bid_budget):
+        self.exchange = TuxExchange(configuration, coin=coin, base=base)
+        self.mutex_UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
         self.distribution_strategy = 1
-        self.ticker = ticker # i.e. 'XMR_BTC'
         self.spread = spread # i.e '15
-        #The Balance Allocation below totals 110% not 100%
-        self.ask_profile = [(1, 5), (2, 5), (3, 10), (4, 15), (5, 20), (6, 25), (10, 30)] # (% change in price, % balance allocation)
-        self.bid_profile = [(-1, 5), (-2, 5), (-3, 10), (-4, 15), (-5, 20), (-6, 25), (-10, 30)]  # (% change in price, % balance allocation)
         self.ask_budget = ask_budget
         self.bid_budget = bid_budget
-        self.original_ask = None
-        self.original_bid = None
         self.history =  self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
 
     def rebalance_orders(self, new_history, new_txes):
@@ -38,7 +32,7 @@ class Merkato(object):
                 price = tx[PRICE]
                 sold.append(tx)
                 buy_price = float(price) - self.spread
-                response = self.exchange.buy(amount, buy_price, self.ticker)
+                response = self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
                 print(BUY)
@@ -46,8 +40,8 @@ class Merkato(object):
                 price = tx[PRICE]
                 bought.append(tx)
                 sell_price = float(price) + self.spread
-                self.exchange.sell(amount, sell_price, self.ticker)
-                response = self.exchange.buy(amount, buy_price, self.ticker)
+                self.exchange.sell(amount, sell_price)
+                response = self.exchange.buy(amount, buy_price)
 
             update_mutex(mutex_UUID, LAST_ORDER, response)
 
@@ -71,7 +65,7 @@ class Merkato(object):
         bid_price = float(low_price)
 
         # Sanity check
-        orders = self.exchange.get_all_orders(self.ticker)
+        orders = self.exchange.get_all_orders()
         lowest_ask = orders['asks'][0][0]
 
         if float(high_price) >= float(lowest_ask):
@@ -82,7 +76,7 @@ class Merkato(object):
             if DEBUG: print("setting bid at " + "{:.8f}".format(bid_price))
             buy_amount = bid_amount/bid_price
             if DEBUG: print("Buy amount: " + str(buy_amount))
-            response = self.exchange.buy(buy_amount, bid_price, self.ticker)
+            response = self.exchange.buy(buy_amount, bid_price)
             bid_price += float(increment)
             time.sleep(.3)
             update_mutex(self.mutex_UUID, LAST_ORDER, response)
@@ -108,7 +102,7 @@ class Merkato(object):
         ask_price = float(low_price)
 
         # Sanity check
-        orders = self.exchange.get_all_orders(self.ticker)
+        orders = self.exchange.get_all_orders()
         highest_bid = orders['bids'][0][0]
 
         if ask_price <= float(highest_bid):
@@ -117,7 +111,7 @@ class Merkato(object):
 
         while ask_price <= float(high_price):
             if DEBUG: print("setting ask at " + "{:.8f}".format(ask_price))
-            response = self.exchange.sell(ask_amount, ask_price, self.ticker)
+            response = self.exchange.sell(ask_amount, ask_price)
             ask_price += float(increment)
             time.sleep(.3)
             update_mutex(self.mutex_UUID, LAST_ORDER, response)
@@ -136,6 +130,7 @@ class Merkato(object):
 
         # Create a dictionary to store our desired orderbook
         orderbook = dict()
+        raise NotImplementedError("'orderbook' never gets any data, probably needs to be made OOP")
 
         for order in orders:
 
@@ -146,10 +141,10 @@ class Merkato(object):
 
             if DEBUG: print(orders[order])
 
-            if coin != self.ticker:
+            if coin != self.exchange.interface.ticker:
                 continue
 
-            if price not in orderbook: # always true as orderbook is empty dict
+            if price not in orderbook: # always true as orderbook is empty dict !!!
 
                 price_data = create_price_data(orders, order)
 
@@ -176,12 +171,12 @@ class Merkato(object):
 
                 # Place a new order on the books with the sum
                 if existing_order_type == "buy":
-                    print("Placing buy for", existing_order['total'], "bitcoins of", self.ticker, "at a price of", price)
+                    print("Placing buy for", existing_order['total'], "{} of".format(self.base), self.exchange.interface.ticker, "at a price of", price)
                     new_id = self.exchange.buy(float(existing_order['total'])/float(price), float(price), self.ticker)
 
                 else: # existing_order_type is sell
-                    print("Placing sell for", existing_order['amount'], self.ticker, "at a price of", price)
-                    new_id = self.exchange.sell(float(existing_order['amount']), float(price), self.ticker)
+                    print("Placing sell for", existing_order['amount'], self.exchange.interface.ticker, "at a price of", price)
+                    new_id = self.exchange.sell(float(existing_order['amount']), float(price), self.echange.interface.ticker)
 
                 if new_id == 0:
                     print("Something went wrong.")
@@ -202,7 +197,7 @@ class Merkato(object):
         # Get current state of trade history before placing orders
         hist_len = len(self.history)
         now = str(time.time())
-        last_trade_price = self.exchange.interface.get_ticker(coin=self.ticker)["last"] # at least for tux api...
+        last_trade_price = self.exchange.get_last_trade_price()
 
         print("Time: " + now)
 
@@ -214,7 +209,7 @@ class Merkato(object):
             new_txes = new_hist_len - hist_len
             if DEBUG: print("New transactions: " + str(new_txes))
             self.rebalance_orders(new_history, new_txes)
-            self.merge_orders(self.ticker)
+            self.merge_orders()
             
             self.history = new_history
 
@@ -223,7 +218,7 @@ class Merkato(object):
                    "filled_orders": {"buy": bought,
                                      "sell": sold},
                    "open_orders": self.exchange.get_my_open_orders(),
-                   "balances": self.exchange.interface.get_balances(0,0,0) # TODO: this needs to get abstracted in exchange base class, also args are unused
+                   "balances": self.exchange.get_balances()
                    }
         return context
 
