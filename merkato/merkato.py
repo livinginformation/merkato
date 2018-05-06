@@ -175,7 +175,7 @@ class Merkato(object):
 
                 else: # existing_order_type is sell
                     print("Placing sell for", existing_order['amount'], self.exchange.ticker, "at a price of", price)
-                    new_id = self.exchange.sell(float(existing_order['amount']), float(price), self.echange.interface.ticker)
+                    new_id = self.exchange.sell(float(existing_order['amount']), float(price), self.exchange.ticker)
 
                 if new_id == 0:
                     print("Something went wrong.")
