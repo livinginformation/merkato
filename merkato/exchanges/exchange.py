@@ -11,13 +11,13 @@ class Exchange(object):
         This class acts as an entry point for all exchange interfaces.
         handling delegation to the proper exchange interface (tux, polo, etc), retry logic, etc.
     '''
-    def __init__(self, configuration):
+    def __init__(self, configuration, coin, base):
         self.exchange   = configuration['exchange']
         self.DEBUG = 100 # TODO: move to configuration object
 
         self.interface = None
         if self.exchange == "tux":
-            self.interface = TuxExchange(configuration)
+            self.interface = TuxExchange(configuration, coin=coin, base=base)
         else:
             raise Exception("ERROR: unsupported exchange: {}".format(self.exchange))
 
@@ -32,7 +32,7 @@ class Exchange(object):
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
-    def sell(self, amount, ask, ticker):
+    def sell(self, amount, ask):
         attempt = 0
         while attempt < self.retries:
             if self.limit_only:
@@ -40,12 +40,12 @@ class Exchange(object):
                 # If ask price is lower than the highest bid, return.
                 pass
             try:
-                success = self.interface.sell(amount, ask, ticker)
+                success = self.interface.sell(amount, ask)
                 if success:
-                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, ticker, ask, self.exchange))
+                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.interface.ticker, ask, self.exchange))
                     return success
                 else:
-                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, self.exchange, attempt, self.retries))
+                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.interface.ticker, ask, self.exchange, attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
@@ -53,7 +53,7 @@ class Exchange(object):
                 break
 
 
-    def buy(self, amount, bid, ticker):
+    def buy(self, amount, bid):
         attempt = 0
         while attempt < self.retries:
             if self.limit_only:
@@ -62,12 +62,12 @@ class Exchange(object):
                 pass
 
             try:
-                success = self.interface.buy(amount, bid, ticker)
+                success = self.interface.buy(amount, bid)
                 if success:
-                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, ticker, bid, self.exchange))
+                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.interface.ticker, bid, self.exchange))
                     return success
                 else:
-                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, bid, self.exchange, attempt, self.retries))
+                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.interface.ticker, bid, self.exchange, attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
@@ -75,8 +75,8 @@ class Exchange(object):
                 return False
 
 
-    def get_all_orders(self, ticker):
-        return self.interface.get_all_orders(ticker)
+    def get_all_orders(self):
+        return self.interface.get_all_orders()
 
 
     def get_my_open_orders(self):
@@ -89,5 +89,17 @@ class Exchange(object):
 
     def cancel_order(self, order_id):
         return self.interface.cancel_order(order_id)
+
+    def get_balances(self):
+        return self.interface.get_balances()
+
+    def get_last_trade_price(self):
+        return self.interface.get_last_trade_price()
+
+    def get_lowest_ask(self):
+        return self.interface.get_lowest_ask()
+
+    def get_highest_bid(self):
+        return self.interface.get_highest_bid()
 
 
