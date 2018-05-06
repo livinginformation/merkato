@@ -101,9 +101,8 @@ class Merkato(object):
 
         ask_price = float(low_price)
 
-        # Sanity check
-        orders = self.exchange.get_all_orders()
-        highest_bid = orders['bids'][0][0]
+        # Sanity check TODO: remove sanity check to exchange layer
+        highest_bid = self.exchange.get_highest_bid()
 
         if ask_price <= float(highest_bid):
             print("Aborting: Ask ladder would make a market order.")
@@ -141,7 +140,7 @@ class Merkato(object):
 
             if DEBUG: print(orders[order])
 
-            if coin != self.exchange.interface.ticker:
+            if coin != self.exchange.ticker:
                 continue
 
             if price not in orderbook: # always true as orderbook is empty dict !!!
@@ -171,11 +170,11 @@ class Merkato(object):
 
                 # Place a new order on the books with the sum
                 if existing_order_type == "buy":
-                    print("Placing buy for", existing_order['total'], "{} of".format(self.base), self.exchange.interface.ticker, "at a price of", price)
+                    print("Placing buy for", existing_order['total'], "{} of".format(self.base), self.exchange.ticker, "at a price of", price)
                     new_id = self.exchange.buy(float(existing_order['total'])/float(price), float(price), self.ticker)
 
                 else: # existing_order_type is sell
-                    print("Placing sell for", existing_order['amount'], self.exchange.interface.ticker, "at a price of", price)
+                    print("Placing sell for", existing_order['amount'], self.exchange.ticker, "at a price of", price)
                     new_id = self.exchange.sell(float(existing_order['amount']), float(price), self.echange.interface.ticker)
 
                 if new_id == 0:

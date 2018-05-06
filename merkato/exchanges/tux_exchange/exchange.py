@@ -5,7 +5,7 @@ import math
 import requests
 import time
 import urllib.parse
-from merkato.exchanges.tux_exchange.utils import getQueryParameters
+from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 DEBUG = True
@@ -20,52 +20,7 @@ class TuxExchange(ExchangeBase):
         self.retries = 5
         self.coin = coin
         self.base = base
-        self.ticker = self.translate_ticker()
-
-    def translate_ticker(self):
-        if self.base == "BTC":
-            if self.coin == "ZEC":
-                return "BTC_ZEC"
-            if self.coin == "PPC":
-                return "BTC_PPC"
-            if self.coin == "EMC":
-                return "BTC_EMC"
-            if self.coin == "ICN":
-                return "BTC_ICN"
-            if self.coin == "POT":
-                return "BTC_POT"
-            if self.coin == "NMC":
-                return "BTC_NMC"
-            if self.coin == "DOGE":
-                return "BTC_DOGE"
-            if self.coin == "BCY":
-                return "BTC_BCY"
-            if self.coin == "LTC":
-                return "BTC_LTC"
-            if self.coin == "DASH":
-                return "BTC_DASH"
-            if self.coin == "ETH":
-                return "BTC_ETH"
-            if self.coin == "BLK":
-                return "BTC_BLK"
-            if self.coin == "DTB":
-                return "BTC_DTB"
-            if self.coin == "DCR":
-                return "BTC_DCR"
-            if self.coin == "GNT":
-                return "BTC_GNT"
-            if self.coin == "PEPECASH":
-                return "BTC_PEPECASH"
-            if self.coin == "SYS":
-                return "BTC_SYS"
-            if self.coin == "XCP":
-                return "BTC_XCP"
-            if self.coin == "XMR":
-                return "BTC_XMR"
-
-        raise NotImplementedError("Unknown pair: coin={}, base={}".format(self.coin,self.base))
-
-
+        self.ticker = translate_ticker(coin=coin, base=base)
 
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
@@ -96,10 +51,10 @@ class TuxExchange(ExchangeBase):
             try:
                 success = self._sell(amount, ask)
                 if success:
-                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, self.exchange))
+                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
                     return success
                 else:
-                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, self.exchange, attempt, self.retries))
+                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
@@ -128,10 +83,10 @@ class TuxExchange(ExchangeBase):
             try:
                 success = self._buy(amount, bid)
                 if success:
-                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, self.exchange))
+                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, "tux"))
                     return success
                 else:
-                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, self.exchange, attempt, self.retries))
+                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
             except Exception as e:  # TODO - too broad exception handling
