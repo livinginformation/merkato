@@ -123,13 +123,13 @@ class Merkato(object):
         # Consider changing semantics from existing_order and order to order and new_order.
         # That is, existing_order currently becomes order, and order becomes new_order.
         # Coin is a string
+        # TODO: Make orders/orderbook variables less semantically similar
 
         orders = self.exchange.get_my_open_orders()
         print(orders)
 
         # Create a dictionary to store our desired orderbook
         orderbook = dict()
-        raise NotImplementedError("'orderbook' never gets any data, probably needs to be made OOP")
 
         for order in orders:
 
@@ -143,7 +143,7 @@ class Merkato(object):
             if coin != self.exchange.ticker:
                 continue
 
-            if price not in orderbook: # always true as orderbook is empty dict !!!
+            if price not in orderbook:
 
                 price_data = create_price_data(orders, order)
 
@@ -154,7 +154,7 @@ class Merkato(object):
 
                 print("Collision at", price)
 
-                existing_order        = orderbook[price] # this will fail as orderbook is empty dict
+                existing_order        = orderbook[price]
                 existing_order_id     = existing_order['order_id']
                 existing_order_type   = existing_order['type']
                 existing_order_total  = float(existing_order['total'])
