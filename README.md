@@ -42,7 +42,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Authors
 
-* **Creator**: Livinginformation (Needmoney90) - [Livinginformation](https://github.com/Livinginformation)
+* **Creator**: [Livinginformation (Needmoney90)](https://github.com/Livinginformation)
 
 * **Core Contributors**: @evdc, @15chrjef, @nasaWelder
 
