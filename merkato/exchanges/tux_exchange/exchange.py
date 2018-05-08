@@ -47,7 +47,9 @@ class TuxExchange(ExchangeBase):
             if self.limit_only:
                 # Get current highest bid on the orderbook
                 # If ask price is lower than the highest bid, return.
-                pass
+                if self.get_highest_bid() > ask:
+                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, ticker, ask, "tux"))
+                    return False # Maybe needs failed or something
             try:
                 success = self._sell(amount, ask)
                 if success:
@@ -61,6 +63,7 @@ class TuxExchange(ExchangeBase):
                 self.debug(0, "sell", "ERROR", e)
                 break
 
+                
     def _buy(self, amount, bid):
         ''' Places a buy for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
@@ -78,8 +81,10 @@ class TuxExchange(ExchangeBase):
             if self.limit_only:
                 # Get current lowest ask on the orderbook
                 # If bid price is higher than the lowest ask, return.
-                pass
-
+                if self.get_lowest_ask() < bid:
+                    
+                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
+                    return False # Maybe needs failed or something
             try:
                 success = self._buy(amount, bid)
                 if success:
