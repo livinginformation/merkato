@@ -42,9 +42,11 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Authors
 
-* **Livinginformation (Needmoney90)** - *Initial work* - [Livinginformation](https://github.com/Livinginformation)
+* **Livinginformation (Needmoney90)** - *Creator* - [Livinginformation](https://github.com/Livinginformation)
 
-See also the list of [contributors](https://github.com/livinginformation/merkato/graphs/contributors) who participated in this project.
+Core Contributors: @evdc, @15chrjef, @nasaWelder
+
+See also the list of [other contributors](https://github.com/livinginformation/merkato/graphs/contributors) who participated in this project.
 
 ## License
 
