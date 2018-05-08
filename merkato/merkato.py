@@ -155,7 +155,7 @@ class Merkato(object):
         pass
     
     
-        def create_ask_ladder(self, total_amount, low_price, high_price, increment):
+    def create_ask_ladder(self, total_amount, low_price, high_price, increment):
         # TODO: this is currently unused in merkato
         #  low_price, high_price, and increment are all strings
         # total_amount is a float
