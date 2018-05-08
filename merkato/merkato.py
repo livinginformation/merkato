@@ -45,6 +45,41 @@ class Merkato(object):
 
             update_mutex(mutex_UUID, LAST_ORDER, response)
 
+            
+    def create_bid_ladder_new(self, total_btc, low_price, high_price):
+        # TODO: BROKEN. Still fix up the float issues.
+        # All parameters should be strings.
+
+        # This gets the total range of the ladder in satoshis
+        order_range = float(high_price) - float(low_price)
+
+        # This was supposed to get the total number of orders we would be placing
+        increments = round(float(order_range)/float(increment))
+
+        # Divide the total btc by the total orders to get the btc per order
+        bid_amount = float(total_btc)/float(increments)
+
+        bid_price = Decimal(low_price)
+
+        # Sanity check. Do a check to make sure that we're limit only.
+        # This is also covered in the exchange interface, but having a second
+        # check here is warranted.
+        orders = self.exchange.get_all_orders()
+        lowest_ask = orders['asks'][0][0]
+
+        if float(high_price) >= float(lowest_ask):
+            print("Aborting: Bid ladder would make a market order.")
+            return
+
+        while bid_price <= float(high_price):
+            # 1. Calculate how much to buy
+            # 2. Buy that much
+            # 3. Increase bid_price by the percentage increment
+            # 4. Sleep for .3 seconds (to prevent API throttling)
+            # 5. No mutex operation is needed, the mutex operations only need to know
+            #    it's last known order to have been hit. This is initialization.
+        
+        
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
         # TODO: this is currently unused in merkato
         #  low_price, high_price, and increment are strings
@@ -82,7 +117,45 @@ class Merkato(object):
             update_mutex(self.mutex_UUID, LAST_ORDER, response)
 
 
-    def create_ask_ladder(self, total_amount, low_price, high_price, increment):
+    def create_ask_ladder_new(self, total_amount, low_price, high_price):
+        # TODO: BROKEN. Still fix up the float issues.
+        #  low_price, high_price, and increment are all strings
+        # total_amount is a float
+        #
+        # This function will never make a market order.
+
+        # This gets the total range of the ladder in satoshis
+        order_range = float(high_price) - float(low_price)
+
+        # This was supposed to get the total number of orders we would be placing
+        increments = float(order_range)/float(increment)
+
+        # Divide the total btc by the total orders to get the btc per order
+        ask_amount = float(total_amount)/float(increments)
+
+        ask_price = Decimal(low_price)
+
+        # Sanity check. Do a check to make sure that we're limit only.
+        # This is also covered in the exchange interface, but having a second
+        # check here is warranted.
+        highest_bid = self.exchange.get_highest_bid()
+
+        if ask_price <= float(highest_bid):
+            print("Aborting: Ask ladder would make a market order.")
+            return
+
+        while ask_price <= float(high_price):
+            # 1. Calculate how much to sell
+            # 2. Sell that much
+            # 3. Increase ask_price by the percentage increment
+            # 4. Sleep for .3 seconds (to prevent API throttling)
+            # 5. No mutex operation is needed, the mutex operations only need to know
+            #    it's last known order to have been hit. This is initialization.
+
+        pass
+    
+    
+        def create_ask_ladder(self, total_amount, low_price, high_price, increment):
         # TODO: this is currently unused in merkato
         #  low_price, high_price, and increment are all strings
         # total_amount is a float
