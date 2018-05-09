@@ -21,6 +21,13 @@ class Merkato(object):
     # Make a second init for recovering a Merkato from the Mutexes table here
     
     def rebalance_orders(self, new_history, new_txes):
+        # This function places a matching order for every new transaction since last run
+        #
+        # TODO: Modify so that the parent function only passes in the new transactions, don't
+        # do the index check internally.
+        
+        # new_history is an array of transactions
+        # new_txes is the number of new transactions contained in new_history
         sold = []
         bought = []
         index = -1*new_txes # Pop this many elements off the back of the transaction history
@@ -120,10 +127,7 @@ class Merkato(object):
 
     def create_ask_ladder_new(self, total_amount, low_price, high_price):
         # TODO: BROKEN. Still fix up the float issues.
-        #  low_price, high_price, and increment are all strings
-        # total_amount is a float
-        #
-        # This function will never make a market order.
+        # All parameters should be strings.
 
         # This gets the total range of the ladder in satoshis
         order_range = float(high_price) - float(low_price)
@@ -193,7 +197,8 @@ class Merkato(object):
 
 
     def merge_orders(self):
-        # TODO still broken post-refactor!
+        # Takes all bids/asks that are at the same price, and combines them.
+        #
         # Consider changing semantics from existing_order and order to order and new_order.
         # That is, existing_order currently becomes order, and order becomes new_order.
         # Coin is a string
