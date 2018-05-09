@@ -15,10 +15,11 @@ class Merkato(object):
         self.mutex_UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
         self.distribution_strategy = 1
         self.spread = spread # i.e '15
-        self.ask_budget = ask_budget
-        self.bid_budget = bid_budget
+        # Create ladders from the bid and ask bidget here
         self.history =  self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
 
+    # Make a second init for recovering a Merkato from the Mutexes table here
+    
     def rebalance_orders(self, new_history, new_txes):
         sold = []
         bought = []
