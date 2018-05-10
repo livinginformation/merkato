@@ -4,7 +4,7 @@ import json
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER
-from merkato.bot import update_mutex
+from merkato.utils.database_utils import update_mutex
 
 DEBUG = True
 
