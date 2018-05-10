@@ -4,7 +4,7 @@ import json
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER
-from merkato.utils.database_utils import update_mutex
+from merkato.utils.database_utils import update_merkato
 
 DEBUG = True
 
@@ -18,7 +18,7 @@ class Merkato(object):
         # Create ladders from the bid and ask bidget here
         self.history =  self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
 
-    # Make a second init for recovering a Merkato from the Mutexes table here
+    # Make a second init for recovering a Merkato from the merkatos table here
     
     def rebalance_orders(self, new_history, new_txes):
         # This function places a matching order for every new transaction since last run
@@ -51,7 +51,7 @@ class Merkato(object):
                 self.exchange.sell(amount, sell_price)
                 response = self.exchange.buy(amount, buy_price)
 
-            update_mutex(mutex_UUID, LAST_ORDER, response)
+            update_merkato(mutex_UUID, LAST_ORDER, response)
 
             
     def create_bid_ladder_new(self, total_btc, low_price, high_price):
@@ -122,7 +122,7 @@ class Merkato(object):
             response = self.exchange.buy(buy_amount, bid_price)
             bid_price += float(increment)
             time.sleep(.3)
-            update_mutex(self.mutex_UUID, LAST_ORDER, response)
+            update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
 
     def create_ask_ladder_new(self, total_amount, low_price, high_price):
@@ -191,7 +191,7 @@ class Merkato(object):
             response = self.exchange.sell(ask_amount, ask_price)
             ask_price += float(increment)
             time.sleep(.3)
-            update_mutex(self.mutex_UUID, LAST_ORDER, response)
+            update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
         pass
 
@@ -259,7 +259,7 @@ class Merkato(object):
                 if new_id == 0:
                     print("Something went wrong.")
                     return 1
-                else: update_mutex(mutex_UUID, LAST_ORDER, new_id)
+                else: update_merkato(mutex_UUID, LAST_ORDER, new_id)
 
                 if DEBUG: print("consolidation successful")
                 existing_order['order_id'] = new_id

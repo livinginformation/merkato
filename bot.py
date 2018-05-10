@@ -1,7 +1,7 @@
 from merkato.merkato_config import load_config, get_config, create_config
 from merkato.merkato import Merkato
 from merkato.parser import parse
-from merkato.utils.database_utils import no_mutex_table_exists, create_mutex_table, insert_mutex, get_all_mutexes
+from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 import sqlite3
 
@@ -24,10 +24,10 @@ def main():
     bid_budget = 1
     pair = translate_ticker(coin, base)
     merkato = Merkato(configuration, coin, base, spread, ask_budget, bid_budget)
-    if no_mutex_table_exists():
-        create_mutex_table()
-    insert_mutex(configuration['exchange'])
-    get_all_mutexes()
+    if no_merkatos_table_exists():
+        create_merkatos_table()
+    insert_merkato(configuration['exchange'])
+    get_all_merkatos()
     merkato.exchange.get_all_orders()
 
 
