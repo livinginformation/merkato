@@ -3,43 +3,35 @@
 import json
 import os.path
 from merkato.utils import write_to_file, update_config_with_credentials, get_exchange, get_config_selection
+from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table
 
 def load_config():
     # Loads an existing configuration file
     # Returns a dictionary
+    exchange_name = input("what is the exchange name? ")
+    return get_exchange(exchange_name)
+    # TODO: Error handling and config validation
 
-    while True:
-        filename = input("Config file name? ")
-
-        if not os.path.isfile("./"+filename):
-            print("File doesn't exist.")
-            continue
-
-        with open("./"+filename) as configuration:
-            data = json.load(configuration)
-
-        # TODO: Error handling and config validation
-
-        return data
-
+def insert_config_into_exchanges(config)
+    limit_only = config["limit_only"]
+    public_key = config["public_key"]
+    private_key = config["private_key"]
+    exchange = config["exchange"]
+    if no_exchanges_table_exists():
+        create_exchanges_table()
+    insert_exchange(exchange, public_key, private_key, limit_only)
 
 def create_config():
     # Create new config
     config = { "limit_only": True }
     while True:
-        filename = input("Config file name? ")
-
-        if os.path.isfile("./"+filename):
-            print("Config already exists.")
-            continue
-
         exchange = get_exchange()
 
         if exchange == 'tux':
             config['exchange'] = 'tux'
 
             update_config_with_credentials(config)
-            write_to_file(filename, config)
+            insert_config_into_exchanges(config)
             return config
 
         elif exchange == 'polo':

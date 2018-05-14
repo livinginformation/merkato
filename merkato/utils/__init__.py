@@ -28,6 +28,12 @@ def get_config_selection():
 	print("3 -> Exit")
 	return input("Selection: ")
 
+def get_exchange():
+	print("Please make a selection:")
+	print("1 -> Create new configuration")
+	print("2 -> Load existing configuration")
+	print("3 -> Exit")
+	return input("Selection: ")
 
 def create_price_data(orders, order):
 	price_data             = {}
@@ -36,8 +42,3 @@ def create_price_data(orders, order):
 	price_data['order_id'] = orders[order]["id"]
 	price_data['type']     = orders[order]["type"]
 	return price_data
-
-def write_to_file(filename, config):
-	with open("./"+filename, "w+") as file:
-		json.dump(config, file)
-		print("written")
