@@ -125,6 +125,40 @@ class Merkato(object):
             update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
 
+    def decaying_ask_ladder(self, total_amount, step, start_price):
+        # Places an ask ladder from the start_price to 2x the start_price.
+        # The last order in the ladder is half the amount of the first
+        # order in the ladder. The amount allocated at each step decays as
+        # orders are placed.
+        # Abandon all hope, ye who enter here. This function uses black magic (math).
+
+        scaling_factor = 0
+        total_orders = floor(math.log(2, step)) # 277 for a step of 1.0025
+        index = 1
+
+        # Calculate scaling factor
+        while index < total_orders:
+            scaling_factor += 1/(step**index)
+            index += 1
+
+        index = 1
+        while index <= total_orders:
+            # Place orders in this loop
+            amount += total_amount/(scaling_factor * step**index)
+            index += 1
+        print(amount)
+
+    def distribute_asks(self, total_to_distribute, step):
+        # 1. Get current price
+        # 2. Call decaying_ask_ladder on that start price, with the given step,
+        #    and half the total_to_distribute
+        # 3. Call decaying_ask_ladder twice more, each time doubling the
+        #    start_price, and halving the total_amount
+        # 4. Store the remainder of total_to_distribute, as well as the final
+        #    order placed in decaying_ask_ladder
+        pass
+
+
     def create_ask_ladder_new(self, total_amount, low_price, high_price):
         # TODO: BROKEN. Still fix up the float issues.
         # All parameters should be strings.
