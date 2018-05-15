@@ -135,6 +135,12 @@ class Graph(tk.Frame):
         self.stub = stub
         self.delay = delay
         self.x_axis_window_size = 51  # todo: button for changing this
+        self.coin_balance = tk.StringVar()
+        self.base_balance = tk.StringVar()
+        self.mean_price = tk.StringVar()
+        self.coin_balance.set("0")
+        self.base_balance.set("0")
+        self.mean_price.set("0")
 
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
         self.label = ttk.Label(self, text=self.parent.title, style="app.TLabel")
@@ -186,12 +192,30 @@ class Graph(tk.Frame):
         self.x_axis_auto_scroll.grid(row=0, column=0, sticky=tk.NW, padx=(5.0), pady=(5,0))
         self.x_axis_window_size_input.grid(row=1, column=0, sticky=tk.NW, padx=(28.0), pady=(2,10))
         # --------------------------------------
+        self.stats_frame = ttk.Frame(self.options_frame, style="app.TFrame")
+        self.profit_base = ttk.Label(self.stats_frame, text="base \u0394bal:", style="app.TLabel")
+        self.profit_base2 = ttk.Label(self.stats_frame, textvariable=self.base_balance, style="app.TLabel")
+        self.profit_alt = ttk.Label(self.stats_frame, text="coin \u0394bal:", style="app.TLabel")
+        self.profit_alt2 = ttk.Label(self.stats_frame, textvariable=self.coin_balance, style="app.TLabel")
+        self.mean_price_lab = ttk.Label(self.stats_frame, text="\u03BC price:", style="app.TLabel")
+        self.mean_price_lab2 = ttk.Label(self.stats_frame, textvariable=self.mean_price, style="app.TLabel")
+
+        self.profit_base.grid(row=1, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.profit_base2.grid(row=1, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.profit_alt.grid(row=0, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.profit_alt2.grid(row=0, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.mean_price_lab.grid(row=0, column=2, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.mean_price_lab2.grid(row=0, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+
+        self.stats_frame.grid(row=0, column=2, rowspan=2, sticky=tk.NW, padx=(28.0), pady=(2,10))
+        # --------------------------------------
 
         self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W, pady=(4,10))
         #self.label.pack(pady=(20,0), padx=10, side=tk.TOP)
         self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
         self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self.options_frame.pack(side=tk.TOP, anchor=tk.W, fill=tk.BOTH, expand=True)
+        self.options_frame.pack(side=tk.TOP, anchor=tk.W, fill=tk.BOTH, expand=False)
+
 
         # --------------------------------------
         self.x_low, self.x_hi = self.ax.get_xlim()
@@ -205,8 +229,16 @@ class Graph(tk.Frame):
             x_this = self.x_price[-1] + 1
             self.fake_orders = {"buy": [(244, 0.5, x_this), (241, 0.5, x_this),(236, 0.5, x_this),(231, 0.5, x_this),(226, 0.5, x_this),(221, 0.5, x_this),(216, 0.5, x_this)],
                                "sell": [(253, 0.5, x_this),(258, 0.5, x_this), (263, 0.5, x_this), (263, 0.5, x_this), (268, 0.5, x_this), (273, 0.5, x_this), (278, 0.5, x_this)]}
-            self._root().after(5000, self.refresh, self.fake_data())
+            #self._root().after(5000, self.refresh, self.fake_data())
 
+    def calc_stats(self):
+        # self.coin_balance.set(str(float(self.coin_balance.get()) + order[1]))
+        try:
+            mean_price = float(self.base_balance.get()) / float(self.coin_balance.get())
+        except ZeroDivisionError as e:
+            mean_price = 0
+        else:
+            self.mean_price.set(str(mean_price))
 
     def fake_data(self):
         x_this = self.x_price[-1] + 1
@@ -233,14 +265,14 @@ class Graph(tk.Frame):
         for order in this_fake_orders["buy"]:
             if price <= order[0]:
                 closed["filled_orders"]["buy"].append((order[0], order[1], x_this - .5))
-                self.parent.alt_balance.set(str(float(self.parent.alt_balance.get()) + order[1]))
-                self.parent.base_balance.set(str(float(self.parent.base_balance.get()) - (order[1]*order[0])))
+                self.coin_balance.set(str(float(self.coin_balance.get()) + order[1]))
+                self.base_balance.set(str(float(self.base_balance.get()) - (order[1]*order[0])))
                 self.fake_orders["sell"].append((order[0] + self.fake_spread, order[1], x_this - .5))
                 self.fake_orders["buy"].remove(order)
         for order in self.fake_orders["sell"]:
             if price >= order[0]:
-                self.parent.alt_balance.set(str(float(self.parent.alt_balance.get()) - order[1]))
-                self.parent.base_balance.set(str(float(self.parent.base_balance.get()) + (order[1] * order[0])))
+                self.coin_balance.set(str(float(self.coin_balance.get()) - order[1]))
+                self.base_balance.set(str(float(self.base_balance.get()) + (order[1] * order[0])))
                 closed["filled_orders"]["sell"].append((order[0], order[1], x_this - .5))
                 self.fake_orders["buy"].append((order[0] - self.fake_spread, order[1], x_this - .5))
                 self.fake_orders["sell"].remove(order)
@@ -371,6 +403,8 @@ class Graph(tk.Frame):
             if True:
                 self.canvas.draw()
 
+            self.calc_stats()
+
         except Exception as e:
             print(str(e))
             raise
@@ -386,21 +420,17 @@ class Graph(tk.Frame):
 
 
 class Bot(ttk.Frame):
-    def __init__(self,app, parent, exchange_config={}, stub = False, title="merkato", pair="", auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
+    def __init__(self,app, parent, exchange_config={}, stub = False, title="merkato", auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
         ttk.Frame.__init__(self, parent, style="app.TFrame", *args, **kwargs)
         self.app = app
         self.parent = parent
         self.stub = stub
-        self.alt_balance = tk.StringVar()
-        self.base_balance = tk.StringVar()
-        self.alt_balance.set("0")
-        self.base_balance.set("0")
         self.is_active = False
         # if background and not self.app.light:
         #     self.bg = tk.PhotoImage(file = background)
         #     self.bglabel = tk.Label(self, image=self.bg)
         #     self.bglabel.place(x=0, y=0, relwidth=1, relheight=1)
-        self.pair = pair # TODO: unused for now
+
         self.title = title
         self.heading = ttk.Label(self, text=self.title, style="heading.TLabel")
 
@@ -420,11 +450,6 @@ class Bot(ttk.Frame):
         self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="buy budget", startVal=0.0, choices="entry")
         self.execute = ttk.Button(self.exchange_frame, text = "Launch", cursor = "shuttle", command= self.start)
 
-        self.profit_base = tk.Label(self.exchange_frame, text="base profit:")
-        self.profit_base2 = tk.Label(self.exchange_frame, textvariable=self.base_balance)
-        self.profit_alt = tk.Label(self.exchange_frame, text="alt profit:")
-        self.profit_alt2 = tk.Label(self.exchange_frame, textvariable=self.alt_balance)
-
         self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.coin.grid(row=1, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.base.grid(row=2, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
@@ -433,10 +458,7 @@ class Bot(ttk.Frame):
         self.ask_budget.grid(row=5, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.bid_budget.grid(row=6, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.execute.grid(row=7, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
-        self.profit_base.grid(row=8, column=0, sticky=tk.NE, padx=(10,5), pady=(10,5))
-        self.profit_base2.grid(row=9, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
-        self.profit_alt.grid(row=10, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
-        self.profit_alt2.grid(row=11, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+
 
         # --------------------
         self.graph = Graph(self.app, self, stub=self.stub, **starting_stats)
