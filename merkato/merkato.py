@@ -134,26 +134,36 @@ class Merkato(object):
 
         scaling_factor = 0
         total_orders = floor(math.log(2, step)) # 277 for a step of 1.0025
-        index = 1
+        current_order = 1
 
         # Calculate scaling factor
-        while index < total_orders:
-            scaling_factor += 1/(step**index)
-            index += 1
+        while current_order < total_orders:
+            scaling_factor += 1/(step**current_order)
+            current_order += 1
 
-        index = 1
-        while index <= total_orders:
+        current_order = 1
+        amount = 0
+        while current_order <= total_orders:
             # Place orders in this loop
-            amount += total_amount/(scaling_factor * step**index)
-            index += 1
+            step_adjusted_factor = step**current_order
+            curernt_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
+            curernt_bid_price = start_price*step_adjusted_factor
+            amount += curernt_bid_amount
+            self.exchange.buy(curernt_bid_amount, curernt_bid_price, self.ticker)
+            current_order += 1
         print(amount)
 
     def distribute_asks(self, total_to_distribute, step):
         # 1. Get current price
         # 2. Call decaying_ask_ladder on that start price, with the given step,
         #    and half the total_to_distribute
+        current_price = 0
+        price = current_price + self.spread
+        self.decaying_ask_ladder(total_to_distribute/2, step, price)
         # 3. Call decaying_ask_ladder twice more, each time doubling the
         #    start_price, and halving the total_amount
+        self.decaying_ask_ladder(total_to_distribute/4, step, price * 2)
+        self.decaying_ask_ladder(total_to_distribute/8, step, price * 4)
         # 4. Store the remainder of total_to_distribute, as well as the final
         #    order placed in decaying_ask_ladder
         pass
