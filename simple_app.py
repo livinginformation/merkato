@@ -50,7 +50,7 @@ expected bot data format from merkato
 
 
 class App:
-
+    # adapted from notebook.py Copyright 2003, Iuri Wickert (iwickert yahoo.com)
     # initialization. receives the master widget
     # reference and the notebook orientation
     def __init__(self, master, side=tk.LEFT):
