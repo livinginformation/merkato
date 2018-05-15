@@ -147,10 +147,10 @@ class Merkato(object):
         while current_order <= total_orders:
             # Place orders in this loop
             step_adjusted_factor = step**current_order
-            curernt_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
-            curernt_bid_price = start_price*step_adjusted_factor
-            amount += curernt_bid_amount
-            self.exchange.buy(curernt_bid_amount, curernt_bid_price, self.ticker)
+            current_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
+            current_bid_price = start_price*step_adjusted_factor
+            amount += current_bid_amount
+            self.exchange.buy(current_bid_amount, current_bid_price, self.ticker)
             current_order += 1
         print(amount)
 
