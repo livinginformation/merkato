@@ -20,6 +20,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from operator import itemgetter
+from collections import OrderedDict
 import random
 import time
 
@@ -47,6 +48,83 @@ expected bot data format from merkato
 }
 """
 
+
+class App:
+    # adapted from notebook.py Copyright 2003, Iuri Wickert (iwickert yahoo.com)
+    # initialization. receives the master widget
+    # reference and the notebook orientation
+    def __init__(self, master, side=tk.LEFT):
+
+        self.active_fr = None
+        self.count = 0
+        self.choice = tk.IntVar(0)
+        self.master = master  # Bot
+
+        # allows the TOP and BOTTOM
+        # radiobuttons' positioning.
+        if side in (tk.TOP, tk.BOTTOM):
+            self.side = tk.LEFT
+        else:
+            self.side = tk.TOP
+
+        # creates notebook's frames structure
+        self.rb_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
+        self.rb_fr.pack(side=side, fill=tk.BOTH)
+        self.screen_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
+        self.screen_fr.pack(fill=tk.BOTH)
+
+        self.roster = OrderedDict() # Bot
+
+    # return a master frame reference for the external frames (screens)
+    def __call__(self):
+
+        return self.screen_fr
+
+    # add a new frame (screen) to the (bottom/left of the) notebook
+    def add_screen(self, fr, title, **kwargs):
+
+        b = tk.Radiobutton(self.rb_fr, text=title, indicatoron=0,
+                           variable=self.choice, value=self.count,
+                           command=lambda: self.display(fr), borderwidth=4, **kwargs)
+        b.pack(fill=tk.BOTH, side=self.side, pady=(10,0), padx=(5,5))
+
+        # ensures the first frame will be
+        # the first selected/enabled
+        if not self.active_fr:
+            fr.is_active = True  # Bot
+            fr.pack(fill=tk.BOTH, expand=1)
+            self.active_fr = fr
+
+        self.count += 1
+
+        self.roster[fr] = b   # Bot
+
+        # returns a reference to the newly created
+        # radiobutton (allowing its configuration/destruction)
+        return b
+
+    def kill_screen(self, fr):   # Bot \/\/\/
+        victim = self.roster.pop(fr)
+        victim.destroy()
+        for f, b in self.roster.items():
+            self.display(f)
+            break
+
+    # hides the former active frame and shows
+    # another one, keeping its reference
+    def display(self, fr):
+        self.active_fr.is_active = False # Bot
+        self.active_fr.forget()
+        fr.pack(fill=tk.BOTH, expand=1)
+        fr.is_active = True  # Bot
+        self.active_fr = fr
+
+    def update_frames(self):
+        print("--- app.update_frames ---")
+        for bot, button in self.roster.items():
+            bot.update()
+        self.master.after(10000, self.update_frames)
+
 class Graph(tk.Frame):
 
     def __init__(self, app, parent, delay = 1000, stub=False, price_x=[], price_y=[], bought_x=[], bought_y=[], sold_x=[], sold_y=[],
@@ -56,12 +134,10 @@ class Graph(tk.Frame):
         self.parent = parent
         self.stub = stub
         self.delay = delay
-        self.x_axis_window_size = 31  # todo: button for changing this
+        self.x_axis_window_size = 51  # todo: button for changing this
 
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
         self.label = ttk.Label(self, text=self.parent.title, style="app.TLabel")
-
-
 
         self.fig, self.ax = plt.subplots()
 
@@ -104,8 +180,11 @@ class Graph(tk.Frame):
 
         # --------------------------------------
         self.options_frame = tk.Frame(self,bg = "black")
-        self.x_axis_auto_scroll = MyWidget(self.app, self.options_frame, optional=True, handle="auto scroll")
-        self.x_axis_auto_scroll.grid(row=0, column=0, sticky=tk.NE)
+        self.x_axis_auto_scroll = MyWidget(self.app, self.options_frame, optional=True, handle="auto_scroll")
+        self.x_axis_window_size_input =  MyWidget(self.app, self.options_frame, choices="entry",ewidth=4, handle="width", startVal="31")
+
+        self.x_axis_auto_scroll.grid(row=0, column=0, sticky=tk.NW, padx=(5.0), pady=(5,0))
+        self.x_axis_window_size_input.grid(row=1, column=0, sticky=tk.NW, padx=(28.0), pady=(2,10))
         # --------------------------------------
 
         self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W, pady=(4,10))
@@ -192,7 +271,7 @@ class Graph(tk.Frame):
         # TODO: do something with date
         return date
 
-    def refresh(self, data):
+    def refresh(self, data, active=True):
         """
         :param data: a dictionary that comes from bot update method.  todo: agree on format for data
         :return:
@@ -270,9 +349,14 @@ class Graph(tk.Frame):
             # -----------------------------------------------------
 
             print("------->",self.x_axis_auto_scroll.optState.get())
+            try:
+                this_window_size = max(int(self.x_axis_window_size_input.get()[0]),5)
+            except:
+                this_window_size = 50
+
             if self.x_axis_auto_scroll.optState.get():
-                if len(self.x_price) > self.x_axis_window_size:
-                    self.ax.set_xlim(self.x_price[-1 * self.x_axis_window_size + 1], self.x_price[-1])
+                if len(self.x_price) > this_window_size:
+                    self.ax.set_xlim(self.x_price[-1 * this_window_size + 1], self.x_price[-1])
                     self.ax.autoscale(axis="y")
                 else:
                     self.ax.autoscale(axis="y")
@@ -284,15 +368,15 @@ class Graph(tk.Frame):
 
             self.ax.grid(color='gray', linestyle='--', linewidth=.5)
             self.ax.set_title(self.parent.title, fontsize=10)
-            self.canvas.draw()
-
-
+            if True:
+                self.canvas.draw()
 
         except Exception as e:
             print(str(e))
             raise
+
         finally:
-            if self.stub:
+            if False:
                 duration = time.time() - start
                 this_delay = int(max((self.delay - duration * 1000), 100))  # be at least 100 ms, assumes past behavior predicts future ;)
                 print("duration of graph refresh: ", duration)
@@ -302,7 +386,7 @@ class Graph(tk.Frame):
 
 
 class Bot(ttk.Frame):
-    def __init__(self,app, parent, exchange_config={}, stub = False, title = "merkato",pair="", auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
+    def __init__(self,app, parent, exchange_config={}, stub = False, title="merkato", pair="", auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
         ttk.Frame.__init__(self, parent, style="app.TFrame", *args, **kwargs)
         self.app = app
         self.parent = parent
@@ -311,6 +395,7 @@ class Bot(ttk.Frame):
         self.base_balance = tk.StringVar()
         self.alt_balance.set("0")
         self.base_balance.set("0")
+        self.is_active = False
         # if background and not self.app.light:
         #     self.bg = tk.PhotoImage(file = background)
         #     self.bglabel = tk.Label(self, image=self.bg)
@@ -321,6 +406,7 @@ class Bot(ttk.Frame):
 
         # merkato args
         #self.auth_frame = ttk.Frame(self, style="app.TFrame")
+        self.bot = None
 
         # --------------------
         self.exchange_frame = ttk.Frame(self, style="app.TFrame")
@@ -339,28 +425,34 @@ class Bot(ttk.Frame):
         self.profit_alt = tk.Label(self.exchange_frame, text="alt profit:")
         self.profit_alt2 = tk.Label(self.exchange_frame, textvariable=self.alt_balance)
 
-
-        self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
-        self.coin.grid(row=0, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
-        self.base.grid(row=1, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
-        self.public_key.grid(row=2, column=0, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
-        self.private_key.grid(row=2, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
-        self.ask_budget.grid(row=3, column=1,sticky=tk.NE, padx=(10,10), pady=(5,5))
-        self.bid_budget.grid(row=3, column=0,sticky=tk.NE, padx=(10,10), pady=(5,5))
-        self.execute.grid(row=4, column=1, sticky=tk.NE, padx=(10,10), pady=(15,5))
-        self.profit_base.grid(row=5, column=1, sticky=tk.NE, padx=(10,10), pady=(40,5))
-        self.profit_base2.grid(row=6, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
-        self.profit_alt.grid(row=7, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
-        self.profit_alt2.grid(row=8, column=1, sticky=tk.NE, padx=(10, 10), pady=(5, 5))
+        self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
+        self.coin.grid(row=1, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.base.grid(row=2, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.public_key.grid(row=3, column=0,  sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.private_key.grid(row=4, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.ask_budget.grid(row=5, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
+        self.bid_budget.grid(row=6, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
+        self.execute.grid(row=7, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
+        self.profit_base.grid(row=8, column=0, sticky=tk.NE, padx=(10,5), pady=(10,5))
+        self.profit_base2.grid(row=9, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.profit_alt.grid(row=10, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.profit_alt2.grid(row=11, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
 
         # --------------------
-        self.graph = Graph(self.app,self,stub=self.stub, **starting_stats)
+        self.graph = Graph(self.app, self, stub=self.stub, **starting_stats)
 
         self.graph.grid(row = 0, column=0, rowspan=3, padx=(5,10))
         #self.auth_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
         self.exchange_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
 
+    def update(self):
+        print("updating bot/graph")
+        if not self.stub:
+            context = self.bot.update_order_book()
+        else:
+            context = self.graph.fake_data()
 
+        self.graph.refresh(data=context, active=self.is_active)
 
     def start(self):
         for widget in [self.public_key, self.private_key, self.exchange_name,self.coin, self.base, self.ask_budget, self.bid_budget]:
@@ -557,20 +649,24 @@ if __name__ == "__main__":
     mystyle.configure("pass.TEntry", foreground="gray55", background="gray55", insertofftime=5000)
     root.option_add("*TCombobox*Listbox*selectBackground", "#D15101")
 
+    def fake_start():
+        return {"price_x" : [1,2,3,4,5,6,7,8,9,10, 11],
+                "price_y" : [250,250,240,240,250,255,250,240,240,250,250],
+                "bought_x" : [3,8,],
+                "bought_y" : [244,244,],
+                "sold_x" : [5.85,10],
+                "sold_y" : [253,253],
+                "x_lowest_sell_order" : [1,2,3,4,5,6,7,8,9,10],
+                "y_lowest_sell_order" : [253, 253, 253, 253, 253, 253, 253, 253, 253, 253, ],
+                "x_highest_buy_order" : [1,2,3,4,5,6,7,8,9,10],
+                "y_highest_buy_order" : [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
+                }
+    #test = Bot(root, root, stub = 1, title="Stub GUI (very raw)", starting_stats=fake_start())
+    #test.pack()
 
-    targs = {
-            "price_x" : [1,2,3,4,5,6,7,8,9,10, 11],
-            "price_y" : [250,250,240,240,250,255,250,240,240,250,250],
-            "bought_x" : [3,8,],
-            "bought_y" : [244,244,],
-            "sold_x" : [5.85,10],
-            "sold_y" : [253,253],
-            "x_lowest_sell_order" : [1,2,3,4,5,6,7,8,9,10],
-            "y_lowest_sell_order" : [253, 253, 253, 253, 253, 253, 253, 253, 253, 253, ],
-            "x_highest_buy_order" : [1,2,3,4,5,6,7,8,9,10],
-            "y_highest_buy_order" : [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
-            }
-    test = Bot(root, root, stub = 1, title="Stub GUI (very raw)", starting_stats=targs)
-    test.pack()
-
+    app = App(root, tk.RIGHT)
+    for i in range(6):
+        bot = Bot(root, app(), stub = 1, title="Stub GUI (very raw)", starting_stats=fake_start())
+        app.add_screen(bot, bot.title)
+    root.after(1000, app.update_frames)
     root.mainloop()
