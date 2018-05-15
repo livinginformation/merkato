@@ -5,6 +5,7 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER
 from merkato.utils.database_utils import update_merkato
+from math import floor
 
 DEBUG = True
 
