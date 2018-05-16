@@ -52,3 +52,31 @@ def translate_ticker(coin, base):
             return "BTC_XMR"
 
     raise NotImplementedError("Unknown pair: coin={}, base={}".format(coin, base))
+
+def create_order(user_id, amount, price):
+    return {
+        "user_id": user_id,
+        "amount": amount,
+        "price":price
+    }
+
+def add_resolved_order(order, resolved_orders, ticker):
+    user_id = order.user_id
+    resolved_order_amount = order.price / order.amount
+
+    user_is_not_in_orders = user_id not in resolved_orders
+    user_does_not_have_resolved_ticker = ticker not in  resolved_orders[user_id]
+
+    if user_is_not_in_orders:
+        user = create_user(user_id, resolved_order_amount)
+        resolved_orders[user_id] = user 
+    else if user_does_not_have_resolved_ticker:
+        resolved_orders[user_id][ticker] = resolved_order_amount
+    else:
+        resolved_orders[user_id][ticker] += resolved_order_amount
+
+def create_user(user_id, resolved_order_amount):
+    return {
+        "user_id": user_id,
+        "resolved_order_amount": resolved_order_amount
+    }
