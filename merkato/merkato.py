@@ -56,7 +56,11 @@ class Merkato(object):
 
 
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
-        # TODO: this is currently unused in merkato
+        # This function has been deprecated in favor of decaying_bid_ladder and
+        # distribute_bids. Having the ability to place a ladder within Merkato
+        # (independent of market making) may eventually be useful, but will require
+        # some reworking of this function (due to amount/price scaling).
+        #
         #  low_price, high_price, and increment are strings
         # total_btc is a float.
         #
@@ -146,7 +150,11 @@ class Merkato(object):
 
 
     def create_ask_ladder(self, total_amount, low_price, high_price, increment):
-        # TODO: this is currently unused in merkato
+        # This function has been deprecated in favor of decaying_ask_ladder and
+        # distribute_asks. Having the ability to place a ladder within Merkato
+        # (independent of market making) may eventually be useful, but will require
+        # some reworking of this function (due to amount/price scaling).
+        #
         #  low_price, high_price, and increment are all strings
         # total_amount is a float
         #
