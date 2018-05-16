@@ -187,7 +187,8 @@ class TuxExchange(ExchangeBase):
                          "coin": {"amount": response[self.coin],
                                   "name": self.coin},
                         }
-        return
+        
+        return pair_balances
 
 
     def get_my_trade_history(self, start=0, end=0):
