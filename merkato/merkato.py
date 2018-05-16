@@ -55,6 +55,60 @@ class Merkato(object):
             update_merkato(mutex_UUID, LAST_ORDER, response)
 
 
+    def decaying_bid_ladder(self, total_amount, step, start_price):
+        # Places an bid ladder from the start_price to 1/2 the start_price.
+        # The first order in the ladder is half the amount (in the base currency) of the last
+        # order in the ladder. The amount allocated at each step decays as
+        # orders are placed.
+        # Abandon all hope, ye who enter here. This function uses black magic (math).
+
+        scaling_factor = 0
+        total_orders = floor(math.log(2, step)) # 277 for a step of 1.0025
+        current_order = 1
+
+        # Calculate scaling factor
+        while current_order < total_orders:
+            scaling_factor += 1/(step**current_order)
+            current_order += 1
+
+        current_order = 1
+        amount = 0
+
+        while current_order <= total_orders:
+            step_adjusted_factor = step**current_order
+            current_ask_amount = total_amount/(scaling_factor / step_adjusted_factor) # This line is probably bugged, haven't thought about it too hard.
+            current_ask_price = start_price/step_adjusted_factor
+            amount += current_ask_amount
+
+            self.exchange.buy(current_ask_amount, current_ask_price)
+            current_order += 1
+
+        print(amount)
+
+
+    def distribute_bids(self, total_to_distribute, step):
+        # Allocates your market making balance on the bid side, in a way that
+        # will never be completely exhausted (run out).
+        # total_to_distribute is in the base currency (usually BTC)
+
+        # 1. Get current price
+        current_price = 0 # Query for this value
+        price = current_price + self.spread/2 # half the spread is on the sell side
+
+        # 2. Call decaying_bid_ladder on that start price, with the given step,
+        #    and half the total_to_distribute
+        self.decaying_bid_ladder(total_to_distribute/2, step, price)
+
+        # 3. Call decaying_bid_ladder twice more, each time halving the
+        #    start_price, and halving the total_amount
+        self.decaying_bid_ladder(total_to_distribute/4, step, price/2)
+        self.decaying_bid_ladder(total_to_distribute/8, step, price/4)
+
+        # 4. Store the remainder of total_to_distribute, as well as the final
+        #    order placed in decaying_bid_ladder
+        pass
+
+
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
         # This function has been deprecated in favor of decaying_bid_ladder and
         # distribute_bids. Having the ability to place a ladder within Merkato
@@ -129,7 +183,7 @@ class Merkato(object):
 
     def distribute_asks(self, total_to_distribute, step):
         # Allocates your market making balance on the ask side, in a way that
-        # it will never be completely exhausted (run out).
+        # will never be completely exhausted (run out).
 
         # 1. Get current price
         current_price = 0 # Query for this value
