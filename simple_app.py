@@ -138,9 +138,12 @@ class Graph(tk.Frame):
         self.coin_balance = tk.StringVar()
         self.base_balance = tk.StringVar()
         self.mean_price = tk.StringVar()
+        self.performance = tk.StringVar()
         self.coin_balance.set("0")
         self.base_balance.set("0")
         self.mean_price.set("0")
+        self.performance.set("0")
+
 
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
         self.label = ttk.Label(self, text=self.parent.title, style="app.TLabel")
@@ -199,6 +202,8 @@ class Graph(tk.Frame):
         self.profit_alt2 = ttk.Label(self.stats_frame, textvariable=self.coin_balance, style="app.TLabel")
         self.mean_price_lab = ttk.Label(self.stats_frame, text="\u03BC price:", style="app.TLabel")
         self.mean_price_lab2 = ttk.Label(self.stats_frame, textvariable=self.mean_price, style="app.TLabel")
+        self.performance_lab = ttk.Label(self.stats_frame, text="\u0394 %:", style="app.TLabel")
+        self.performance_lab2 = ttk.Label(self.stats_frame, textvariable=self.performance, style="app.TLabel")
 
         self.profit_base.grid(row=1, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.profit_base2.grid(row=1, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
@@ -206,6 +211,8 @@ class Graph(tk.Frame):
         self.profit_alt2.grid(row=0, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.mean_price_lab.grid(row=0, column=2, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.mean_price_lab2.grid(row=0, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.performance_lab.grid(row=1, column=2, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.performance_lab2.grid(row=1, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
 
         self.stats_frame.grid(row=0, column=2, rowspan=2, sticky=tk.NW, padx=(28.0), pady=(2,10))
         # --------------------------------------
@@ -233,12 +240,46 @@ class Graph(tk.Frame):
 
     def calc_stats(self):
         # self.coin_balance.set(str(float(self.coin_balance.get()) + order[1]))
+        base_cumulative = float(self.base_balance.get())
+        coin_cumulative = float(self.coin_balance.get())
+
+        selling_scenario = coin_cumulative < 0 and base_cumulative > 0
+        buying_scenario = coin_cumulative > 0 and base_cumulative < 0
+        zero_scenario = coin_cumulative == 0 and base_cumulative == 0
+        free_money_scenario = (coin_cumulative == 0 and base_cumulative > 0) or (coin_cumulative > 0 and base_cumulative == 0)
         try:
-            mean_price = float(self.base_balance.get()) / float(self.coin_balance.get())
+            mean_price = base_cumulative / coin_cumulative
         except ZeroDivisionError as e:
-            mean_price = 0
+            mean_price = "N/A"
+        except Exception as e:
+            MessageBox.showerror("calc_stats error", str(e))
+            return
         else:
-            self.mean_price.set(str(mean_price))
+            price_actual = float(self.y_price[-1])
+            diff = abs(1 - abs(mean_price / price_actual)) * 100
+
+        if free_money_scenario:
+            performance = "inf"
+            performance_string = "inf"
+        elif buying_scenario:
+            if price_actual > mean_price:
+                performance = diff
+
+            else:
+                performance = -1 * diff
+        elif selling_scenario:
+            if price_actual < mean_price:
+                performance = diff
+            else:
+                performance = -1 * diff
+        elif zero_scenario:
+            performance = 0.0
+
+        if type(performance) == float:
+            performance_string = "{0:.3f}".format(performance)
+
+        self.mean_price.set(str(mean_price))
+        self.performance.set(performance_string)
 
     def fake_data(self):
         x_this = self.x_price[-1] + 1
@@ -420,10 +461,11 @@ class Graph(tk.Frame):
 
 
 class Bot(ttk.Frame):
-    def __init__(self,app, parent, exchange_config={}, stub = False, title="merkato", auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
+    def __init__(self, app, parent, owner, exchange_config=None, stub = False, title="merkato", auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
         ttk.Frame.__init__(self, parent, style="app.TFrame", *args, **kwargs)
-        self.app = app
-        self.parent = parent
+        self.app = app # root
+        self.parent = parent # containing frame
+        self.owner = owner
         self.stub = stub
         self.is_active = False
         # if background and not self.app.light:
@@ -432,6 +474,8 @@ class Bot(ttk.Frame):
         #     self.bglabel.place(x=0, y=0, relwidth=1, relheight=1)
 
         self.title = title
+        self.title_var = tk.StringVar()
+        self.title_var.set("New Merkato")
         self.heading = ttk.Label(self, text=self.title, style="heading.TLabel")
 
         # merkato args
@@ -458,6 +502,9 @@ class Bot(ttk.Frame):
         self.ask_budget.grid(row=5, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.bid_budget.grid(row=6, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.execute.grid(row=7, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
+        # --------------------
+        self.util_frame = ttk.Frame(self, style="app.TFrame")
+        self.kill_button = ttk.Button(self.util_frame, text="Kill", cursor="shuttle", command=self.kill)
 
 
         # --------------------
@@ -466,6 +513,8 @@ class Bot(ttk.Frame):
         self.graph.grid(row = 0, column=0, rowspan=3, padx=(5,10))
         #self.auth_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
         self.exchange_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
+        self.util_frame.grid(row = 1, column=1, sticky=tk.SE, padx=(10,10), pady=(10,5))
+
 
     def update(self):
         print("updating bot/graph")
@@ -479,6 +528,11 @@ class Bot(ttk.Frame):
     def start(self):
         for widget in [self.public_key, self.private_key, self.exchange_name,self.coin, self.base, self.ask_budget, self.bid_budget]:
             print("{}:\t\t{}".format(widget.handle,widget.get()[0]))
+
+    def kill(self):
+        self._root().after(10, self.owner.kill_screen, self)
+
+
 
         # if not exchange_config:
         #     # get args via gui
@@ -688,7 +742,7 @@ if __name__ == "__main__":
 
     app = App(root, tk.RIGHT)
     for i in range(6):
-        bot = Bot(root, app(), stub = 1, title="Stub GUI (very raw)", starting_stats=fake_start())
-        app.add_screen(bot, bot.title)
+        bot = Bot(root, app(), app, stub = 1, title="Stub GUI (very raw)", starting_stats=fake_start())
+        app.add_screen(bot, "null", textvariable=bot.title_var)
     root.after(1000, app.update_frames)
     root.mainloop()
