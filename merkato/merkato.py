@@ -20,13 +20,13 @@ class Merkato(object):
         self.history =  self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
 
     # Make a second init for recovering a Merkato from the merkatos table here
-    
+
     def rebalance_orders(self, new_history, new_txes):
         # This function places a matching order for every new transaction since last run
         #
         # TODO: Modify so that the parent function only passes in the new transactions, don't
         # do the index check internally.
-        
+
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
         sold = []
@@ -54,41 +54,7 @@ class Merkato(object):
 
             update_merkato(mutex_UUID, LAST_ORDER, response)
 
-            
-    def create_bid_ladder_new(self, total_btc, low_price, high_price):
-        # TODO: BROKEN. Still fix up the float issues.
-        # All parameters should be strings.
 
-        # This gets the total range of the ladder in satoshis
-        order_range = float(high_price) - float(low_price)
-
-        # This was supposed to get the total number of orders we would be placing
-        increments = round(float(order_range)/float(increment))
-
-        # Divide the total btc by the total orders to get the btc per order
-        bid_amount = float(total_btc)/float(increments)
-
-        bid_price = Decimal(low_price)
-
-        # Sanity check. Do a check to make sure that we're limit only.
-        # This is also covered in the exchange interface, but having a second
-        # check here is warranted.
-        orders = self.exchange.get_all_orders()
-        lowest_ask = orders['asks'][0][0]
-
-        if float(high_price) >= float(lowest_ask):
-            print("Aborting: Bid ladder would make a market order.")
-            return
-
-        while bid_price <= float(high_price):
-            # 1. Calculate how much to buy
-            # 2. Buy that much
-            # 3. Increase bid_price by the percentage increment
-            # 4. Sleep for .3 seconds (to prevent API throttling)
-            # 5. No mutex operation is needed, the mutex operations only need to know
-            #    it's last known order to have been hit. This is initialization.
-        
-        
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
         # TODO: this is currently unused in merkato
         #  low_price, high_price, and increment are strings
@@ -144,67 +110,41 @@ class Merkato(object):
 
         current_order = 1
         amount = 0
+
         while current_order <= total_orders:
-            # Place orders in this loop
             step_adjusted_factor = step**current_order
-            current_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
-            current_bid_price = start_price*step_adjusted_factor
-            amount += current_bid_amount
-            self.exchange.buy(current_bid_amount, current_bid_price, self.ticker)
+            current_ask_amount = total_amount/(scaling_factor * step_adjusted_factor)
+            current_ask_price = start_price*step_adjusted_factor
+            amount += current_ask_amount
+
+            self.exchange.sell(current_ask_amount, current_ask_price)
             current_order += 1
+
         print(amount)
 
+
     def distribute_asks(self, total_to_distribute, step):
+        # Allocates your market making balance on the ask side, in a way that
+        # it will never be completely exhausted (run out).
+
         # 1. Get current price
+        current_price = 0 # Query for this value
+        price = current_price + self.spread/2 # half the spread is on the buy side
+
         # 2. Call decaying_ask_ladder on that start price, with the given step,
         #    and half the total_to_distribute
-        current_price = 0
-        price = current_price + self.spread
         self.decaying_ask_ladder(total_to_distribute/2, step, price)
+
         # 3. Call decaying_ask_ladder twice more, each time doubling the
         #    start_price, and halving the total_amount
         self.decaying_ask_ladder(total_to_distribute/4, step, price * 2)
         self.decaying_ask_ladder(total_to_distribute/8, step, price * 4)
+
         # 4. Store the remainder of total_to_distribute, as well as the final
         #    order placed in decaying_ask_ladder
         pass
 
 
-    def create_ask_ladder_new(self, total_amount, low_price, high_price):
-        # TODO: BROKEN. Still fix up the float issues.
-        # All parameters should be strings.
-
-        # This gets the total range of the ladder in satoshis
-        order_range = float(high_price) - float(low_price)
-
-        # This was supposed to get the total number of orders we would be placing
-        increments = float(order_range)/float(increment)
-
-        # Divide the total btc by the total orders to get the btc per order
-        ask_amount = float(total_amount)/float(increments)
-
-        ask_price = Decimal(low_price)
-
-        # Sanity check. Do a check to make sure that we're limit only.
-        # This is also covered in the exchange interface, but having a second
-        # check here is warranted.
-        highest_bid = self.exchange.get_highest_bid()
-
-        if ask_price <= float(highest_bid):
-            print("Aborting: Ask ladder would make a market order.")
-            return
-
-        while ask_price <= float(high_price):
-            # 1. Calculate how much to sell
-            # 2. Sell that much
-            # 3. Increase ask_price by the percentage increment
-            # 4. Sleep for .3 seconds (to prevent API throttling)
-            # 5. No mutex operation is needed, the mutex operations only need to know
-            #    it's last known order to have been hit. This is initialization.
-
-        pass
-    
-    
     def create_ask_ladder(self, total_amount, low_price, high_price, increment):
         # TODO: this is currently unused in merkato
         #  low_price, high_price, and increment are all strings
