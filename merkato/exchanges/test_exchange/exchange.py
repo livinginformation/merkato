@@ -5,20 +5,21 @@ import math
 import requests
 import time
 import urllib.parse
-from merkato.exchanges.test_exchange.utils import getQueryParameters, translate_ticker
+from merkato.exchanges.test_exchange.utils import apply_resolved_orders
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
+from merkato.exchanges.test_exchange.orderbook import Orderbook
+
 DEBUG = True
 
 class TestExchange(ExchangeBase):
-    def __init__(self, config, coin, base):
-        self.privatekey = config['privatekey']
-        self.publickey  = config['publickey']
-        self.limit_only = config['limit_only']
-        self.retries = 5
+    def __init__(self, config, coin, base, user_id):
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
+        self.orderbook = Orderbook()
+        self.user_id = user_id
+        self.user_accounts = {}
 
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
@@ -29,15 +30,8 @@ class TestExchange(ExchangeBase):
             print("-" * 10)
 
     def _sell(self, amount, ask,):
-        ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
-            :param amount: string
-            :param ask: float
-            :param ticker: string
-        '''
-        query_parameters = getQueryParameters(SELL, self.ticker, amount, ask)
-        response = self._create_signed_request(query_parameters)
-
-        return response['success']
+        newAccounts = self.orderbook.addAsk(self.user_id, amount, ask)
+        apply_resolved_orders(self.user_accounts, newAccounts)
 
     def sell(self, amount, ask):
         attempt = 0
@@ -49,29 +43,15 @@ class TestExchange(ExchangeBase):
                     self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, ticker, ask, "tux"))
                     return False # Maybe needs failed or something
             try:
-                success = self._sell(amount, ask)
-                if success:
-                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
-                    return success
-                else:
-                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, "tux", attempt, self.retries))
-                    attempt += 1
-                    time.sleep(5)
+                self._sell(amount, ask)
             except Exception as e:  # TODO - too broad exception handling
                 self.debug(0, "sell", "ERROR", e)
                 break
 
                 
     def _buy(self, amount, bid):
-        ''' Places a buy for a number of an asset at the indicated price (0.00000503 for example)
-            :param amount: string
-            :param bid: float
-            :param ticker: string
-        '''
-        query_parameters = getQueryParameters(BUY, self.ticker, amount, bid)
-        response = self._create_signed_request(query_parameters)
-
-        return response['success']
+        newAccounts = self.orderbook.addBid(self.user_id, amount, bid)
+        apply_resolved_orders(self.user_accounts, newAccounts)
 
     def buy(self, amount, bid):
         attempt = 0
@@ -84,18 +64,13 @@ class TestExchange(ExchangeBase):
                     self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
                     return False # Maybe needs failed or something
             try:
-                success = self._buy(amount, bid)
-                if success:
-                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, "tux"))
-                    return success
-                else:
-                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
-                    attempt += 1
-                    time.sleep(5)
+                self._buy(amount, bid)
             except Exception as e:  # TODO - too broad exception handling
                 self.debug(0, "buy", "ERROR", e)
                 return False
 
+    def get_order_history(self, user_id):
+        pass
 
     def get_all_orders(self):
         ''' Returns all open orders for the ticker XYZ (not BTC_XYZ)
@@ -188,43 +163,11 @@ class TestExchange(ExchangeBase):
         
         return pair_balances
 
-
-    def get_my_trade_history(self, start=0, end=0):
-        if DEBUG: print("--> Getting trade history...")
-        
-        query_parameters = { "method": "getmytradehistory" }
-        
-        if start != 0 and end != 0:
-            query_parameters["start"] = start
-            query_parameters["end"] = end 
-
-        return self._create_signed_request(query_parameters)
-
     def get_last_trade_price(self):
         return self.get_ticker(self.ticker)["last"]
 
     def get_lowest_ask(self):
-        return self.get_ticker(self.ticker)["lowestAsk"]
+        return self.orderbook.asks[0]
 
     def get_highest_bid(self):
-        return self.get_ticker(self.ticker)["highestBid"]
-
-    def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
-        ''' Signs provided query parameters with API keys
-            :param query_parameters: dictionary
-            :param nonce: int
-            :param timeout: int
-        '''
-
-        # return response needing signature, nonce created if not supplied
-        if not nonce:
-            nonce = int(time.time() * 1000)
-
-        query_parameters.update({"nonce": nonce})
-        post = urllib.parse.urlencode(query_parameters)
-
-        signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-        head = {'Key': self.publickey, 'Sign': signature}
-
-        response = requests.post(self.url, data=query_parameters, headers=head, timeout=timeout).json()
-        return response
+        return self.orderbook.bids[0]
