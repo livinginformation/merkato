@@ -1,6 +1,6 @@
 
 #from exchange import Exchange
-#from merkato import Merkato
+from merkato.merkato import Merkato
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -211,7 +211,7 @@ class Graph(tk.Frame):
         self.profit_base2.grid(row=1, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.profit_alt.grid(row=0, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.profit_alt2.grid(row=0, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
-        self.mean_price_lab.grid(row=0, column=2, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.mean_price_lab.grid(row=0, column=2, sticky=tk.NE, padx=(40, 5), pady=(5, 5))
         self.mean_price_lab2.grid(row=0, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.performance_lab.grid(row=1, column=2, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.performance_lab2.grid(row=1, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
