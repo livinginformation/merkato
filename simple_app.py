@@ -1,6 +1,6 @@
 
 #from exchange import Exchange
-#from merkato import Merkato
+from merkato.merkato import Merkato
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -120,10 +120,12 @@ class App:
         self.active_fr = fr
 
     def update_frames(self):
-        print("--- app.update_frames ---")
         for bot, button in self.roster.items():
-            bot.update()
-        self.master.after(10000, self.update_frames)
+            try:
+                bot.update()
+            except Exception as e:
+                print(str(e)) # TODO: email user
+        self.master.after(1000, self.update_frames)
 
 class Graph(tk.Frame):
 
@@ -209,7 +211,7 @@ class Graph(tk.Frame):
         self.profit_base2.grid(row=1, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.profit_alt.grid(row=0, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.profit_alt2.grid(row=0, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
-        self.mean_price_lab.grid(row=0, column=2, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.mean_price_lab.grid(row=0, column=2, sticky=tk.NE, padx=(40, 5), pady=(5, 5))
         self.mean_price_lab2.grid(row=0, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.performance_lab.grid(row=1, column=2, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.performance_lab2.grid(row=1, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
@@ -246,9 +248,9 @@ class Graph(tk.Frame):
         selling_scenario = coin_cumulative < 0 and base_cumulative > 0
         buying_scenario = coin_cumulative > 0 and base_cumulative < 0
         zero_scenario = coin_cumulative == 0 and base_cumulative == 0
-        free_money_scenario = (coin_cumulative == 0 and base_cumulative > 0) or (coin_cumulative > 0 and base_cumulative == 0)
+        free_money_scenario = (coin_cumulative >= 0 and base_cumulative > 0) or (coin_cumulative > 0 and base_cumulative >= 0)
         try:
-            mean_price = base_cumulative / coin_cumulative
+            mean_price = abs(base_cumulative / coin_cumulative)
         except ZeroDivisionError as e:
             mean_price = "N/A"
         except Exception as e:
@@ -256,19 +258,18 @@ class Graph(tk.Frame):
             return
         else:
             price_actual = float(self.y_price[-1])
-            diff = abs(1 - abs(mean_price / price_actual)) * 100
+            diff = (abs(mean_price - price_actual) / price_actual) * 100
 
         if free_money_scenario:
             performance = "inf"
             performance_string = "inf"
         elif buying_scenario:
-            if price_actual > mean_price:
+            if price_actual >= mean_price:
                 performance = diff
-
             else:
                 performance = -1 * diff
         elif selling_scenario:
-            if price_actual < mean_price:
+            if price_actual <= mean_price:
                 performance = diff
             else:
                 performance = -1 * diff
@@ -481,6 +482,8 @@ class Bot(ttk.Frame):
         # merkato args
         #self.auth_frame = ttk.Frame(self, style="app.TFrame")
         self.bot = None
+        if exchange_config:
+            self.bot = Merkato(**exchange_config) #presumably from db
 
         # --------------------
         self.exchange_frame = ttk.Frame(self, style="app.TFrame")
@@ -492,6 +495,7 @@ class Bot(ttk.Frame):
 
         self.ask_budget = MyWidget(self.app, self.exchange_frame, handle="sell budget", startVal=0.0, choices="entry")
         self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="buy budget", startVal=0.0, choices="entry")
+        self.spread = MyWidget(self.app, self.exchange_frame, handle="spread [%]", startVal=5.0, choices="entry")
         self.execute = ttk.Button(self.exchange_frame, text = "Launch", cursor = "shuttle", command= self.start)
 
         self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
@@ -501,10 +505,12 @@ class Bot(ttk.Frame):
         self.private_key.grid(row=4, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.ask_budget.grid(row=5, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.bid_budget.grid(row=6, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
-        self.execute.grid(row=7, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
+        self.spread.grid(row=7, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.execute.grid(row=8, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
         # --------------------
         self.util_frame = ttk.Frame(self, style="app.TFrame")
         self.kill_button = ttk.Button(self.util_frame, text="Kill", cursor="shuttle", command=self.kill)
+        self.kill_button.grid(row=0, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
 
 
         # --------------------
@@ -512,24 +518,50 @@ class Bot(ttk.Frame):
 
         self.graph.grid(row = 0, column=0, rowspan=3, padx=(5,10))
         #self.auth_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
-        self.exchange_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
+        if not self.bot:
+            self.exchange_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
         self.util_frame.grid(row = 1, column=1, sticky=tk.SE, padx=(10,10), pady=(10,5))
 
 
     def update(self):
-        print("updating bot/graph")
-        if not self.stub:
-            context = self.bot.update_order_book()
-        else:
-            context = self.graph.fake_data()
 
-        self.graph.refresh(data=context, active=self.is_active)
+        if self.stub or self.bot: # then we have something to update
+            print("updating bot/graph")
+            if not self.stub:
+                context = self.bot.update_order_book()
+            else:
+                context = self.graph.fake_data()
+
+            self.graph.refresh(data=context, active=self.is_active)
 
     def start(self):
         for widget in [self.public_key, self.private_key, self.exchange_name,self.coin, self.base, self.ask_budget, self.bid_budget]:
             print("{}:\t\t{}".format(widget.handle,widget.get()[0]))
+        config = {}
+        self.merk_args = {}
+
+        config['privatekey'] = self.private_key.get()[0]
+        config['publickey']  = self.public_key.get()[0]
+        config['limit_only'] = True
+
+        self.merk_args["configuration"] = config
+        self.merk_args["exchange"] = self.exchange_name.get()[0]
+        self.merk_args["coin"] = self.coin.get()[0]
+        self.merk_args["base"] = self.base.get()[0]
+        self.merk_args["ask_budget"] = self.ask_budget.get()[0]
+        self.merk_args["bid_budget"] = self.bid_budget.get()[0]
+        self.merk_args["spread"] = self.spread.get()[0]
+
+        if not self.stub:
+            try:
+                self.bot = Merkato(**self.merk_args)
+            except Exception as e:
+                MessageBox.showerror("Bot Start Fail", str(e))
+            else:
+                self.exchange_frame.destroy()
 
     def kill(self):
+        # TODO: tell self.bot to cancel all orders and delete merkato from DB
         self._root().after(10, self.owner.kill_screen, self)
 
 

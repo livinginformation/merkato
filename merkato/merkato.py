@@ -11,7 +11,7 @@ DEBUG = True
 
 
 class Merkato(object):
-    def __init__(self, configuration, coin, base, spread, ask_budget, bid_budget):
+    def __init__(self, configuration, exchange, coin, base, spread, ask_budget, bid_budget):
         self.exchange = TuxExchange(configuration, coin=coin, base=base)
         self.mutex_UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
         self.distribution_strategy = 1
