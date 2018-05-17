@@ -123,7 +123,7 @@ class App:
         print("--- app.update_frames ---")
         for bot, button in self.roster.items():
             bot.update()
-        self.master.after(10000, self.update_frames)
+        self.master.after(1000, self.update_frames)
 
 class Graph(tk.Frame):
 
@@ -246,9 +246,9 @@ class Graph(tk.Frame):
         selling_scenario = coin_cumulative < 0 and base_cumulative > 0
         buying_scenario = coin_cumulative > 0 and base_cumulative < 0
         zero_scenario = coin_cumulative == 0 and base_cumulative == 0
-        free_money_scenario = (coin_cumulative == 0 and base_cumulative > 0) or (coin_cumulative > 0 and base_cumulative == 0)
+        free_money_scenario = (coin_cumulative >= 0 and base_cumulative > 0) or (coin_cumulative > 0 and base_cumulative >= 0)
         try:
-            mean_price = base_cumulative / coin_cumulative
+            mean_price = abs(base_cumulative / coin_cumulative)
         except ZeroDivisionError as e:
             mean_price = "N/A"
         except Exception as e:
@@ -256,19 +256,18 @@ class Graph(tk.Frame):
             return
         else:
             price_actual = float(self.y_price[-1])
-            diff = abs(1 - abs(mean_price / price_actual)) * 100
+            diff = (abs(mean_price - price_actual) / price_actual) * 100
 
         if free_money_scenario:
             performance = "inf"
             performance_string = "inf"
         elif buying_scenario:
-            if price_actual > mean_price:
+            if price_actual >= mean_price:
                 performance = diff
-
             else:
                 performance = -1 * diff
         elif selling_scenario:
-            if price_actual < mean_price:
+            if price_actual <= mean_price:
                 performance = diff
             else:
                 performance = -1 * diff
