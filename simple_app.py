@@ -68,7 +68,8 @@ class App:
             self.side = tk.TOP
 
         # creates notebook's frames structure
-        self.rb_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
+        #self.rb_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
+        self.rb_fr = VSFrame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.rb_fr.pack(side=side, fill=tk.BOTH)
         self.screen_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.screen_fr.pack(fill=tk.BOTH)
@@ -83,10 +84,10 @@ class App:
     # add a new frame (screen) to the (bottom/left of the) notebook
     def add_screen(self, fr, title, **kwargs):
 
-        b = tk.Radiobutton(self.rb_fr, text=title, indicatoron=0,
+        b = tk.Radiobutton(self.rb_fr.interior, text=title, indicatoron=0,
                            variable=self.choice, value=self.count,
                            command=lambda: self.display(fr), borderwidth=4, **kwargs)
-        b.pack(fill=tk.BOTH, side=self.side, pady=(10,0), padx=(5,5))
+        b.pack(fill=tk.BOTH, side=self.side, pady=(13,0), padx=(6,6))
 
         # ensures the first frame will be
         # the first selected/enabled
@@ -113,19 +114,38 @@ class App:
     # hides the former active frame and shows
     # another one, keeping its reference
     def display(self, fr):
-        self.active_fr.is_active = False # Bot
+        try:
+            self.roster[self.active_fr].config(fg="black")
+        except:
+            pass
+        self.active_fr.is_active = False  # Bot
         self.active_fr.forget()
         fr.pack(fill=tk.BOTH, expand=1)
         fr.is_active = True  # Bot
         self.active_fr = fr
+        self.roster[self.active_fr].config(fg="black")
 
     def update_frames(self):
         for bot, button in self.roster.items():
             try:
                 bot.update()
+                try:
+                    if bot.graph.performance.get() == "inf":
+                        button.config(fg="green")
+                    elif float(bot.graph.performance.get()) > 0:
+                        button.config(fg="green")
+                    elif float(bot.graph.performance.get()) < 0:
+                        button.config(fg="red")
+                    else:
+                        button.config(fg="black")
+                except Exception as e:
+                    print(str(e))
+                    button.config(fg="orange")
             except Exception as e:
+                button.config(bg="red")
+                button.config(fg="black")
                 print(str(e)) # TODO: email user
-        self.master.after(1000, self.update_frames)
+        self.master.after(15000, self.update_frames)
 
 class Graph(tk.Frame):
 
@@ -148,7 +168,7 @@ class Graph(tk.Frame):
 
 
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
-        self.label = ttk.Label(self, text=self.parent.title, style="app.TLabel")
+        self.label = ttk.Label(self, text=self.parent.name, style="app.TLabel")
 
         self.fig, self.ax = plt.subplots()
 
@@ -181,7 +201,7 @@ class Graph(tk.Frame):
 
         self.canvas = FigureCanvasTkAgg(self.fig, self)
         self.ax.grid(color='gray', linestyle='--', linewidth=.5)
-        self.ax.set_title(self.parent.title, fontsize=10)
+        self.ax.set_title(self.parent.name, fontsize=10)
         self.canvas.draw()
 
 
@@ -279,14 +299,19 @@ class Graph(tk.Frame):
         if type(performance) == float:
             performance_string = "{0:.3f}".format(performance)
 
-        self.mean_price.set(str(mean_price))
+        if type(mean_price) == float:
+            mean_price_string = "{0:.5g}".format(mean_price)
+        else:
+            mean_price_string = mean_price
+
+        self.mean_price.set(mean_price_string)
         self.performance.set(performance_string)
 
     def fake_data(self):
         x_this = self.x_price[-1] + 1
         old_price = self.y_price[-1]
 
-        price = old_price + random.randint(-5, 5)
+        price = abs(old_price + random.randint(-5, 5))
 
 
 
@@ -441,7 +466,7 @@ class Graph(tk.Frame):
                 self.ax.set_ylim(self.y_low, self.y_hi)
 
             self.ax.grid(color='gray', linestyle='--', linewidth=.5)
-            self.ax.set_title(self.parent.title, fontsize=10)
+            self.ax.set_title(self.parent.name, fontsize=10)
             if True:
                 self.canvas.draw()
 
@@ -458,31 +483,27 @@ class Graph(tk.Frame):
                 print("duration of graph refresh: ", duration)
                 self._root().after(this_delay, self.refresh, self.fake_data())
 
-
-
-
 class Bot(ttk.Frame):
-    def __init__(self, app, parent, owner, exchange_config=None, stub = False, title="merkato", auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
+    def __init__(self, app, parent, owner, exchange_config=None, stub = False, auto_start = False, starting_stats = {"price_x": []}, *args, **kwargs):
         ttk.Frame.__init__(self, parent, style="app.TFrame", *args, **kwargs)
         self.app = app # root
         self.parent = parent # containing frame
         self.owner = owner
         self.stub = stub
         self.is_active = False
-        # if background and not self.app.light:
-        #     self.bg = tk.PhotoImage(file = background)
-        #     self.bglabel = tk.Label(self, image=self.bg)
-        #     self.bglabel.place(x=0, y=0, relwidth=1, relheight=1)
-
-        self.title = title
         self.title_var = tk.StringVar()
-        self.title_var.set("New Merkato")
-        self.heading = ttk.Label(self, text=self.title, style="heading.TLabel")
+        if self.stub:
+            self.name = "XMR/BTC   Kraken"
+        else:
+            self.name = "New Merkato"
+        self.title_var.set(str(self.name))
 
         # merkato args
         #self.auth_frame = ttk.Frame(self, style="app.TFrame")
         self.bot = None
         if exchange_config:
+            self.name = exchange_config["coin"] + "/" + exchange_config["base"] + "    " + exchange_config["exchange"]
+            self.title_var.set(str(self.name))
             self.bot = Merkato(**exchange_config) #presumably from db
 
         # --------------------
@@ -511,8 +532,6 @@ class Bot(ttk.Frame):
         self.util_frame = ttk.Frame(self, style="app.TFrame")
         self.kill_button = ttk.Button(self.util_frame, text="Kill", cursor="shuttle", command=self.kill)
         self.kill_button.grid(row=0, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
-
-
         # --------------------
         self.graph = Graph(self.app, self, stub=self.stub, **starting_stats)
 
@@ -533,6 +552,10 @@ class Bot(ttk.Frame):
                 context = self.graph.fake_data()
 
             self.graph.refresh(data=context, active=self.is_active)
+            try:
+                self.title_var.set(str(self.name) + "   " + str(self.graph.performance.get()))
+            except:
+                self.title_var.set(str(self.name) + "   err")
 
     def start(self):
         for widget in [self.public_key, self.private_key, self.exchange_name,self.coin, self.base, self.ask_budget, self.bid_budget]:
@@ -551,6 +574,9 @@ class Bot(ttk.Frame):
         self.merk_args["ask_budget"] = self.ask_budget.get()[0]
         self.merk_args["bid_budget"] = self.bid_budget.get()[0]
         self.merk_args["spread"] = self.spread.get()[0]
+
+        self.name = str(self.merk_args["coin"]) + "/" + str(self.merk_args["base"]) + "    " + str(self.merk_args["exchange"])
+        self.title_var.set(str(self.name))
 
         if not self.stub:
             try:
@@ -602,6 +628,54 @@ class Bot(ttk.Frame):
         #self.amount.grid(row=2,column=1,sticky = tk.E,pady= (10,0))
         self.qr.grid(row=3,column=0,sticky = tk.W+tk.E,padx=(140,0),pady= (15,80),columnspan = 3)
         """
+
+class VSFrame(tk.Frame):
+    """A pure Tkinter scrollable frame that actually works!
+    * Use the 'interior' attribute to place widgets inside the scrollable frame
+    * Construct and pack/place/grid normally
+    * This frame only allows vertical scrolling
+
+    """
+    def __init__(self, parent,fheight = 200, width = 330, *args, **kw):
+        self.parent = parent
+        tk.Frame.__init__(self, parent, *args, **kw)
+
+        # create a canvas object and a vertical scrollbar for scrolling it
+        vscrollbar = tk.Scrollbar(self, orient=tk.VERTICAL)
+
+        vscrollbar.pack(fill=tk.Y, side=tk.RIGHT, expand=tk.FALSE)
+        canvas = tk.Canvas(self, bd=0, highlightthickness=0,
+                        yscrollcommand=vscrollbar.set,height = fheight, width=width, background = "black")
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.TRUE)
+        vscrollbar.config(command=canvas.yview)
+
+        # reset the view
+        canvas.xview_moveto(0)
+        canvas.yview_moveto(0)
+
+        # create a frame inside the canvas which will be scrolled with it
+        self.interior = interior = tk.Frame(canvas,bg = "black",width = width)
+        interior_id = canvas.create_window(0, 0, window=interior,
+                                           anchor=tk.NW)
+
+
+        # track changes to the canvas and frame width and sync them,
+        # also updating the scrollbar
+        def _configure_interior(event):
+            # update the scrollbars to match the size of the inner frame
+            size = (interior.winfo_reqwidth(), interior.winfo_reqheight())
+            canvas.config(scrollregion="0 0 %s %s" % size)
+            if interior.winfo_reqwidth() != canvas.winfo_width():
+                # update the canvas's width to fit the inner frame
+                canvas.config(width=interior.winfo_reqwidth())
+        interior.bind('<Configure>', _configure_interior)
+
+        def _configure_canvas(event):
+            if interior.winfo_reqwidth() != canvas.winfo_width():
+                # update the inner frame's width to fill the canvas
+                canvas.itemconfigure(interior_id, width=canvas.winfo_width())
+        canvas.bind('<Configure>', _configure_canvas)
+
 
 class MyWidget(ttk.Frame):
     def __init__(self,app, parent,handle,choices=None,subs = {}, is_password = False,startVal = None,allowEntry = False,static = False,
@@ -773,8 +847,8 @@ if __name__ == "__main__":
     #test.pack()
 
     app = App(root, tk.RIGHT)
-    for i in range(6):
-        bot = Bot(root, app(), app, stub = 1, title="Stub GUI (very raw)", starting_stats=fake_start())
-        app.add_screen(bot, "null", textvariable=bot.title_var)
+    for i in range(20):
+        bot = Bot(root, app(), app, stub=1, starting_stats=fake_start())
+        app.add_screen(bot, "null", textvariable=bot.title_var,  bg="gray75", fg="black", selectcolor="lightblue",)
     root.after(1000, app.update_frames)
     root.mainloop()
