@@ -38,7 +38,3 @@ def apply_resolved_orders(current_accounts, resolved_orders):
                 user[ticker] = resolved_orders[user_id][ticker]
             else:
                 user[ticker] += resolved_orders[user_id][ticker]
-
-
-
-
