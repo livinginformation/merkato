@@ -4,22 +4,25 @@ import json
 import math
 import requests
 import time
+import random
 import urllib.parse
 from merkato.exchanges.test_exchange.utils import apply_resolved_orders
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 from merkato.exchanges.test_exchange.orderbook import Orderbook
-
+from merkato.exchanges.text_exchange.constants import test_asks, test_bids
 DEBUG = True
 
 class TestExchange(ExchangeBase):
-    def __init__(self, config, coin, base, user_id):
+    def __init__(self, config, coin, base, user_id, accounts = {}, price = 1):
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
-        self.orderbook = Orderbook()
+        self.orderbook = Orderbook(test_bids, test_asks)
         self.user_id = user_id
-        self.user_accounts = {}
+        self.user_accounts = accounts
+        self.order_history = []
+        self.price = price
 
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
@@ -30,8 +33,7 @@ class TestExchange(ExchangeBase):
             print("-" * 10)
 
     def _sell(self, amount, ask,):
-        newAccounts = self.orderbook.addAsk(self.user_id, amount, ask)
-        apply_resolved_orders(self.user_accounts, newAccounts)
+        self.orderbook.addAsk(self.user_id, amount, ask)
 
     def sell(self, amount, ask):
         attempt = 0
@@ -50,8 +52,7 @@ class TestExchange(ExchangeBase):
 
                 
     def _buy(self, amount, bid):
-        newAccounts = self.orderbook.addBid(self.user_id, amount, bid)
-        apply_resolved_orders(self.user_accounts, newAccounts)
+        self.orderbook.addBid(self.user_id, amount, bid)
 
     def buy(self, amount, bid):
         attempt = 0
@@ -70,7 +71,16 @@ class TestExchange(ExchangeBase):
                 return False
 
     def get_order_history(self, user_id):
-        pass
+        return self.order_history
+
+    def generate_fake_data():
+        positive_or_negative = [-.2, .2]
+        while True:
+            self.price += random.choice(positive_or_negative)
+            new_order = self.orderbook.generate_fake_orders(self.price)
+            apply_resolved_orders(self.user_accounts, new_order)
+            self.order_history.append(new_order)
+            time.sleep(2)
 
     def get_all_orders(self):
         ''' Returns all open orders for the ticker XYZ (not BTC_XYZ)
