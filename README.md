@@ -11,7 +11,7 @@ See [requirements.txt](https://github.com/livinginformation/merkato/blob/master/
 Install all dependencies.
 For Python2
 ```
- pip install -r requirements.txt
+Currently broken, if someone wants to support it, go for it.
 ```
 For Python3
 ```
