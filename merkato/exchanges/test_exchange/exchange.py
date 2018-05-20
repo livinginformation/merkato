@@ -73,7 +73,7 @@ class TestExchange(ExchangeBase):
     def get_order_history(self, user_id):
         return self.order_history
 
-    def generate_fake_data():
+    def generate_fake_data(self, delta_range=[-3,3]):
         positive_or_negative = [-.2, .2]
         self.price = abs(self.price * (1 + random.randint(*delta_range) / 100))  # percent walk of price, never < 0
         new_orders = self.orderbook.generate_fake_orders(self.price)
@@ -103,6 +103,8 @@ class TestExchange(ExchangeBase):
 
         return self._create_signed_request(query_parameters)
 
+    def get_my_trade_history(self):
+        return filter(lambda order: order["user_id"] == self.user_id, self.order_history)
 
     def cancel_order(self, order_id):
         ''' Cancels the order with the specified order ID
