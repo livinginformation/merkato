@@ -75,12 +75,12 @@ class TestExchange(ExchangeBase):
 
     def generate_fake_data():
         positive_or_negative = [-.2, .2]
-        while True:
-            self.price += random.choice(positive_or_negative)
-            new_order = self.orderbook.generate_fake_orders(self.price)
-            apply_resolved_orders(self.user_accounts, new_order)
-            self.order_history.append(new_order)
-            time.sleep(2)
+        self.price = abs(self.price * (1 + random.randint(*delta_range) / 100))  # percent walk of price, never < 0
+        new_orders = self.orderbook.generate_fake_orders(self.price)
+        no_new_orders = bool(new_orders)
+        if no_new_orders == False:
+            apply_resolved_orders(self.user_accounts, new_orders)
+            self.order_history.append(new_orders)
 
     def get_all_orders(self):
         ''' Returns all open orders for the ticker XYZ (not BTC_XYZ)
