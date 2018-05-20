@@ -8,7 +8,7 @@ class Orderbook:
         self.bid_ticker = 'XMR'
         self.ask_ticker = 'BTC'
     
-  def addBid(userID, amount, price):
+  def addBid(self, userID, amount, price):
     is_market_order = price > self.asks[0].price
     order = create_order(userID, amount, price)
     self.bids.append(order)
@@ -16,7 +16,7 @@ class Orderbook:
     if is_market_order:
         return self.resolve_market_order()
     
-  def addAsk(userID, amount, price):
+  def addAsk(self, userID, amount, price):
     # create ask
     order = create_order(userID, amount, price)
     # push ask
@@ -25,26 +25,28 @@ class Orderbook:
     self.asks = sorted(self.asks, key=lambda ask: ask["price"])
 
     
-  def resolve_market_order(type):
+  def resolve_market_order(self, type, price):
     resolved_orders = {}
     highest_bid = self.bids[0]
-    lowest_ask = self.bids[0]
+    lowest_ask = self.asks[0]
 
     if type == ASK:
-        self.asks.pop(0)
-        add_resolved_order(lowest_ask, resolved_orders, self.bid_ticker)
-        lowest_ask = self.asks[0]
+        while lowest_ask < price:
+            self.asks.pop(0)
+            add_resolved_order(lowest_ask, resolved_orders, self.bid_ticker)
+            lowest_ask = self.asks[0]
     else:
-        self.bids.pop(0)
-        add_resolved_order(highest_bid, resolved_orders, self.ask_ticker)
-        highest_bid = self.bids[0]
+        while highest_bid > price:
+            self.bids.pop(0)
+            add_resolved_order(highest_bid, resolved_orders, self.ask_ticker)
+            highest_bid = self.bids[0]
     return resolved_orders
 
-def generate_fake_orders(price):
+def generate_fake_orders(self, price):
     is_bid_market_order = price < self.bids[0].price
     is_ask_market_order = price > self.asks[0].price
 
     if(is_ask_market_order):
-        return self.resolve_market_order(ASK)
+        return self.resolve_market_order(ASK, price)
     elif(is_bid_market_order):
-        return self.resolve_market_order(BID)
+        return self.resolve_market_order(BID, price)

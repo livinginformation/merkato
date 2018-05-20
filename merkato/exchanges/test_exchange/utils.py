@@ -15,7 +15,7 @@ def add_resolved_order(order, resolved_orders, ticker):
     if user_is_not_in_orders:
         user = create_user(user_id, resolved_order_amount)
         resolved_orders[user_id] = user 
-    else if user_does_not_have_resolved_ticker:
+    elif user_does_not_have_resolved_ticker:
         resolved_orders[user_id][ticker] = resolved_order_amount
     else:
         resolved_orders[user_id][ticker] += resolved_order_amount
