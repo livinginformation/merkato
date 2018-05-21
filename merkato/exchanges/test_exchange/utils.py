@@ -5,26 +5,27 @@ def create_order(user_id, amount, price):
         "price":price
     }
 
-def add_resolved_order(order, resolved_orders, ticker):
+def add_resolved_order(order, resolved_orders, add_ticker, sell_ticker):
     user_id = order.user_id
-    resolved_order_amount = order.price / order.amount
+    resolved_order_amount_to_add = order.price / order.amount
 
     user_is_not_in_orders = user_id not in resolved_orders
-    user_does_not_have_resolved_ticker = ticker not in  resolved_orders[user_id]
+    user_does_not_have_resolved_add_ticker = add_ticker not in  resolved_orders[user_id]
+    user_does_not_have_resolved_sell_ticker = sell_ticker not in resolved_orders[user_id]
 
     if user_is_not_in_orders:
-        user = create_user(user_id, resolved_order_amount)
-        resolved_orders[user_id] = user 
-    elif user_does_not_have_resolved_ticker:
-        resolved_orders[user_id][ticker] = resolved_order_amount
-    else:
-        resolved_orders[user_id][ticker] += resolved_order_amount
+        resolved_orders[user_id] = {} 
 
-def create_user(user_id, resolved_order_amount):
-    return {
-        "user_id": user_id,
-        "resolved_order_amount": resolved_order_amount
-    }
+    if user_does_not_have_resolved_add_ticker:
+        resolved_orders[user_id][add_ticker] = resolved_order_amount_to_add
+    else:
+        resolved_orders[user_id][add_ticker] += resolved_order_amount_to_add
+    
+    if user_does_not_have_resolved_sell_ticker:
+        resolved_orders[user_id][sell_ticker] = -order.amount
+    else:
+        resolved_orders[user_id][sell_ticker] -= order.amount
+    
 
 def apply_resolved_orders(current_accounts, resolved_orders):
     for user_id, user in resolved_orders.items():
