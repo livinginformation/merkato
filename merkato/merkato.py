@@ -343,7 +343,8 @@ class Merkato(object):
                    "filled_orders": {"buy": bought,
                                      "sell": sold},
                    "open_orders": self.exchange.get_my_open_orders(),
-                   "balances": self.exchange.get_balances()
+                   "balances": self.exchange.get_balances(),
+                   "orderbook": self.exchange.get_all_orders()
                    }
         return context
 
