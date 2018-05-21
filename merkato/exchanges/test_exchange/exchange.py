@@ -116,60 +116,31 @@ class TestExchange(ExchangeBase):
 
 
     def get_ticker(self, coin=None):
-        ''' Returns the current ticker data for the given coin. If no coin is given,
-            it will return the ticker data for all coins.
-            :param coin: string (of the format BTC_XYZ)
+        ''' Returns the current ticker data for the target coin.
         '''
-
-        params = { "method": "getticker" }
-        response = requests.get(self.url, params=params)
-
-        if not coin:
-            return json.loads(response.text)
-
-        response_json = json.loads(response.text)
-        print(response_json[coin])
-        return response_json[coin]
+        # Broken, TODO
+        return ""
 
 
-    def get_24h_volume(self, coin=None):
-        ''' Returns the 24 hour volume for the given coin.
-            If no coin is given, returns for all coins.
-            :param coin string (of the form BTC_XYZ where XYZ is the alt ticker)
+    def get_24h_volume(self):
+        ''' Returns the 24 hour volume for the target coin.
         '''
-
-        params = { "method": "get24hvolume" }
-        response = requests.get(self.url, params=params)
-
-        if not coin:
-            return json.loads(response.text)
-
-        response_json = json.loads(response.text)
-        print(response_json[coin])
-        return response_json[coin]
+        # Broken, TODO
+        return ""
 
 
     def get_balances(self):
-        # also keys go unused, also coin...
-        tuxParams = {"method" : "getmybalances"}
+        # broken, TODO        
+        return ""
 
-        response = self._create_signed_request(tuxParams)
-        print(response)
-        for crypto in response:
-                print(str(crypto) + ": " + str(response[crypto]))
-        pair_balances = {"base" : {"amount": response[self.base],
-                                   "name" : self.base},
-                         "coin": {"amount": response[self.coin],
-                                  "name": self.coin},
-                        }
-        
-        return pair_balances
 
     def get_last_trade_price(self):
-        return self.get_ticker(self.ticker)["last"]
+        return self.get_ticker()
+
 
     def get_lowest_ask(self):
         return self.orderbook.asks[0]
+
 
     def get_highest_bid(self):
         return self.orderbook.bids[0]
