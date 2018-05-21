@@ -98,9 +98,12 @@ class TestExchange(ExchangeBase):
 
     def get_my_open_orders(self):
         ''' Returns all open orders for the authenticated user '''
-        # Broken atm
-        return ""
-
+        my_bids = filter(lambda order: order["user_id"] == self.user_id, self.orderbook.bids)
+        my_asks = filter(lambda order: order["user_id"] == self.user_id, self.orderbook.aks)
+        return {
+            "asks": my_asks,
+            "bids": my_bids
+        }
 
     def get_my_trade_history(self):
         return filter(lambda order: order["user_id"] == self.user_id, self.order_history)
