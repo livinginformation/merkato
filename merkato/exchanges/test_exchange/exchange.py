@@ -13,6 +13,7 @@ from merkato.exchanges.test_exchange.orderbook import Orderbook
 from merkato.exchanges.text_exchange.constants import test_asks, test_bids
 DEBUG = True
 
+
 class TestExchange(ExchangeBase):
     def __init__(self, config, coin, base, user_id, accounts = {}, price = 1):
         self.coin = coin
@@ -24,6 +25,7 @@ class TestExchange(ExchangeBase):
         self.order_history = []
         self.price = price
 
+
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
             print("-"*10)
@@ -32,8 +34,10 @@ class TestExchange(ExchangeBase):
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
+
     def _sell(self, amount, ask,):
         self.orderbook.addAsk(self.user_id, amount, ask)
+
 
     def sell(self, amount, ask):
         attempt = 0
@@ -54,6 +58,7 @@ class TestExchange(ExchangeBase):
     def _buy(self, amount, bid):
         self.orderbook.addBid(self.user_id, amount, bid)
 
+
     def buy(self, amount, bid):
         attempt = 0
         while attempt < self.retries:
@@ -70,8 +75,10 @@ class TestExchange(ExchangeBase):
                 self.debug(0, "buy", "ERROR", e)
                 return False
 
+
     def get_order_history(self, user_id):
         return self.order_history
+
 
     def generate_fake_data(self, delta_range=[-3,3]):
         positive_or_negative = [-.2, .2]
@@ -81,6 +88,7 @@ class TestExchange(ExchangeBase):
         if no_new_orders == False:
             apply_resolved_orders(self.user_accounts, new_orders)
             self.order_history.append(new_orders)
+
 
     def get_all_orders(self):
         ''' Returns all open orders for the current pair
@@ -93,29 +101,20 @@ class TestExchange(ExchangeBase):
         # Broken atm
         return ""
 
+
     def get_my_trade_history(self):
         return filter(lambda order: order["user_id"] == self.user_id, self.order_history)
+
 
     def cancel_order(self, order_id):
         ''' Cancels the order with the specified order ID
             :param order_id: string
         '''
-
-        if DEBUG: print("--> Cancelling order...")
-
-        if order_id == 0:
-            if DEBUG: print("---> Order ID was zero, so bailing on function...")
-            return False
-
-        query_parameters = {
-            "method": "cancelorder",
-            "market": self.base,
-            "id": order_id
-        }
-        return self._create_signed_request(query_parameters)
+        # Broken, TODO
+        return ""
 
 
-    def get_ticker(self, coin=None):
+    def get_ticker(self):
         ''' Returns the current ticker data for the target coin.
         '''
         # Broken, TODO
