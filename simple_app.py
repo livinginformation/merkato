@@ -145,7 +145,7 @@ class App:
                 button.config(bg="red")
                 button.config(fg="black")
                 print(str(e)) # TODO: email user
-        self.master.after(15000, self.update_frames)
+        self.master.after(10000, self.update_frames)
 
 class Graph(tk.Frame):
 
@@ -676,6 +676,14 @@ class VSFrame(tk.Frame):
                 canvas.itemconfigure(interior_id, width=canvas.winfo_width())
         canvas.bind('<Configure>', _configure_canvas)
 
+        def _scrollwheel(event):
+            print("caught scroll",event.widget)
+            return 'break'
+
+        vscrollbar.bind('<Button-4>', _scrollwheel)
+        vscrollbar.bind('<Button-5>', _scrollwheel)
+
+
 
 class MyWidget(ttk.Frame):
     def __init__(self,app, parent,handle,choices=None,subs = {}, is_password = False,startVal = None,allowEntry = False,static = False,
@@ -812,6 +820,12 @@ class MyWidget(ttk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
+
+
+    def _scrollwheel(event):
+        print("caught scroll", event.widget)
+        return 'break'
+
     root.title("merkato (pre-release)")
     mystyle = ttk.Style()
     mystyle.theme_use('clam')  # ('clam', 'alt', 'default', 'classic')
