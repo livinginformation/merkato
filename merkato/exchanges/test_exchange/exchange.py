@@ -90,10 +90,8 @@ class TestExchange(ExchangeBase):
 
     def get_my_open_orders(self):
         ''' Returns all open orders for the authenticated user '''
-
-        query_parameters = { "method": "getmyopenorders" }
-
-        return self._create_signed_request(query_parameters)
+        # Broken atm
+        return
 
     def get_my_trade_history(self):
         return filter(lambda order: order["user_id"] == self.user_id, self.order_history)
