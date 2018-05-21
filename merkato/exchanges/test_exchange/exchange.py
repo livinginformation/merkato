@@ -83,17 +83,9 @@ class TestExchange(ExchangeBase):
             self.order_history.append(new_orders)
 
     def get_all_orders(self):
-        ''' Returns all open orders for the ticker XYZ (not BTC_XYZ)
-            :param coin: string
+        ''' Returns all open orders for the current pair
         '''
-        # TODO: Accept BTC_XYZ by stripping BTC_ if it exists
-
-        params = {"method": "getorders", "coin": self.coin}
-        response = requests.get(self.url, params=params)
-
-        response_json = json.loads(response.text)
-        if DEBUG: print(response_json)
-        return response_json
+        return self.orderbook # We need to decide on the format this returns.
 
 
     def get_my_open_orders(self):
