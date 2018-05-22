@@ -11,7 +11,6 @@ from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 from merkato.exchanges.test_exchange.orderbook import Orderbook
 from merkato.exchanges.text_exchange.constants import test_asks, test_bids
-DEBUG = True
 
 
 class TestExchange(ExchangeBase):
