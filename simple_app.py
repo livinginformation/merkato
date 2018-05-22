@@ -64,6 +64,7 @@ class App:
         # radiobuttons' positioning.
         if side in (tk.TOP, tk.BOTTOM):
             self.side = tk.LEFT
+
         else:
             self.side = tk.TOP
 
@@ -71,9 +72,13 @@ class App:
         #self.rb_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.rb_fr = VSFrame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.rb_fr.pack(side=side, fill=tk.BOTH)
-        self.screen_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
+        self.screen_fr = tk.Frame(master, 
+            borderwidth=2, 
+            relief=tk.RIDGE, 
+            bg="black"
+        )
+        
         self.screen_fr.pack(fill=tk.BOTH)
-
         self.roster = OrderedDict() # Bot
 
     # return a master frame reference for the external frames (screens)
@@ -84,9 +89,15 @@ class App:
     # add a new frame (screen) to the (bottom/left of the) notebook
     def add_screen(self, fr, title, **kwargs):
 
-        b = tk.Radiobutton(self.rb_fr.interior, text=title, indicatoron=0,
-                           variable=self.choice, value=self.count,
-                           command=lambda: self.display(fr), borderwidth=4, **kwargs)
+        b = tk.Radiobutton(self.rb_fr.interior, 
+            text=title, 
+            indicatoron=0,
+            variable=self.choice, 
+            value=self.count,
+            command=lambda: self.display(fr), 
+            borderwidth=4, 
+            **kwargs)
+           
         b.pack(fill=tk.BOTH, side=self.side, pady=(13,0), padx=(6,6))
 
         # ensures the first frame will be
@@ -149,8 +160,22 @@ class App:
 
 class Graph(tk.Frame):
 
-    def __init__(self, app, parent, delay = 1000, stub=False, price_x=[], price_y=[], bought_x=[], bought_y=[], sold_x=[], sold_y=[],
-                 x_lowest_sell_order=[], y_lowest_sell_order=[], x_highest_buy_order=[], y_highest_buy_order=[]):
+    def __init__(self, 
+        app, 
+        parent, 
+        delay = 1000, 
+        stub=False, 
+        price_x=[], 
+        price_y=[], 
+        bought_x=[], 
+        bought_y=[], 
+        sold_x=[], 
+        sold_y=[],
+        x_lowest_sell_order=[],
+        y_lowest_sell_order=[],
+        x_highest_buy_order=[],
+        y_highest_buy_order=[]
+    ):
         tk.Frame.__init__(self, parent, bg="black")
         self.app = app
         self.parent = parent
@@ -179,20 +204,36 @@ class Graph(tk.Frame):
 
         self.x_bought = bought_x
         self.y_bought = bought_y
-        self.boughtScatter = self.ax.scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
+        self.boughtScatter = self.ax.scatter(self.x_bought,
+            self.y_bought, 
+            color="lime", 
+            marker="P", 
+            s=100
+        )
 
         self.x_sold = sold_x
         self.y_sold = sold_y
-        self.scatter_sold = self.ax.scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
+        self.scatter_sold = self.ax.scatter(self.x_sold,
+            self.y_sold,
+            color="salmon",
+            marker="D",
+            s=100
+        )
 
         self.x_lowest_sell_order = x_lowest_sell_order
         self.y_lowest_sell_order = y_lowest_sell_order
-        self.line_lowest_sell_order = Line2D(self.x_lowest_sell_order, self.y_lowest_sell_order, color="red")
+        self.line_lowest_sell_order = Line2D(self.x_lowest_sell_order, 
+            self.y_lowest_sell_order, 
+            color="red"
+        )
         self.ax.add_line(self.line_lowest_sell_order)
 
         self.x_highest_buy_order = x_highest_buy_order
         self.y_highest_buy_order = y_highest_buy_order
-        self.line_highest_buy_order = Line2D(self.x_highest_buy_order, self.y_highest_buy_order, color="green")
+        self.line_highest_buy_order = Line2D(self.x_highest_buy_order, 
+            self.y_highest_buy_order, 
+            color="green"
+        )
         self.ax.add_line(self.line_highest_buy_order)
 
         plt.tight_layout()
@@ -838,11 +879,25 @@ if __name__ == "__main__":
     mystyle.configure("heading.TLabel", foreground="white", background="black",
                       font=('Liberation Mono', '36', 'normal'))  # "#4C4C4C")
     mystyle.configure("app.TFrame", foreground="gray55", background="black")  # "#4C4C4C",)
-    mystyle.configure("app.TButton", foreground="gray55", background="#D15101", activeforeground="#F2681C")  # F2681C
-    mystyle.configure("app.TCheckbutton", foreground="gray55", background="black")  # "#4C4C4C")
-    mystyle.configure("app.TCombobox", background="#F2681C", selectbackground="#D15101")  # postoffset = (0,0,500,0))
+    mystyle.configure("app.TButton",
+        foreground="gray55", 
+        background="#D15101", 
+        activeforeground="#F2681C"
+    )  # F2681C
+    mystyle.configure("app.TCheckbutton", 
+        foreground="gray55",
+        background="black"
+    )  # "#4C4C4C")
+    mystyle.configure("app.TCombobox", 
+        background="#F2681C", 
+        selectbackground="#D15101"
+    )  # postoffset = (0,0,500,0))
     mystyle.configure("app.TEntry", foreground="black", background="gray55")
-    mystyle.configure("pass.TEntry", foreground="gray55", background="gray55", insertofftime=5000)
+    mystyle.configure("pass.TEntry",
+        foreground="gray55", 
+        background="gray55",
+        insertofftime=5000
+    )
     root.option_add("*TCombobox*Listbox*selectBackground", "#D15101")
 
     def fake_start():
@@ -863,6 +918,12 @@ if __name__ == "__main__":
     app = App(root, tk.RIGHT)
     for i in range(20):
         bot = Bot(root, app(), app, stub=1, starting_stats=fake_start())
-        app.add_screen(bot, "null", textvariable=bot.title_var,  bg="gray75", fg="black", selectcolor="lightblue",)
+        app.add_screen(bot,
+            "null", 
+            textvariable=bot.title_var,
+            bg="gray75",
+            fg="black",
+            selectcolor="lightblue"
+        )
     root.after(1000, app.update_frames)
     root.mainloop()
