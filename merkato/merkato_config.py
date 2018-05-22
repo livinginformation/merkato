@@ -4,6 +4,7 @@ import json
 import os.path
 from merkato.utils import write_to_file, update_config_with_credentials, get_exchange, get_config_selection
 from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table
+from merkato.exchanges.tux_exchange.utils import validate_credentials
 
 def load_config():
     # Loads an existing configuration file
@@ -31,6 +32,10 @@ def create_config():
             config['exchange'] = 'tux'
 
             update_config_with_credentials(config)
+            credentials_are_invalid = validate_credentials(config)
+            while credentials_are_invalid:
+                config = update_config_with_credentials(config)
+                credentials_are_invalid = validate_credentials(config)
             insert_config_into_exchanges(config)
             return config
 
