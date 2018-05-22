@@ -8,7 +8,7 @@ import urllib.parse
 from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
-DEBUG = True
+
 
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
@@ -173,7 +173,8 @@ class TuxExchange(ExchangeBase):
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
-        print(response_json[coin])
+        self.debug(10, "get_ticker", response_json[coin])
+
         return response_json[coin]
 
 
@@ -190,7 +191,8 @@ class TuxExchange(ExchangeBase):
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
-        print(response_json[coin])
+        self.debug(10, "get_24h_volume", response_json[coin])
+
         return response_json[coin]
 
 
@@ -202,9 +204,8 @@ class TuxExchange(ExchangeBase):
         tuxParams = {"method" : "getmybalances"}
 
         response = self._create_signed_request(tuxParams)
-        print(response)
-        for crypto in response:
-                print(str(crypto) + ": " + str(response[crypto]))
+        self.debug(10, "get_balances", response)
+
         pair_balances = {"base" : {"amount": response[self.base],
                                    "name" : self.base},
                          "coin": {"amount": response[self.coin],
