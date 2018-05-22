@@ -1,14 +1,34 @@
+import urllib.parse
+import hmac
+import requests
+
 def getQueryParameters(type, ticker, amount, price):
     formatted_amount = "{:.8f}".format(amount)
     formatted_price = "{:.8f}".format(price)
+    formatted_method = "{:.8f}".format(type)
+    formatted_coin = "{:.8f}".format(ticker)
     return {
-        "method": type,
-        "market": "BTC",
-        "coin": ticker,
+        "method": formatted_method,
+        "market": "{:.8f}".format("BTC"),
+        "coin": formatted_coin,
         "amount": formatted_amount,
         "price": formatted_price
     }
 
+def validate_credentials(config):
+    query_parameters = { "method": "getmyopenorders" }
+    nonce = int(time.time() * 1000)
+    timeout=15
+
+    query_parameters.update({"nonce": nonce})
+    post = urllib.parse.urlencode(query_parameters)
+
+
+    signature = hmac.new(config['privatekey'].encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+    head = {'Key': config['publickey'], 'Sign': signature}
+
+    request = requests.post(self.url, data=query_parameters, headers=head, timeout=timeout).json()
+    return request.status_code == 200
 
 def translate_ticker(coin, base):
     if base == "BTC":
