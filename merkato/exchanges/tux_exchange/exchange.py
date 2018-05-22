@@ -22,13 +22,17 @@ class TuxExchange(ExchangeBase):
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
 
+
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
             print("-"*10)
             print("{}---> {}:".format(level, header))
+
             for arg in args:
                 print("\t\t" + repr(arg))
+
             print("-" * 10)
+
 
     def _sell(self, amount, ask,):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
@@ -41,29 +45,35 @@ class TuxExchange(ExchangeBase):
 
         return response['success']
 
+
     def sell(self, amount, ask):
         attempt = 0
         while attempt < self.retries:
             if self.limit_only:
                 # Get current highest bid on the orderbook
                 # If ask price is lower than the highest bid, return.
+
                 if self.get_highest_bid() > ask:
                     self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, ticker, ask, "tux"))
                     return False # Maybe needs failed or something
+
             try:
                 success = self._sell(amount, ask)
+
                 if success:
                     self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
                     return success
+
                 else:
                     self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
+
             except Exception as e:  # TODO - too broad exception handling
                 self.debug(0, "sell", "ERROR", e)
                 break
 
-                
+
     def _buy(self, amount, bid):
         ''' Places a buy for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
@@ -75,25 +85,32 @@ class TuxExchange(ExchangeBase):
 
         return response['success']
 
+
     def buy(self, amount, bid):
         attempt = 0
+
         while attempt < self.retries:
             if self.limit_only:
                 # Get current lowest ask on the orderbook
                 # If bid price is higher than the lowest ask, return.
+
                 if self.get_lowest_ask() < bid:
-                    
+
                     self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
                     return False # Maybe needs failed or something
+
             try:
                 success = self._buy(amount, bid)
+
                 if success:
                     self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, "tux"))
                     return success
+
                 else:
                     self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
+
             except Exception as e:  # TODO - too broad exception handling
                 self.debug(0, "buy", "ERROR", e)
                 return False
@@ -109,7 +126,8 @@ class TuxExchange(ExchangeBase):
         response = requests.get(self.url, params=params)
 
         response_json = json.loads(response.text)
-        if DEBUG: print(response_json)
+        self.debug(10, "get_all_orders", response.text)
+
         return response_json
 
 
@@ -126,10 +144,12 @@ class TuxExchange(ExchangeBase):
             :param order_id: string
         '''
 
-        if DEBUG: print("--> Cancelling order...")
+        self.debug(10, "cancel_order","---> cancelling order")
+
 
         if order_id == 0:
-            if DEBUG: print("---> Order ID was zero, so bailing on function...")
+            self.debug(3, "cancel_order","---> Order ID was zero, bailing")
+
             return False
 
         query_parameters = {
@@ -175,6 +195,9 @@ class TuxExchange(ExchangeBase):
 
 
     def get_balances(self):
+        ''' TODO Function Definition
+        '''
+
         # also keys go unused, also coin...
         tuxParams = {"method" : "getmybalances"}
 
@@ -187,29 +210,41 @@ class TuxExchange(ExchangeBase):
                          "coin": {"amount": response[self.coin],
                                   "name": self.coin},
                         }
-        
+
         return pair_balances
 
 
     def get_my_trade_history(self, start=0, end=0):
-        if DEBUG: print("--> Getting trade history...")
-        
+        ''' TODO Function Definition
+        '''
+        self.debug(10, "get_my_trade_history","---> Getting trade history...")
+
         query_parameters = { "method": "getmytradehistory" }
-        
+
         if start != 0 and end != 0:
             query_parameters["start"] = start
-            query_parameters["end"] = end 
+            query_parameters["end"] = end
 
         return self._create_signed_request(query_parameters)
 
+
     def get_last_trade_price(self):
+        ''' TODO Function Definition
+        '''
         return self.get_ticker(self.ticker)["last"]
 
+
     def get_lowest_ask(self):
+        ''' TODO Function Definition
+        '''
         return self.get_ticker(self.ticker)["lowestAsk"]
 
+
     def get_highest_bid(self):
+        ''' TODO Function Definition
+        '''
         return self.get_ticker(self.ticker)["highestBid"]
+
 
     def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
         ''' Signs provided query parameters with API keys
