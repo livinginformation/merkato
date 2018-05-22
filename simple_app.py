@@ -323,7 +323,7 @@ class Graph(tk.Frame):
 
         self.profit_base.grid(row=1, 
             column = 0, 
-            ticky = tk.NE, 
+            sticky = tk.NE, 
             padx=(10, 5), pady=(5, 5)
         )
         self.profit_base2.grid(row=1, 
