@@ -8,7 +8,7 @@ def create_merkatos_table():
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS merkatos
-                    (exchange text, exchange_pair text, pair text, spread text, profit_limit integer, last_order text)''')
+                    (exchange text, exchange_pair text, pair text, spread text, profit_limit integer, last_order text, reserved_balance float, ask_budget float, bid_budget float)''')
         c.execute('''CREATE UNIQUE INDEX id_exchange_pair ON merkatos (exchange_pair)''')
         conn.commit()
         conn.close()
@@ -27,7 +27,7 @@ def no_merkatos_table_exists():
         return number_of_mutex_tables == 0
 
 
-def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', pair='BTC_ETH', spread='.1', profit_limit=10, last_order=''):
+def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', pair='BTC_ETH', spread='.1', profit_limit=10, last_order='', reserved_balance=0, ask_budget=0, bid_budget=0):
     try:
         conn = sqlite3.connect('merkato.db')
     except Exception as e:
@@ -35,8 +35,8 @@ def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', pair='BTC_ETH', spread=
     finally:
         c = conn.cursor()
         c.execute("""INSERT INTO merkatos 
-                    (exchange, exchange_pair, pair, spread, profit_limit, last_order) VALUES (?,?,?,?,?,?)""", 
-                    (exchange, exchange_pair, pair, spread, profit_limit, last_order))
+                    (exchange, exchange_pair, pair, spread, profit_limit, last_order, reserved_balance, ask_budget, bid_budget) VALUES (?,?,?,?,?,?,?,?,?)""", 
+                    (exchange, exchange_pair, pair, spread, profit_limit, last_order, reserved_balance, ask_budget, bid_budget))
         conn.commit()
         conn.close()
 
