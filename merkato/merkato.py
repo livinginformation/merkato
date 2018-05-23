@@ -17,8 +17,10 @@ class Merkato(object):
         self.distribution_strategy = 1
         self.spread = spread # i.e '15
         # Create ladders from the bid and ask bidget here
-        self.history =  self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
-
+        self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
+        self.base_allocation = ask_budget
+        self.alternative_allocation = bid_budget
+        self.reserved_balance = 0
     # Make a second init for recovering a Merkato from the merkatos table here
 
     def rebalance_orders(self, new_history, new_txes):

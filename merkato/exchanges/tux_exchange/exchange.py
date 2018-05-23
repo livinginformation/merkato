@@ -21,7 +21,7 @@ class TuxExchange(ExchangeBase):
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
-
+        self.name = 'tux'
 
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
