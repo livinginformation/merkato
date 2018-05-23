@@ -4,7 +4,7 @@ import json
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, ASK_BUDGET, BID_BUDGET
-from merkato.utils.database_utils import update_merkato
+from merkato.utils.database_utils import update_merkato, get_all_merkatos_from_exchange
 from math import floor
 
 DEBUG = True
@@ -392,3 +392,32 @@ class Merkato(object):
                 self.exchange.cancel_order(order_id)
                 if DEBUG: print("price: " + str(price))
                 time.sleep(.3)
+
+    def calculate_total_budget_on_merkatos():
+        merkatos = get_all_merkatos_from_exchange(self.exchange.name)
+        budgets_object = {}
+        for merkato in merkatos:
+            current_merkato = merkatos[merkato]
+            pair = current_merkato['pair'].split("_")
+            ask_asset = pair[0]
+            bid_asset = pair[1]
+            bid_budget = current_merkato["bid_budget"]
+            ask_budget = current_merkato["ask_budget"]
+            if ask_asset not in budgets_object:
+                budgets_object[ask_asset] = 0
+            if bid_asset not in budgets_object:
+                budgets_object[bid_asset] = 0
+            budgets_object[ask_asset] += ask_budget
+            budgets_object[bid_asset] += bid_budget
+        return budgets_object
+    
+    def calculate_balances_budgets_difference():
+        balances = self.exchange.get_balances()
+        budgets = calculate_total_budget_on_merkatos()
+        unbudgeted_balances = {}
+        for ticker in budgets:
+            current_budget = budgets[ticker]
+            current_balance = balances[ticker]['balance']
+            unbudgeted_balances[ticker] = current_balance - current_budget
+        return unbudgeted_balances
+

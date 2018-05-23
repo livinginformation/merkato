@@ -154,3 +154,16 @@ def no_exchanges_table_exists():
         conn.commit()
         conn.close()
         return number_of_exchange_tables == 0
+
+def get_all_merkatos_from_exchange(exchange):
+    try:
+        conn = sqlite3.connect('merkato.db')
+    except Exception as e:
+        print(str(e))
+    finally:
+        c = conn.cursor()
+        c.execute('''SELECT * FROM merkatos WHERE exchange={}'''.format(exchange))
+        merkatos = c.fetchall()
+        conn.commit()
+        conn.close()
+        return merkatos
