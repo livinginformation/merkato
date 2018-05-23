@@ -3,7 +3,7 @@ import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
-from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER
+from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, ASK_BUDGET, BID_BUDGET
 from merkato.utils.database_utils import update_merkato
 from math import floor
 
@@ -18,9 +18,10 @@ class Merkato(object):
         self.spread = spread # i.e '15
         # Create ladders from the bid and ask bidget here
         self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
-        self.base_allocation = ask_budget
-        self.alternative_allocation = bid_budget
-        self.reserved_balance = 0
+        self.ask_budget = ask_budget
+        self.bid_budget = bid_budget
+        self.bid_reserved_balance = 0
+        self.ask_reserved_balance = 0
     # Make a second init for recovering a Merkato from the merkatos table here
 
     def rebalance_orders(self, new_history, new_txes):
@@ -54,7 +55,7 @@ class Merkato(object):
                 self.exchange.sell(amount, sell_price)
                 response = self.exchange.buy(amount, buy_price)
 
-            update_merkato(mutex_UUID, LAST_ORDER, response)
+            update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
 
     def decaying_bid_ladder(self, total_amount, step, start_price):
@@ -308,7 +309,7 @@ class Merkato(object):
                 if new_id == 0:
                     print("Something went wrong.")
                     return 1
-                else: update_merkato(mutex_UUID, LAST_ORDER, new_id)
+                else: update_merkato(self.mutex_UUID, LAST_ORDER, new_id)
 
                 if DEBUG: print("consolidation successful")
                 existing_order['order_id'] = new_id
@@ -355,7 +356,33 @@ class Merkato(object):
         # replace old settings with new settings
         pass
 
+    def add_reserve(self):
+        pass
+    
+    def remove_reserve(self, amount, type_of_reserve):
+        invalid_reserve_reduction = amount > self.reserved_balance:
+        if amount > self.reserved_balance:
+            return False
+        if type_of_reserve == ASK_RESERVE:
+            new_amount = self.ask_reserved_balance - amount
+            self.ask_reserved_balance = new_amount
+            self.remove_budget(amount, ASK_BUDGET)
+        else:
+            new_amount = self.bid_reserved_balance - amount
+            self.bid_reserved_balance = new_amount
+            self.remove_budget(amount, BID_BUDGET)
+        update_merkato(self.mutex_UUID, type_of_reserve, new_amount)
+        return True
 
+    def remove_budget(self, amount, type_of_budget):
+        if type_of_reserve == ASK_RESERVE:
+            new_amount = self.ask_budget - amount
+            self.ask_budget = new_amount
+        else:
+            new_amount = self.bid_budget - amount
+            self.bid_budget = new_amount
+        update_merkato(self.mutex_UUID, type_of_budget, new_amount)
+        
     def cancelrange(self, start, end):
         open_orders = self.exchange.get_my_open_orders()
         for order in open_orders:
