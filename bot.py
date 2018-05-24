@@ -1,4 +1,4 @@
-from merkato.merkato import Merkato
+#from merkato.merkato import Merkato
 
 from   graph import Graph
 from   my_widget import MyWidget
