@@ -49,142 +49,38 @@ class Bot(ttk.Frame):
 
         # --------------------
         self.exchange_frame = ttk.Frame(self, style="app.TFrame")
-        self.exchange_name = MyWidget(self.app, 
-            self.exchange_frame, 
-            handle ="exchange", 
-            choices = ["tux", "polo", "kraken", "gdax"]
-        )
-        self.coin = MyWidget(self.app, 
-            self.exchange_frame, 
-            handle ="coin", 
-            choices = ["XMR", "LTC", "PEPE"]
-        )
-        self.base = MyWidget(self.app, 
-            self.exchange_frame, 
-            handle = "base", 
-            choices = ["BTC","USDT"]
-        )
-        self.public_key = MyWidget(self.app, 
-            self.exchange_frame, 
-            handle = "pub. key", 
-            choices = "entry"
-        )
-        self.private_key = MyWidget(self.app, 
-            self.exchange_frame, 
-            handle = "priv. key", 
-            is_password = True, 
-            choices = "entry"
-        )
-        self.ask_budget = MyWidget(self.app, 
-            self.exchange_frame, 
-            handle = "sell budget", 
-            startVal = 0.0, 
-            choices = "entry"
-        )
-        self.bid_budget = MyWidget(self.app, 
-            self.exchange_frame, 
-            handle = "buy budget", 
-            startVal = 0.0, 
-            choices = "entry"
-        )
-        self.spread = MyWidget(self.app, 
-            self.exchange_frame, 
-            handle = "spread [%]", 
-            startVal = 5.0, 
-            choices = "entry"
-        )
-        self.execute = ttk.Button(self.exchange_frame, 
-            text = "Launch", 
-            cursor = "shuttle", 
-            command = self.start
-        )
-        self.exchange_name.grid(row = 0, 
-            column = 0,
-            sticky = tk.NE, 
-            padx = (10,5), 
-            pady = (5,5)
-        )
-        self.coin.grid(row = 1, 
-            column = 0, 
-            sticky = tk.NE, 
-            padx = (10, 5), 
-            pady = (5, 5)
-        )
-        self.base.grid(row = 2, 
-            column = 0, 
-            sticky = tk.NE, 
-            padx = (10, 5), 
-            pady = (5, 5)
-        )
-        self.public_key.grid(row = 3, 
-            column = 0,  
-            sticky = tk.NE, 
-            padx = (10, 5),
-            pady=(5, 5)
-        )
-        self.private_key.grid(row = 4, 
-            column = 0, 
-            sticky = tk.NE, 
-            padx = (10, 5), 
-            pady = (5, 5)
-        )
-        self.ask_budget.grid(row = 5, 
-            column = 0,
-            sticky = tk.NE, 
-            padx = (10,5), 
-            pady = (5,5)
-        )
-        self.bid_budget.grid(row = 6, 
-            column = 0,
-            sticky = tk.NE, 
-            padx = (10,5), 
-            pady = (5,5)
-        )
-        self.spread.grid(row = 7, 
-            column = 0, 
-            sticky = tk.NE, 
-            padx = (10, 5), 
-            pady = (5, 5)
-        )
-        self.execute.grid(row = 8, 
-            column = 0, 
-            sticky = tk.NE, 
-            padx = (10,5), 
-            pady = (15,5)
-        )
+        self.exchange_name = MyWidget(self.app, self.exchange_frame, handle="exchange", choices= ["tux", "polo", "kraken", "gdax"])
+        self.coin = MyWidget(self.app, self.exchange_frame, handle="coin", choices= ["XMR", "LTC", "PEPE"])
+        self.base = MyWidget(self.app, self.exchange_frame, handle="base", choices= ["BTC","USDT"])
+        self.public_key = MyWidget(self.app, self.exchange_frame, handle="pub. key", choices="entry")
+        self.private_key = MyWidget(self.app, self.exchange_frame, handle="priv. key", is_password=True, choices="entry")
 
+        self.ask_budget = MyWidget(self.app, self.exchange_frame, handle="sell budget", startVal=0.0, choices="entry")
+        self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="buy budget", startVal=0.0, choices="entry")
+        self.spread = MyWidget(self.app, self.exchange_frame, handle="spread [%]", startVal=5.0, choices="entry")
+        self.execute = ttk.Button(self.exchange_frame, text = "Launch", cursor = "shuttle", command= self.start)
+
+        self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
+        self.coin.grid(row=1, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.base.grid(row=2, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.public_key.grid(row=3, column=0,  sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.private_key.grid(row=4, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.ask_budget.grid(row=5, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
+        self.bid_budget.grid(row=6, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
+        self.spread.grid(row=7, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.execute.grid(row=8, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
         # --------------------
-        self.util_frame = ttk.Frame(self, style = "app.TFrame")
-        self.kill_button = ttk.Button(self.util_frame, 
-            text = "Kill", 
-            cursor = "shuttle", 
-            command = self.kill
-        )
-        self.kill_button.grid(row = 0, 
-            column = 0, 
-            sticky = tk.NE, 
-            padx = (10,5), 
-            pady = (15,5)
-        )
+        self.util_frame = ttk.Frame(self, style="app.TFrame")
+        self.kill_button = ttk.Button(self.util_frame, text="Kill", cursor="shuttle", command=self.kill)
+        self.kill_button.grid(row=0, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
         # --------------------
         self.graph = Graph(self.app, self, stub=self.stub, **starting_stats)
 
         self.graph.grid(row = 0, column=0, rowspan=3, padx=(5,10))
         #self.auth_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
         if not self.bot:
-            self.exchange_frame.grid(row = 0, 
-                column = 1, 
-                sticky = tk.NE, 
-                padx = (10,10), 
-                pady = (20,5)
-            )
-            
-        self.util_frame.grid(row = 1, 
-            column = 1, 
-            sticky = tk.SE, 
-            padx = (10,10), 
-            pady = (10,5)
-        )
+            self.exchange_frame.grid(row = 0, column=1, sticky=tk.NE, padx=(10,10), pady=(20,5))
+        self.util_frame.grid(row = 1, column=1, sticky=tk.SE, padx=(10,10), pady=(10,5))
 
 
     def update(self):

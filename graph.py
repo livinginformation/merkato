@@ -57,54 +57,42 @@ class Graph(tk.Frame):
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
         self.label = ttk.Label(self, text=self.parent.name, style="app.TLabel")
 
-        self.fig, self.ax = plt.subplots()
+        self.fig, self.ax = plt.subplots(1, 2, sharey=True, tight_layout=True,  gridspec_kw = {'width_ratios':[4, 1]})
 
         self.x_price = price_x
         self.y_price = price_y
         self.line_price = Line2D(self.x_price, self.y_price, color="blue")
-        self.ax.add_line(self.line_price)
+        self.ax[0].add_line(self.line_price)
 
         self.x_bought = bought_x
         self.y_bought = bought_y
-        self.boughtScatter = self.ax.scatter(self.x_bought,
-            self.y_bought, 
-            color="lime", 
-            marker="P", 
-            s=100
-        )
+        self.boughtScatter = self.ax[0].scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
 
         self.x_sold = sold_x
         self.y_sold = sold_y
-        self.scatter_sold = self.ax.scatter(self.x_sold,
-            self.y_sold,
-            color="salmon",
-            marker="D",
-            s=100
-        )
+        self.scatter_sold = self.ax[0].scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
 
         self.x_lowest_sell_order = x_lowest_sell_order
         self.y_lowest_sell_order = y_lowest_sell_order
-        self.line_lowest_sell_order = Line2D(self.x_lowest_sell_order, 
-            self.y_lowest_sell_order, 
-            color="red"
-        )
-        self.ax.add_line(self.line_lowest_sell_order)
+        self.line_lowest_sell_order = Line2D(self.x_lowest_sell_order, self.y_lowest_sell_order, color="red")
+        self.ax[0].add_line(self.line_lowest_sell_order)
 
         self.x_highest_buy_order = x_highest_buy_order
         self.y_highest_buy_order = y_highest_buy_order
-        self.line_highest_buy_order = Line2D(self.x_highest_buy_order, 
-            self.y_highest_buy_order, 
-            color="green"
-        )
-        self.ax.add_line(self.line_highest_buy_order)
+        self.line_highest_buy_order = Line2D(self.x_highest_buy_order, self.y_highest_buy_order, color="green")
+        self.ax[0].add_line(self.line_highest_buy_order)
 
-        plt.tight_layout()
+        #plt.tight_layout()
         #self.fig = Figure(figsize=(5, 5), dpi=100)
         #self.graph = self.fig.add_subplot(111)
+        # -----------------------------
+        self.ax_depth = self.ax[1]
+        self.ax_depth.grid(color='gray', linestyle='--', linewidth=.5)
+        # ---------------------------
 
         self.canvas = FigureCanvasTkAgg(self.fig, self)
-        self.ax.grid(color = 'gray', linestyle = '--', linewidth = .5)
-        self.ax.set_title(self.parent.name, fontsize=10)
+        self.ax[0].grid(color='gray', linestyle='--', linewidth=.5)
+        self.ax[0].set_title(self.parent.name, fontsize=10)
         self.canvas.draw()
 
 
@@ -114,94 +102,27 @@ class Graph(tk.Frame):
 
         # --------------------------------------
         self.options_frame = tk.Frame(self,bg = "black")
-        self.x_axis_auto_scroll = MyWidget(self.app, 
-            self.options_frame, 
-            optional = True, 
-            handle = "auto_scroll"
-        )
-        self.x_axis_window_size_input = MyWidget(self.app, 
-            self.options_frame, 
-            choices = "entry",
-            ewidth = 4, 
-            handle = "width", 
-            startVal = "31"
-        )
+        self.x_axis_auto_scroll = MyWidget(self.app, self.options_frame, optional=True, handle="auto_scroll")
+        self.x_axis_window_size_input =  MyWidget(self.app, self.options_frame, choices="entry",ewidth=4, handle="width", startVal="100")
 
-        self.x_axis_auto_scroll.grid(row=0, 
-            column = 0, 
-            sticky = tk.NW, 
-            padx = (5.0), 
-            pady = (5,0)
-        )
-        self.x_axis_window_size_input.grid(row=1, 
-            column = 0, sticky=tk.NW, 
-            padx = (28.0), 
-            pady = (2,10)
-        )
-            
+        self.x_axis_auto_scroll.grid(row=0, column=0, sticky=tk.NW, padx=(5.0), pady=(5,0))
+        self.x_axis_window_size_input.grid(row=1, column=0, sticky=tk.NW, padx=(28.0), pady=(2,10))
         # --------------------------------------
         self.stats_frame = ttk.Frame(self.options_frame, style="app.TFrame")
-        self.profit_base = ttk.Label(self.stats_frame, 
-            text = "base \u0394bal:", 
-            style = "app.TLabel"
-        )
-        self.profit_base2 = ttk.Label(self.stats_frame, 
-            textvariable = self.base_balance, 
-            style = "app.TLabel"
-        )
-        self.profit_alt = ttk.Label(self.stats_frame, 
-            text = "coin \u0394bal:", 
-            style = "app.TLabel"
-        )
-        self.profit_alt2 = ttk.Label(self.stats_frame, 
-            textvariable = self.coin_balance, 
-            style = "app.TLabel"
-        )
-        self.mean_price_lab = ttk.Label(self.stats_frame, 
-            text = "\u03BC price:", 
-            style = "app.TLabel"
-        )
-        self.mean_price_lab2 = ttk.Label(self.stats_frame, 
-            textvariable = self.mean_price, 
-            style = "app.TLabel"
-        )
-        self.performance_lab = ttk.Label(self.stats_frame, 
-            text = "\u0394 %:", 
-            style = "app.TLabel"
-        )
-        self.performance_lab2 = ttk.Label(self.stats_frame, 
-            textvariable = self.performance, style="app.TLabel"
-        )
+        self.profit_base = ttk.Label(self.stats_frame, text="base \u0394bal:", style="app.TLabel")
+        self.profit_base2 = ttk.Label(self.stats_frame, textvariable=self.base_balance, style="app.TLabel")
+        self.profit_alt = ttk.Label(self.stats_frame, text="coin \u0394bal:", style="app.TLabel")
+        self.profit_alt2 = ttk.Label(self.stats_frame, textvariable=self.coin_balance, style="app.TLabel")
+        self.mean_price_lab = ttk.Label(self.stats_frame, text="\u03BC price:", style="app.TLabel")
+        self.mean_price_lab2 = ttk.Label(self.stats_frame, textvariable=self.mean_price, style="app.TLabel")
+        self.performance_lab = ttk.Label(self.stats_frame, text="\u0394 %:", style="app.TLabel")
+        self.performance_lab2 = ttk.Label(self.stats_frame, textvariable=self.performance, style="app.TLabel")
 
-        self.profit_base.grid(row=1, 
-            column = 0, 
-            sticky = tk.NE, 
-            padx=(10, 5), pady=(5, 5)
-        )
-        self.profit_base2.grid(row=1, 
-            column = 1, 
-            sticky = tk.NE, 
-            padx = (10, 5), 
-            pady = (5, 5)
-        )
-        self.profit_alt.grid(row=0, 
-            column=0, 
-            sticky=tk.NE, 
-            padx=(10, 5), 
-            pady=(5, 5)
-        )
-        self.profit_alt2.grid(row=0, 
-            column = 1, 
-            sticky = tk.NE, 
-            padx = (10, 5), 
-            pady = (5, 5)
-        )
-        self.mean_price_lab.grid(row=0, 
-            column=2, 
-            sticky=tk.NE, 
-            padx=(40, 5), 
-            pady=(5, 5)
-        )
+        self.profit_base.grid(row=1, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.profit_base2.grid(row=1, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.profit_alt.grid(row=0, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.profit_alt2.grid(row=0, column=1, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.mean_price_lab.grid(row=0, column=2, sticky=tk.NE, padx=(40, 5), pady=(5, 5))
         self.mean_price_lab2.grid(row=0, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.performance_lab.grid(row=1, column=2, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.performance_lab2.grid(row=1, column=3, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
@@ -217,8 +138,8 @@ class Graph(tk.Frame):
 
 
         # --------------------------------------
-        self.x_low, self.x_hi = self.ax.get_xlim()
-        self.y_low, self.y_hi = self.ax.get_ylim()
+        self.x_low, self.x_hi = self.ax[0].get_xlim()
+        self.y_low, self.y_hi = self.ax[0].get_ylim()
 
         #self.loop = animation.FuncAnimation(f, self.refresh,fargs = , interval=1000)
 
@@ -229,6 +150,22 @@ class Graph(tk.Frame):
             self.fake_orders = {"buy": [(244, 0.5, x_this), (241, 0.5, x_this),(236, 0.5, x_this),(231, 0.5, x_this),(226, 0.5, x_this),(221, 0.5, x_this),(216, 0.5, x_this)],
                                "sell": [(253, 0.5, x_this),(258, 0.5, x_this), (263, 0.5, x_this), (263, 0.5, x_this), (268, 0.5, x_this), (273, 0.5, x_this), (278, 0.5, x_this)]}
             #self._root().after(5000, self.refresh, self.fake_data())
+
+    def draw_orderbook(self, orderbook=None):
+        if orderbook:
+            bid_prices =  [float(order[0]) for order in orderbook["bids"]]
+            bid_amounts = [float(order[1]) for order in orderbook["bids"]]
+            ask_prices = [float(order[0]) for order in orderbook["asks"]]
+            ask_amounts = [float(order[1]) for order in orderbook["asks"]]
+            num_bins_bids = 100 # max(100, len(set(orderbook["bids"])))
+            num_bins_asks = 100 # max(100, len(set(orderbook["asks"])))
+            self.ax_depth.clear()
+            #self.ax_depth.autoscale(False)
+            self.ax_depth.grid(color='gray', linestyle='--', linewidth=.5)
+            self.ax_depth.hist(bid_prices, weights=bid_amounts, bins=num_bins_bids, orientation="horizontal", color="g")
+            self.ax_depth.hist(ask_prices, weights=ask_amounts, bins=num_bins_asks, orientation="horizontal", color="r")
+            #self.ax_depth.autoscale(axis="x")
+            #self.ax_depth.autoscale(False)
 
 
     def calc_stats(self):
@@ -348,6 +285,16 @@ class Graph(tk.Frame):
         if closed["filled_orders"]["buy"] or closed["filled_orders"]["sell"]:
             print("#------------\nORDER ALERT:")
             data.update(closed)
+        order_book = {"asks": [], "bids": []}
+        for step in range(50):
+            ask_price = price * (1 + float(step) / 300.0)
+            ask_amount = random.randint(max(1,step - 2), step + 5)
+            bid_price = price * (1 - float(step) / 300.0)
+            bid_amount = random.randint(max(1,step - 2), step + 5)
+
+            order_book["asks"].append([str(ask_price), str(ask_amount)])
+            order_book["bids"].append([str(bid_price), str(bid_amount)])
+        data["orderbook"] = order_book
 
         print(repr(data))
         
@@ -366,12 +313,11 @@ class Graph(tk.Frame):
         :param data: a dictionary that comes from bot update method.  todo: agree on format for data
         :return:
         '''
-        self.x_low, self.x_hi = self.ax.get_xlim()
-        self.y_low, self.y_hi = self.ax.get_ylim()
+        self.x_low, self.x_hi = self.ax[0].get_xlim()
+        self.y_low, self.y_hi = self.ax[0].get_ylim()
         start = time.time()
-        self.ax.clear()
-        print("cleared self.ax")
-        
+        self.ax[0].clear()
+        print("cleared self.ax[0]")
         try:
             if "price" in data:
                 px, py = data["price"]
@@ -380,7 +326,7 @@ class Graph(tk.Frame):
                 
             if self.x_price and self.y_price:
                 self.line_price.set_data(self.x_price, self.y_price)
-                self.ax.add_line(self.line_price)
+                self.ax[0].add_line(self.line_price)
 
             # -----------------------------------------------------
 
@@ -396,12 +342,7 @@ class Graph(tk.Frame):
             if self.x_bought and self.y_bought:
                 print(self.x_bought, self.y_bought)
                 #self.boughtScatter.set_offsets((self.x_bought, self.y_bought))
-                self.boughtScatter = self.ax.scatter(self.x_bought, 
-                    self.y_bought, 
-                    color="lime", 
-                    marker="P", 
-                    s=100
-                )
+                self.boughtScatter = self.ax[0].scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
 
             # -----------------------------------------------------
             if "filled_orders" in data:
@@ -415,8 +356,7 @@ class Graph(tk.Frame):
                         
             if self.x_sold and self.y_sold:
                 #self.scatter_sold.set_offsets((self.x_sold, self.y_sold))
-                self.scatter_sold = self.ax.scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
-
+                self.scatter_sold = self.ax[0].scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
             # -----------------------------------------------------
             order_price_index = 0  # sort on first element of tuple which should be price (for now)
             order_time_index = 2
@@ -449,11 +389,11 @@ class Graph(tk.Frame):
 
             if self.x_lowest_sell_order and self.y_lowest_sell_order:
                 self.line_lowest_sell_order.set_data(self.x_lowest_sell_order, self.y_lowest_sell_order)
-                self.ax.add_line(self.line_lowest_sell_order)
+                self.ax[0].add_line(self.line_lowest_sell_order)
 
             if self.x_highest_buy_order and self.y_highest_buy_order:
                 self.line_highest_buy_order.set_data(self.x_highest_buy_order, self.y_highest_buy_order)
-                self.ax.add_line(self.line_highest_buy_order)
+                self.ax[0].add_line(self.line_highest_buy_order)
             # -----------------------------------------------------
 
             print("------->",self.x_axis_auto_scroll.optState.get())
@@ -464,25 +404,32 @@ class Graph(tk.Frame):
             except:
                 this_window_size = 50
 
+            try:
+                self.draw_orderbook(data["orderbook"])
+            except:
+                pass
+
             if self.x_axis_auto_scroll.optState.get():
                 
                 if len(self.x_price) > this_window_size:
-                    self.ax.set_xlim(self.x_price[-1 * this_window_size + 1],
-                    self.x_price[-1])
-                    self.ax.autoscale(axis = "y")
-                    
+                    self.ax[0].set_xlim(self.x_price[-1 * this_window_size + 1], self.x_price[-1])
+                    #self.ax[0].autoscale(axis="y")
+                    self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
+
                 else:
-                    self.ax.autoscale(axis = "y")
+                    #self.ax[0].autoscale(axis="y")
+                    self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
 
             else:
                 print("trying:  ", self.x_low, self.x_hi, self.y_low, self.y_hi)
-                self.ax.set_xlim(self.x_low, self.x_hi)
-                self.ax.set_ylim(self.y_low, self.y_hi)
+                self.ax[0].set_xlim(self.x_low, self.x_hi)
+                self.ax[0].set_ylim(self.y_low, self.y_hi)
 
-            self.ax.grid(color='gray', linestyle = '--', linewidth = .5)
-            self.ax.set_title(self.parent.name, fontsize = 10)
-            
-            if True:
+            self.ax[0].grid(color='gray', linestyle='--', linewidth=.5)
+            self.ax[0].set_title(self.parent.name, fontsize=10)
+
+
+            if active:
                 self.canvas.draw()
 
             self.calc_stats()
