@@ -167,6 +167,63 @@ class Graph(tk.Frame):
             #self.ax_depth.autoscale(axis="x")
             #self.ax_depth.autoscale(False)
 
+    def draw_depth(self, bidasks=None, bps=.25):
+        if bidasks:
+            best_bid = max([float(price) for price, amount in bidasks["bids"]])
+            best_ask = min([float(price) for price, amount in bidasks["asks"]])
+            worst_bid = best_bid * (1 - bps)
+            worst_ask = best_ask * (1 + bps)
+            filtered_bids = sorted(
+                [(float(bid[0]), float(bid[1])) for bid in bidasks["bids"] if float(bid[0]) >= worst_bid],
+                key=lambda x: -x[0])
+            filtered_asks = sorted(
+                [(float(ask[0]), float(ask[1])) for ask in bidasks["asks"] if float(ask[0]) <= worst_ask],
+                key=lambda x: +x[0])
+
+            bsizeacc = 0
+            bhys = []  # bid - horizontal - ys
+            bhxmins = []  # bid - horizontal - xmins
+            bhxmaxs = []  # ...
+            bvxs = []
+            bvymins = []
+            bvymaxs = []
+            asizeacc = 0
+            ahys = []
+            ahxmins = []
+            ahxmaxs = []
+            avxs = []
+            avymins = []
+            avymaxs = []
+
+            for (p1, s1), (p2, s2) in zip(filtered_bids, filtered_bids[1:]):
+                bvymins.append(bsizeacc)
+                if bsizeacc == 0:
+                    bsizeacc += s1
+                bhys.append(bsizeacc)
+                bhxmins.append(p2)
+                bhxmaxs.append(p1)
+                bvxs.append(p2)
+                bsizeacc += s2
+                bvymaxs.append(bsizeacc)
+
+            for (p1, s1), (p2, s2) in zip(filtered_asks, filtered_asks[1:]):
+                avymins.append(asizeacc)
+                if asizeacc == 0:
+                    asizeacc += s1
+                ahys.append(asizeacc)
+                ahxmins.append(p1)
+                ahxmaxs.append(p2)
+                avxs.append(p2)
+                asizeacc += s2
+                avymaxs.append(asizeacc)
+
+            self.ax_depth.clear()
+            self.ax_depth.grid(color='gray', linestyle='--', linewidth=.5)
+            self.ax_depth.vlines(bhys[1:], bhxmins[1:], bhxmaxs[1:], color="green")
+            self.ax_depth.hlines(bvxs, bvymins, bvymaxs, color="green")
+            self.ax_depth.vlines(ahys[1:], ahxmins[1:], ahxmaxs[1:], color="red")
+            self.ax_depth.hlines(avxs, avymins, avymaxs, color="red")
+
 
     def calc_stats(self):
         ''' TODO Function Description
@@ -286,11 +343,11 @@ class Graph(tk.Frame):
             print("#------------\nORDER ALERT:")
             data.update(closed)
         order_book = {"asks": [], "bids": []}
-        for step in range(50):
+        for step in range(2,50):
             ask_price = price * (1 + float(step) / 300.0)
-            ask_amount = random.randint(max(1,step - 2), step + 5)
+            ask_amount = max(0, random.randint(-3, 5))
             bid_price = price * (1 - float(step) / 300.0)
-            bid_amount = random.randint(max(1,step - 2), step + 5)
+            bid_amount = max(0, random.randint(-3, 5))
 
             order_book["asks"].append([str(ask_price), str(ask_amount)])
             order_book["bids"].append([str(bid_price), str(bid_amount)])
@@ -405,7 +462,7 @@ class Graph(tk.Frame):
                 this_window_size = 50
 
             try:
-                self.draw_orderbook(data["orderbook"])
+                self.draw_depth(data["orderbook"])
             except:
                 pass
 
