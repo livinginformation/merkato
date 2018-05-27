@@ -1,6 +1,6 @@
 
 #from exchange import Exchange
-from merkato.merkato import Merkato
+#from merkato.merkato import Merkato
 
 import matplotlib
 matplotlib.use("TkAgg")

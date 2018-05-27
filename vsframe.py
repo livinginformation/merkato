@@ -35,8 +35,8 @@ class VSFrame(tk.Frame):
 
         # create a frame inside the canvas which will be scrolled with it
         self.interior = interior = tk.Frame(canvas,bg = "black",width = width)
-        interior_id = canvas.create_window(0, 0, window = interior,
-                                           anchor = tk.NW)
+        interior_id = canvas.create_window(0, 0, window=interior,
+                                           anchor=tk.NW)
 
 
         # track changes to the canvas and frame width and sync them,

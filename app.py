@@ -27,12 +27,7 @@ class App:
         #self.rb_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.rb_fr = VSFrame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.rb_fr.pack(side=side, fill=tk.BOTH)
-        self.screen_fr = tk.Frame(master, 
-            borderwidth=2, 
-            relief=tk.RIDGE, 
-            bg="black"
-        )
-        
+        self.screen_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.screen_fr.pack(fill=tk.BOTH)
         self.roster = OrderedDict() # Bot
 
@@ -95,6 +90,10 @@ class App:
         fr.pack(fill=tk.BOTH, expand=1)
         fr.is_active = True  # Bot
         self.active_fr = fr
+        try:
+            self.active_fr.graph.canvas.draw()
+        except:
+            pass
         self.roster[self.active_fr].config(fg="black")
 
 
