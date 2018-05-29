@@ -363,10 +363,12 @@ class Merkato(object):
         invalid_reserve_reduction = amount > self.reserved_balance:
         if amount > self.reserved_balance:
             return False
+        
         if type_of_reserve == ASK_RESERVE:
             new_amount = self.ask_reserved_balance - amount
             self.ask_reserved_balance = new_amount
             self.remove_budget(amount, ASK_BUDGET)
+            
         else:
             new_amount = self.bid_reserved_balance - amount
             self.bid_reserved_balance = new_amount
@@ -375,7 +377,7 @@ class Merkato(object):
         return True
 
     def remove_budget(self, amount, type_of_budget):
-        if type_of_reserve == ASK_RESERVE:
+        if type_of_budget == ASK_BUDGET:
             new_amount = self.ask_budget - amount
             self.ask_budget = new_amount
         else:
