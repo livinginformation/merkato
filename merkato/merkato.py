@@ -360,22 +360,25 @@ class Merkato(object):
         pass
     
     def remove_reserve(self, amount, type_of_reserve):
-        invalid_reserve_reduction = amount > self.reserved_balance:
+        invalid_reserve_reduction = amount > self.reserved_balance
         if amount > self.reserved_balance:
             return False
+        
         if type_of_reserve == ASK_RESERVE:
             new_amount = self.ask_reserved_balance - amount
             self.ask_reserved_balance = new_amount
             self.remove_budget(amount, ASK_BUDGET)
+            
         else:
             new_amount = self.bid_reserved_balance - amount
             self.bid_reserved_balance = new_amount
             self.remove_budget(amount, BID_BUDGET)
         update_merkato(self.mutex_UUID, type_of_reserve, new_amount)
         return True
-
+# budgets may not be needed as they can be calculated for all balances from API query, 
+# however we may need the budget per merkato, so we will keep this until more is known.
     def remove_budget(self, amount, type_of_budget):
-        if type_of_reserve == ASK_RESERVE:
+        if type_of_budget == ASK_BUDGET:
             new_amount = self.ask_budget - amount
             self.ask_budget = new_amount
         else:
