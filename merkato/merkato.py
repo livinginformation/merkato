@@ -375,7 +375,7 @@ class Merkato(object):
             self.remove_budget(amount, BID_BUDGET)
         update_merkato(self.mutex_UUID, type_of_reserve, new_amount)
         return True
-
+#   budgets may no be needed as can be calculated for all balances from API query, however we may need the budget per merkato, will keep this until more is known.
     def remove_budget(self, amount, type_of_budget):
         if type_of_budget == ASK_BUDGET:
             new_amount = self.ask_budget - amount
