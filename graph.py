@@ -310,15 +310,11 @@ class Graph(tk.Frame):
         for order in this_fake_orders["buy"]:
             if price <= order[0]:
                 closed["filled_orders"]["buy"].append((order[0], order[1], x_this - .5))
-                self.coin_balance.set(str(float(self.coin_balance.get()) + order[1]))
-                self.base_balance.set(str(float(self.base_balance.get()) - (order[1]*order[0])))
                 self.fake_orders["sell"].append((order[0] + self.fake_spread, order[1], x_this - .5))
                 self.fake_orders["buy"].remove(order)
 
         for order in self.fake_orders["sell"]:
             if price >= order[0]:
-                self.coin_balance.set(str(float(self.coin_balance.get()) - order[1]))
-                self.base_balance.set(str(float(self.base_balance.get()) + (order[1] * order[0])))
                 closed["filled_orders"]["sell"].append((order[0], order[1], x_this - .5))
                 self.fake_orders["buy"].append((order[0] - self.fake_spread, order[1], x_this - .5))
                 self.fake_orders["sell"].remove(order)
@@ -391,13 +387,14 @@ class Graph(tk.Frame):
                 if "buy" in data["filled_orders"]:
                     
                     for filled in data["filled_orders"]["buy"]:
+                        self.coin_balance.set(str(float(self.coin_balance.get()) + filled[1]))
+                        self.base_balance.set(str(float(self.base_balance.get()) - (filled[1] * filled[0])))
                         bx = self.date_formatter(filled[2]) # date
                         by = filled[0]
                         self.x_bought.append(bx)
                         self.y_bought.append(by)
 
             if self.x_bought and self.y_bought:
-                print(self.x_bought, self.y_bought)
                 #self.boughtScatter.set_offsets((self.x_bought, self.y_bought))
                 self.boughtScatter = self.ax[0].scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
 
@@ -406,6 +403,8 @@ class Graph(tk.Frame):
                 if "sell" in data["filled_orders"]:
 
                     for filled in data["filled_orders"]["sell"]:
+                        self.coin_balance.set(str(float(self.coin_balance.get()) - filled[1]))
+                        self.base_balance.set(str(float(self.base_balance.get()) + (filled[1] * filled[0])))
                         sx = self.date_formatter(filled[2]) # date
                         sy = filled[0]
                         self.x_sold.append(sx)
