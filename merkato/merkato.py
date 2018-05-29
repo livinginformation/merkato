@@ -360,7 +360,7 @@ class Merkato(object):
         pass
     
     def remove_reserve(self, amount, type_of_reserve):
-        invalid_reserve_reduction = amount > self.reserved_balance:
+        invalid_reserve_reduction = amount > self.reserved_balance
         if amount > self.reserved_balance:
             return False
         
