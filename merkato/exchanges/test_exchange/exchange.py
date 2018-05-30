@@ -10,11 +10,11 @@ from merkato.exchanges.test_exchange.utils import apply_resolved_orders
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 from merkato.exchanges.test_exchange.orderbook import Orderbook
-from merkato.exchanges.text_exchange.constants import test_asks, test_bids
-
+from merkato.exchanges.test_exchange.constants import test_asks, test_bids
+from merkato.exchanges.tux_exchange.utils import translate_ticker
 
 class TestExchange(ExchangeBase):
-    def __init__(self, config, coin, base, user_id, accounts = {}, price = 1):
+    def __init__(self, config, coin, base, user_id=20, accounts = {}, price = 1):
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)

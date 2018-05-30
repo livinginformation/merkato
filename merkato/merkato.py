@@ -2,18 +2,23 @@ import time
 import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
-from merkato.utils import create_price_data
-from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE
-from merkato.utils.database_utils import update_merkato, get_all_merkatos_from_exchange
+from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE
+from merkato.utils.database_utils import update_merkato, insert_merkato
+from merkato.exchanges.tux_exchange.utils import translate_ticker
+from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange
 from math import floor
 
 DEBUG = True
 
 
 class Merkato(object):
-    def __init__(self, configuration, exchange, coin, base, spread):
-        self.exchange = TuxExchange(configuration, coin=coin, base=base)
-        self.mutex_UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
+    def __init__(self, configuration, coin, base, spread):
+        validate_merkato_initialization(configuration, coin, base, spread)
+        UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
+        insert_merkato(configuration[EXCHANGE], UUID, coin, base)
+        exchange_class = get_relevant_exchange(configuration[EXCHANGE])
+        self.exchange = exchange_class(configuration, coin=coin, base=base)
+        self.mutex_UUID = UUID
         self.distribution_strategy = 1
         self.spread = spread # i.e '15
         # Create ladders from the bid and ask bidget here
