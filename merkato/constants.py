@@ -14,6 +14,3 @@ LAST_ORDER = 'last_order'
 
 ASK_RESERVE = 'ask_reserve'
 BID_RESERVE = 'bid_reserve'
-
-ASK_BUDGET = 'ask_budget'
-BID_BUDGET = 'bid_budget'

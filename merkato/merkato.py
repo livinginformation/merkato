@@ -3,7 +3,7 @@ import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.utils import create_price_data
-from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, ASK_BUDGET, BID_BUDGET
+from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE
 from merkato.utils.database_utils import update_merkato, get_all_merkatos_from_exchange
 from math import floor
 
@@ -11,15 +11,13 @@ DEBUG = True
 
 
 class Merkato(object):
-    def __init__(self, configuration, exchange, coin, base, spread, ask_budget, bid_budget):
+    def __init__(self, configuration, exchange, coin, base, spread):
         self.exchange = TuxExchange(configuration, coin=coin, base=base)
         self.mutex_UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
         self.distribution_strategy = 1
         self.spread = spread # i.e '15
         # Create ladders from the bid and ask bidget here
         self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
-        self.ask_budget = ask_budget
-        self.bid_budget = bid_budget
         self.bid_reserved_balance = 0
         self.ask_reserved_balance = 0
     # Make a second init for recovering a Merkato from the merkatos table here
@@ -360,31 +358,19 @@ class Merkato(object):
         pass
     
     def remove_reserve(self, amount, type_of_reserve):
-        invalid_reserve_reduction = amount > self.reserved_balance
-        if amount > self.reserved_balance:
+        current_reserve_amount = self.ask_reserved_balance if type_of_reserve == ASK_RESERVE else self.bid_reserved_balance
+        invalid_reserve_reduction = amount > current_reserve_amount
+        if invalid_reserve_reduction:
             return False
         
         if type_of_reserve == ASK_RESERVE:
             new_amount = self.ask_reserved_balance - amount
-            self.ask_reserved_balance = new_amount
-            self.remove_budget(amount, ASK_BUDGET)
-            
+            self.ask_reserved_balance = new_amount            
         else:
             new_amount = self.bid_reserved_balance - amount
             self.bid_reserved_balance = new_amount
-            self.remove_budget(amount, BID_BUDGET)
         update_merkato(self.mutex_UUID, type_of_reserve, new_amount)
         return True
-# budgets may not be needed as they can be calculated for all balances from API query, 
-# however we may need the budget per merkato, so we will keep this until more is known.
-    def remove_budget(self, amount, type_of_budget):
-        if type_of_budget == ASK_BUDGET:
-            new_amount = self.ask_budget - amount
-            self.ask_budget = new_amount
-        else:
-            new_amount = self.bid_budget - amount
-            self.bid_budget = new_amount
-        update_merkato(self.mutex_UUID, type_of_budget, new_amount)
         
     def cancelrange(self, start, end):
         open_orders = self.exchange.get_my_open_orders()
@@ -395,32 +381,4 @@ class Merkato(object):
                 self.exchange.cancel_order(order_id)
                 if DEBUG: print("price: " + str(price))
                 time.sleep(.3)
-
-    def calculate_total_budget_on_merkatos():
-        merkatos = get_all_merkatos_from_exchange(self.exchange.name)
-        budgets_object = {}
-        for merkato in merkatos:
-            current_merkato = merkatos[merkato]
-            pair = current_merkato['pair'].split("_")
-            ask_asset = pair[0]
-            bid_asset = pair[1]
-            bid_budget = current_merkato["bid_budget"]
-            ask_budget = current_merkato["ask_budget"]
-            if ask_asset not in budgets_object:
-                budgets_object[ask_asset] = 0
-            if bid_asset not in budgets_object:
-                budgets_object[bid_asset] = 0
-            budgets_object[ask_asset] += ask_budget
-            budgets_object[bid_asset] += bid_budget
-        return budgets_object
-    
-    def calculate_balances_budgets_difference():
-        balances = self.exchange.get_balances()
-        budgets = calculate_total_budget_on_merkatos()
-        unbudgeted_balances = {}
-        for ticker in budgets:
-            current_budget = budgets[ticker]
-            current_balance = balances[ticker]['balance']
-            unbudgeted_balances[ticker] = current_balance - current_budget
-        return unbudgeted_balances
 
