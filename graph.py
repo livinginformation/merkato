@@ -52,6 +52,7 @@ class Graph(tk.Frame):
         self.base_balance.set("0")
         self.mean_price.set("0")
         self.performance.set("0")
+        self.orderbook = None
 
 
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
@@ -167,8 +168,9 @@ class Graph(tk.Frame):
             #self.ax_depth.autoscale(axis="x")
             #self.ax_depth.autoscale(False)
 
-    def draw_depth(self, bidasks=None, bps=.25):
-        if bidasks:
+    def draw_depth(self, bps=.35):
+        if self.orderbook:
+            bidasks = self.orderbook.copy()
             best_bid = max([float(price) for price, amount in bidasks["bids"]])
             best_ask = min([float(price) for price, amount in bidasks["asks"]])
             worst_bid = best_bid * (1 - bps)
@@ -310,15 +312,11 @@ class Graph(tk.Frame):
         for order in this_fake_orders["buy"]:
             if price <= order[0]:
                 closed["filled_orders"]["buy"].append((order[0], order[1], x_this - .5))
-                self.coin_balance.set(str(float(self.coin_balance.get()) + order[1]))
-                self.base_balance.set(str(float(self.base_balance.get()) - (order[1]*order[0])))
                 self.fake_orders["sell"].append((order[0] + self.fake_spread, order[1], x_this - .5))
                 self.fake_orders["buy"].remove(order)
 
         for order in self.fake_orders["sell"]:
             if price >= order[0]:
-                self.coin_balance.set(str(float(self.coin_balance.get()) - order[1]))
-                self.base_balance.set(str(float(self.base_balance.get()) + (order[1] * order[0])))
                 closed["filled_orders"]["sell"].append((order[0], order[1], x_this - .5))
                 self.fake_orders["buy"].append((order[0] - self.fake_spread, order[1], x_this - .5))
                 self.fake_orders["sell"].remove(order)
@@ -364,133 +362,141 @@ class Graph(tk.Frame):
         # TODO: do something with date
         return date
 
+    def ingest_data(self, data):
+        if "price" in data:
+            px, py = data["price"]
+            self.x_price.append(self.date_formatter(px))
+            self.y_price.append(py)
+        # -----------------------------------------------------
+
+        if "filled_orders" in data:
+            if "buy" in data["filled_orders"]:
+
+                for filled in data["filled_orders"]["buy"]:
+                    self.coin_balance.set(str(float(self.coin_balance.get()) + filled[1]))
+                    self.base_balance.set(str(float(self.base_balance.get()) - (filled[1] * filled[0])))
+                    bx = self.date_formatter(filled[2])  # date
+                    by = filled[0]
+                    self.x_bought.append(bx)
+                    self.y_bought.append(by)
+        # -----------------------------------------------------
+        if "filled_orders" in data:
+            if "sell" in data["filled_orders"]:
+
+                for filled in data["filled_orders"]["sell"]:
+                    self.coin_balance.set(str(float(self.coin_balance.get()) - filled[1]))
+                    self.base_balance.set(str(float(self.base_balance.get()) + (filled[1] * filled[0])))
+                    sx = self.date_formatter(filled[2])  # date
+                    sy = filled[0]
+                    self.x_sold.append(sx)
+                    self.y_sold.append(sy)
+
+        # -----------------------------------------------------
+        order_price_index = 0  # sort on first element of tuple which should be price (for now)
+        order_time_index = 2
+
+        if "open_orders" in data:
+
+            if "sell" in data["open_orders"]:
+                sell_data = data["open_orders"]["sell"]
+
+                if sell_data:
+                    lowest_sell = sorted(sell_data, key=itemgetter(order_price_index))[0]
+                    self.x_lowest_sell_order.append(self.date_formatter(self.x_price[-1]))
+                    self.y_lowest_sell_order.append(lowest_sell[order_price_index])
+
+                    if len(sell_data) > 1:  # then we have a meaningful "high" order
+                        # todo: something with this data
+                        highest_sell = sorted(sell_data, key=itemgetter(order_price_index))[-1]
+
+            if "buy" in data["open_orders"]:
+                buy_data = data["open_orders"]["buy"]
+
+                if buy_data:
+                    highest_buy = sorted(buy_data, key=itemgetter(order_price_index))[-1]
+                    self.x_highest_buy_order.append(self.date_formatter(self.x_price[-1]))
+                    self.y_highest_buy_order.append(highest_buy[order_price_index])
+
+                    if len(buy_data) > 1:  # then we have a meaningful "low" order
+                        # todo: something with this data
+                        lowest_buy = sorted(buy_data, key=itemgetter(order_price_index))[0]
+
+        # -----------------------------------------------------
+        if "orderbook" in data:
+            self.orderbook = data["orderbook"]
+
+    def draw_graph(self):
+        self.x_low, self.x_hi = self.ax[0].get_xlim()
+        self.y_low, self.y_hi = self.ax[0].get_ylim()
+        start = time.time()
+        self.ax[0].clear()
+        print("cleared self.ax[0]")
+
+        if self.x_price and self.y_price:
+            self.line_price.set_data(self.x_price, self.y_price)
+            self.ax[0].add_line(self.line_price)
+
+        if self.x_bought and self.y_bought:
+            # self.boughtScatter.set_offsets((self.x_bought, self.y_bought))
+            self.boughtScatter = self.ax[0].scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
+
+        if self.x_sold and self.y_sold:
+            # self.scatter_sold.set_offsets((self.x_sold, self.y_sold))
+            self.scatter_sold = self.ax[0].scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
+
+        if self.x_lowest_sell_order and self.y_lowest_sell_order:
+            self.line_lowest_sell_order.set_data(self.x_lowest_sell_order, self.y_lowest_sell_order)
+            self.ax[0].add_line(self.line_lowest_sell_order)
+
+        if self.x_highest_buy_order and self.y_highest_buy_order:
+            self.line_highest_buy_order.set_data(self.x_highest_buy_order, self.y_highest_buy_order)
+            self.ax[0].add_line(self.line_highest_buy_order)
+
+        try:
+            this_window_size = max(int(self.x_axis_window_size_input.get()[0]), 5)
+
+        except:
+            this_window_size = 50
+
+        try:
+            self.draw_depth()
+        except:
+            pass
+
+        if self.x_axis_auto_scroll.optState.get():
+
+            if len(self.x_price) > this_window_size:
+                self.ax[0].set_xlim(self.x_price[-1 * this_window_size + 1], self.x_price[-1])
+                # self.ax[0].autoscale(axis="y")
+                self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
+
+            else:
+                # self.ax[0].autoscale(axis="y")
+                self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
+
+        else:
+            print("trying:  ", self.x_low, self.x_hi, self.y_low, self.y_hi)
+            self.ax[0].set_xlim(self.x_low, self.x_hi)
+            self.ax[0].set_ylim(self.y_low, self.y_hi)
+
+        self.ax[0].grid(color='gray', linestyle='--', linewidth=.5)
+        self.ax[0].set_title(self.parent.name, fontsize=10)
+
+        self.canvas.draw()
+
+
 
     def refresh(self, data, active=True):
         '''
         :param data: a dictionary that comes from bot update method.  todo: agree on format for data
         :return:
         '''
-        self.x_low, self.x_hi = self.ax[0].get_xlim()
-        self.y_low, self.y_hi = self.ax[0].get_ylim()
-        start = time.time()
-        self.ax[0].clear()
-        print("cleared self.ax[0]")
+
         try:
-            if "price" in data:
-                px, py = data["price"]
-                self.x_price.append(self.date_formatter(px))
-                self.y_price.append(py)
-                
-            if self.x_price and self.y_price:
-                self.line_price.set_data(self.x_price, self.y_price)
-                self.ax[0].add_line(self.line_price)
-
-            # -----------------------------------------------------
-
-            if "filled_orders" in data:
-                if "buy" in data["filled_orders"]:
-                    
-                    for filled in data["filled_orders"]["buy"]:
-                        bx = self.date_formatter(filled[2]) # date
-                        by = filled[0]
-                        self.x_bought.append(bx)
-                        self.y_bought.append(by)
-
-            if self.x_bought and self.y_bought:
-                print(self.x_bought, self.y_bought)
-                #self.boughtScatter.set_offsets((self.x_bought, self.y_bought))
-                self.boughtScatter = self.ax[0].scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
-
-            # -----------------------------------------------------
-            if "filled_orders" in data:
-                if "sell" in data["filled_orders"]:
-
-                    for filled in data["filled_orders"]["sell"]:
-                        sx = self.date_formatter(filled[2]) # date
-                        sy = filled[0]
-                        self.x_sold.append(sx)
-                        self.y_sold.append(sy)
-                        
-            if self.x_sold and self.y_sold:
-                #self.scatter_sold.set_offsets((self.x_sold, self.y_sold))
-                self.scatter_sold = self.ax[0].scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
-            # -----------------------------------------------------
-            order_price_index = 0  # sort on first element of tuple which should be price (for now)
-            order_time_index = 2
-            
-            if "open_orders" in data:
-                
-                if "sell" in data["open_orders"]:
-                    sell_data = data["open_orders"]["sell"]
-                    
-                    if sell_data:
-                        lowest_sell = sorted(sell_data, key=itemgetter(order_price_index))[0]
-                        self.x_lowest_sell_order.append(self.date_formatter(self.x_price[-1]))
-                        self.y_lowest_sell_order.append(lowest_sell[order_price_index])
-                        
-                        if len(sell_data) > 1:   # then we have a meaningful "high" order
-                            # todo: something with this data
-                            highest_sell = sorted(sell_data, key=itemgetter(order_price_index))[-1]
-
-                if "buy" in data["open_orders"]:
-                    buy_data = data["open_orders"]["buy"]
-                    
-                    if buy_data:
-                        highest_buy = sorted(buy_data, key=itemgetter(order_price_index))[-1]
-                        self.x_highest_buy_order.append(self.date_formatter(self.x_price[-1]))
-                        self.y_highest_buy_order.append(highest_buy[order_price_index])
-                        
-                        if len(buy_data) > 1:   # then we have a meaningful "low" order
-                            # todo: something with this data
-                            lowest_buy = sorted(buy_data, key=itemgetter(order_price_index))[0]
-
-            if self.x_lowest_sell_order and self.y_lowest_sell_order:
-                self.line_lowest_sell_order.set_data(self.x_lowest_sell_order, self.y_lowest_sell_order)
-                self.ax[0].add_line(self.line_lowest_sell_order)
-
-            if self.x_highest_buy_order and self.y_highest_buy_order:
-                self.line_highest_buy_order.set_data(self.x_highest_buy_order, self.y_highest_buy_order)
-                self.ax[0].add_line(self.line_highest_buy_order)
-            # -----------------------------------------------------
-
-            print("------->",self.x_axis_auto_scroll.optState.get())
-
-            try:
-                this_window_size = max(int(self.x_axis_window_size_input.get()[0]),5)
-                
-            except:
-                this_window_size = 50
-
-            try:
-                self.draw_depth(data["orderbook"])
-            except:
-                pass
-
-            if self.x_axis_auto_scroll.optState.get():
-                
-                if len(self.x_price) > this_window_size:
-                    self.ax[0].set_xlim(self.x_price[-1 * this_window_size + 1], self.x_price[-1])
-                    #self.ax[0].autoscale(axis="y")
-                    self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
-
-                else:
-                    #self.ax[0].autoscale(axis="y")
-                    self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
-
-            else:
-                print("trying:  ", self.x_low, self.x_hi, self.y_low, self.y_hi)
-                self.ax[0].set_xlim(self.x_low, self.x_hi)
-                self.ax[0].set_ylim(self.y_low, self.y_hi)
-
-            self.ax[0].grid(color='gray', linestyle='--', linewidth=.5)
-            self.ax[0].set_title(self.parent.name, fontsize=10)
-
-
-            if active:
-                self.canvas.draw()
-
+            self.ingest_data(data)
             self.calc_stats()
-
+            if active:
+                self.draw_graph()
         except Exception as e:
             print(str(e))
             raise

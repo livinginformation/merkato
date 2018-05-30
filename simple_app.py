@@ -1,6 +1,6 @@
 
 #from exchange import Exchange
-#from merkato.merkato import Merkato
+from merkato.merkato import Merkato
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     app = App(root, tk.RIGHT)
     for i in range(20):
-        bot = Bot(root, app(), app, stub = 1, starting_stats=fake_start())
+        bot = Bot(root, app(), app, stub=1, starting_stats=fake_start())
         app.add_screen(bot,
             "null", 
             textvariable=bot.title_var,

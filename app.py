@@ -91,7 +91,7 @@ class App:
         fr.is_active = True  # Bot
         self.active_fr = fr
         try:
-            self.active_fr.graph.canvas.draw()
+            self.active_fr.graph.draw_graph()
         except:
             pass
         self.roster[self.active_fr].config(fg="black")
