@@ -268,6 +268,7 @@ class Merkato(object):
             coin     = orders[order]["coin"]
             amount   = float(orders[order]["amount"]) # Amount in asset
             total    = float(orders[order]["total"])  # Total in BTC
+            order_id = orders[order]['order_id']
 
             if DEBUG: print(orders[order])
 
@@ -301,8 +302,8 @@ class Merkato(object):
 
                 # Place a new order on the books with the sum
                 if existing_order_type == "buy":
-                    print("Placing buy for", existing_order['total'], "{} of".format(self.base), self.exchange.ticker, "at a price of", price)
-                    new_id = self.exchange.buy(float(existing_order['total'])/float(price), float(price), self.ticker)
+                    print("Placing buy for", existing_order['total'], "{} of".format(self.exchange.base), self.exchange.ticker, "at a price of", price)
+                    new_id = self.exchange.buy(float(existing_order['total'])/float(price), float(price), self.exchange.ticker)
 
                 else: # existing_order_type is sell
                     print("Placing sell for", existing_order['amount'], self.exchange.ticker, "at a price of", price)
