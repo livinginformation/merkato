@@ -2,21 +2,22 @@
 
 import json
 import os.path
-from merkato.utils import write_to_file, update_config_with_credentials, get_exchange, get_config_selection
-from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table
+from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table, get_merkato
 from merkato.exchanges.tux_exchange.utils import validate_credentials
+from merkato.constants import EXCHANGE
+from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection
 
 def load_config():
     # Loads an existing configuration file
     # Returns a dictionary
-    exchange_name = input("what is the exchange name? ")
-    return get_exchange(exchange_name)
+    exchange_name_pair = input("what is the exchange_pair_name name? ")
+    return get_merkato(exchange_name_pair)
     # TODO: Error handling and config validation
 
-def insert_config_into_exchanges(config)
+def insert_config_into_exchanges(config):
     limit_only = config["limit_only"]
-    public_key = config["public_key"]
-    private_key = config["private_key"]
+    public_key = config["publickey"]
+    private_key = config["privatekey"]
     exchange = config["exchange"]
     if no_exchanges_table_exists():
         create_exchanges_table()
@@ -25,17 +26,24 @@ def insert_config_into_exchanges(config)
 def create_config():
     # Create new config
     config = { "limit_only": True }
+    url = "https://tuxexchange.com/api"
     while True:
         exchange = get_exchange()
 
         if exchange == 'tux':
-            config['exchange'] = 'tux'
+            config[EXCHANGE] = 'tux'
 
             update_config_with_credentials(config)
-            credentials_are_invalid = validate_credentials(config)
+            credentials_are_invalid = validate_credentials(config, url)
             while credentials_are_invalid:
                 config = update_config_with_credentials(config)
-                credentials_are_invalid = validate_credentials(config)
+                credentials_are_invalid = validate_credentials(config, url)
+            insert_config_into_exchanges(config)
+            return config
+        
+        elif exchange == 'test':
+            config[EXCHANGE] = 'test'
+            update_config_with_credentials(config)
             insert_config_into_exchanges(config)
             return config
 

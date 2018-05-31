@@ -8,7 +8,7 @@ def create_merkatos_table():
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS merkatos
-                    (exchange text, exchange_pair text, pair text, spread text, profit_limit integer, last_order text, ask_reserved_balance float, bid_reserved_balance float, ask_budget float, bid_budget float)''')
+                    (exchange text, exchange_pair text, base text, alt text, spread text, profit_limit integer, last_order text, ask_reserved_balance float, bid_reserved_balance float)''')
         c.execute('''CREATE UNIQUE INDEX id_exchange_pair ON merkatos (exchange_pair)''')
         conn.commit()
         conn.close()
@@ -27,7 +27,7 @@ def no_merkatos_table_exists():
         return number_of_mutex_tables == 0
 
 
-def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', pair='BTC_ETH', spread='.1', profit_limit=10, last_order='', bid_reserved_balance=0, ask_reserved_balance=0, ask_budget=0, bid_budget=0):
+def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', spread='.1', profit_limit=10, last_order='', bid_reserved_balance=0, ask_reserved_balance=0):
     try:
         conn = sqlite3.connect('merkato.db')
     except Exception as e:
@@ -35,8 +35,8 @@ def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', pair='BTC_ETH', spread=
     finally:
         c = conn.cursor()
         c.execute("""INSERT INTO merkatos 
-                    (exchange, exchange_pair, pair, spread, profit_limit, last_order, ask_reserved_balance, bid_reserved_balance, ask_budget, bid_budget) VALUES (?,?,?,?,?,?,?,?,?,?)""", 
-                    (exchange, exchange_pair, pair, spread, profit_limit, last_order, ask_reserved_balance, bid_reserved_balance, ask_budget, bid_budget))
+                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, ask_reserved_balance, bid_reserved_balance) VALUES (?,?,?,?,?,?,?,?,?)""", 
+                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, ask_reserved_balance, bid_reserved_balance))
         conn.commit()
         conn.close()
 
@@ -116,19 +116,6 @@ def get_all_exchanges():
         conn.close()
         return all_exchanges
 
-def get_all_exchanges():
-    try:
-        conn = sqlite3.connect('merkato.db')
-    except Exception as e:
-        print(str(e))
-    finally:
-        c = conn.cursor()
-        c.execute("SELECT * FROM exchanges")
-        all_exchanges = c.fetchall()
-        conn.commit()
-        conn.close()
-        return all_exchanges
-
 def get_exchange(exchange):
     try:
         conn = sqlite3.connect('merkato.db')
@@ -136,11 +123,25 @@ def get_exchange(exchange):
         print(str(e))
     finally:
         c = conn.cursor()
-        c.execute('''SELECT * FROM exchanges WHERE exchange = ?"''', (exchange))
-        exchange = c.fetchall()[0][0]
+        c.execute('''SELECT * FROM exchanges WHERE exchange = ?''', (exchange,))
+        exchange = c.fetchall()[0]
         conn.commit()
         conn.close()
         return exchange
+
+def exchange_exists(exchange):
+    try:
+        conn = sqlite3.connect('merkato.db')
+    except Exception as e:
+        print(str(e))
+    finally:
+        c = conn.cursor()
+        c.execute('''SELECT * FROM exchanges WHERE exchange = ?''', (exchange,))
+        result = len(c.fetchall())
+
+        conn.commit()
+        conn.close()
+        return result
 
 def no_exchanges_table_exists():
     try:
@@ -155,15 +156,15 @@ def no_exchanges_table_exists():
         conn.close()
         return number_of_exchange_tables == 0
 
-def get_all_merkatos_from_exchange(exchange):
+def get_merkato(exchange_name_pair):
     try:
         conn = sqlite3.connect('merkato.db')
     except Exception as e:
         print(str(e))
     finally:
         c = conn.cursor()
-        c.execute('''SELECT * FROM merkatos WHERE exchange={}'''.format(exchange))
-        merkatos = c.fetchall()
+        c.execute('''SELECT * FROM merkatos WHERE exchange_pair = ?''', (exchange_name_pair,))
+        exchange = c.fetchall()[0][0]
         conn.commit()
         conn.close()
-        return merkatos
+        return exchange
