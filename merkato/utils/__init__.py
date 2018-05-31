@@ -65,8 +65,8 @@ def generate_complete_merkato_configs(merkato_tuples):
 		config['privatekey'] = exchange[2]
 
 		complete_config['configuration'] = config
-		complete_config['base'] = tuple[3]
-		complete_config['coin'] = tuple[2]
+		complete_config['base'] = tuple[2]
+		complete_config['coin'] = tuple[3]
 		complete_config['spread'] = tuple[4]
 		merkato_complete_configs.append(complete_config)
 
