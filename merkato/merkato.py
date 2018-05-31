@@ -12,19 +12,19 @@ DEBUG = True
 
 
 class Merkato(object):
-    def __init__(self, configuration, coin, base, spread):
+    def __init__(self, configuration, coin, base, spread, coin_reserve, base_reserve):
         validate_merkato_initialization(configuration, coin, base, spread)
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
-        insert_merkato(configuration[EXCHANGE], UUID, coin, base)
+        insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, coin_reserve, base_reserve)
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
         self.mutex_UUID = UUID
         self.distribution_strategy = 1
-        self.spread = spread # i.e '15
+        self.spread = spread # i.e '.15
         # Create ladders from the bid and ask bidget here
         self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
-        self.bid_reserved_balance = 0
-        self.ask_reserved_balance = 0
+        self.bid_reserved_balance = coin_reserve
+        self.ask_reserved_balance = base_reserve
     # Make a second init for recovering a Merkato from the merkatos table here
 
     def rebalance_orders(self, new_history, new_txes):
@@ -46,7 +46,7 @@ class Merkato(object):
                 amount = tx['amount']
                 price = tx[PRICE]
                 sold.append(tx)
-                buy_price = float(price) - self.spread
+                buy_price = float(price) * ( 1  - (self.spread/.5))
                 response = self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
@@ -54,9 +54,8 @@ class Merkato(object):
                 amount = tx['amount']
                 price = tx[PRICE]
                 bought.append(tx)
-                sell_price = float(price) + self.spread
-                self.exchange.sell(amount, sell_price)
-                response = self.exchange.buy(amount, buy_price)
+                sell_price = float(price) * ( 1  + (self.spread/.5))
+                response = self.exchange.sell(amount, sell_price)
 
             update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
