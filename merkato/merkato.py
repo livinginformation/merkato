@@ -26,6 +26,7 @@ class Merkato(object):
         self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
         self.bid_reserved_balance = coin_reserve
         self.ask_reserved_balance = base_reserve
+        self.distribute_initial_orders(base_reserve, coin_reserve)
     # Make a second init for recovering a Merkato from the merkatos table here
 
     def rebalance_orders(self, new_history, new_txes):
@@ -99,8 +100,13 @@ class Merkato(object):
 
         print(amount)
 
+    def distribute_initial_orders(self, total_base, total_alt):
+        # waiting on vizualization for bids before running it as is
+        # self.distribute_bids(total_base)
+        self.distribute_asks(total_alt)
 
-    def distribute_bids(self, total_to_distribute, step=1.0025):
+
+    def distribute_bids(self, total_to_distribute, step=.9725):
         # Allocates your market making balance on the bid side, in a way that
         # will never be completely exhausted (run out).
         # total_to_distribute is in the base currency (usually BTC)
