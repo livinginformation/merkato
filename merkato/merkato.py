@@ -118,7 +118,7 @@ class Merkato(object):
         #    order placed in decaying_bid_ladder
         pass
 
-    def newTransactionHistory(self, newTransactionHistory):
+    def log_new_transactions(self, newTransactionHistory):
         file = open('my_tax_audit_logs.txt', 'a+')
         for transaction in newTransactionHistory:
             file.write(json.dump(transaction))
