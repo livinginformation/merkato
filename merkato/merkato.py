@@ -100,7 +100,7 @@ class Merkato(object):
         print(amount)
 
 
-    def distribute_bids(self, total_to_distribute, step):
+    def distribute_bids(self, total_to_distribute, step=1.0025):
         # Allocates your market making balance on the bid side, in a way that
         # will never be completely exhausted (run out).
         # total_to_distribute is in the base currency (usually BTC)
@@ -205,7 +205,7 @@ class Merkato(object):
         print(amount)
 
 
-    def distribute_asks(self, total_to_distribute, step):
+    def distribute_asks(self, total_to_distribute, step=1.0025):
         # Allocates your market making balance on the ask side, in a way that
         # will never be completely exhausted (run out).
 
