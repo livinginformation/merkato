@@ -137,7 +137,13 @@ class TuxExchange(ExchangeBase):
 
         query_parameters = { "method": "getmyopenorders" }
 
-        return self._create_signed_request(query_parameters)
+        orders = self._create_signed_request(query_parameters)
+        
+        # Return orders in standardized format (list of buys/sells)
+        # Tux returns {id: {order}, id: {order}, ...}, we want
+        # [{order}, {order}, ...]
+        
+        return list(orders.values())
 
 
     def cancel_order(self, order_id):
