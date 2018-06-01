@@ -6,6 +6,7 @@ from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID
 from merkato.utils.database_utils import update_merkato, insert_merkato
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange
+import math
 from math import floor
 
 DEBUG = True
@@ -39,6 +40,7 @@ class Merkato(object):
         bought = []
         index = -1*new_txes # Pop this many elements off the back of the transaction history
         newTransactionHistory = new_history[index:]
+        self.log_new_transactions(newTransactionHistory)
         for tx in newTransactionHistory:
 
             if tx['type'] == SELL:
@@ -46,7 +48,7 @@ class Merkato(object):
                 amount = tx['amount']
                 price = tx[PRICE]
                 sold.append(tx)
-                buy_price = float(price) * ( 1  - (self.spread/.5))
+                buy_price = float(price) * ( 1  - (self.spread/2))
                 response = self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
@@ -54,7 +56,7 @@ class Merkato(object):
                 amount = tx['amount']
                 price = tx[PRICE]
                 bought.append(tx)
-                sell_price = float(price) * ( 1  + (self.spread/.5))
+                sell_price = float(price) * ( 1  + (self.spread/2))
                 response = self.exchange.sell(amount, sell_price)
 
             update_merkato(self.mutex_UUID, LAST_ORDER, response)
@@ -112,6 +114,12 @@ class Merkato(object):
         # 4. Store the remainder of total_to_distribute, as well as the final
         #    order placed in decaying_bid_ladder
         pass
+
+    def newTransactionHistory(self, newTransactionHistory):
+        file = open('my_tax_audit_logs.txt', 'a+')
+        for transaction in newTransactionHistory:
+            file.write(json.dump(transaction))
+        file.close()
 
 
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
