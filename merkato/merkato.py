@@ -345,7 +345,8 @@ class Merkato(object):
 
         new_history = self.exchange.get_my_trade_history()
         new_hist_len = len(new_history)
-
+        new_transactions = []
+        
         if new_hist_len > hist_len:
             # We have new transactions
             new_txes = new_hist_len - hist_len
