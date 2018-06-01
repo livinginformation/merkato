@@ -370,6 +370,13 @@ class Graph(tk.Frame):
         # -----------------------------------------------------
 
         if "filled_orders" in data:
+            ''' Format:
+            [
+            {'id': '430236', 'date': '2018-05-30 17:03:41', 'type': 'buy', 'price': '0.00000290', 'amount': '78275.86206896', 'total': '0.22700000', 'fee': '0.00000000', 'feepercent': '0.000', 'orderId': '86963799', 'market': 'BTC', 'coin': 'PEPECASH', 'market_pair': 'BTC_PEPECASH'},
+            {'id': '423240', 'date': '2018-04-22 06:19:19', 'type': 'sell', 'price': '0.00000500', 'amount': '6711.95200000', 'total': '0.03355976', 'fee': '0.00000000', 'feepercent': '0.000', 'orderId': '90404882', 'market': 'BTC', 'coin': 'PEPECASH', 'market_pair': 'BTC_PEPECASH'},
+            ...
+            ]
+            '''
             if "buy" in data["filled_orders"]:
 
                 for filled in data["filled_orders"]["buy"]:
