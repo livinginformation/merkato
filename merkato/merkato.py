@@ -62,6 +62,8 @@ class Merkato(object):
             update_merkato(self.mutex_UUID, LAST_ORDER, response)
             
         self.log_new_transactions(newTransactionHistory)
+        
+        return newTransactionHistory
 
     def decaying_bid_ladder(self, total_amount, step, start_price):
         # Places an bid ladder from the start_price to 1/2 the start_price.
@@ -348,15 +350,14 @@ class Merkato(object):
             # We have new transactions
             new_txes = new_hist_len - hist_len
             if DEBUG: print("New transactions: " + str(new_txes))
-            self.rebalance_orders(new_history, new_txes)
+            new_transactions = self.rebalance_orders(new_history, new_txes)
             self.merge_orders()
             
             self.history = new_history
 
         # context to be used for GUI plotting
         context = {"price": (now, last_trade_price),
-                   "filled_orders": {"buy": bought,
-                                     "sell": sold},
+                   "filled_orders": new_transactions,
                    "open_orders": self.exchange.get_my_open_orders(),
                    "balances": self.exchange.get_balances(),
                    "orderbook": self.exchange.get_all_orders()
