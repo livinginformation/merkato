@@ -106,8 +106,16 @@ class Merkato(object):
         # total_to_distribute is in the base currency (usually BTC)
 
         # 1. Get current price
-        current_price = 0 # Query for this value
-        price = current_price + self.spread/2 # half the spread is on the sell side
+
+        # If the spread on the current exchange exceeds 10% for .05btc of volume on each
+        # side, then prompt the user to tell you the midpoint price. Todo.
+        pass
+        
+        # Otherwise, take the highest bid and lowest ask, add and divide by two, and
+        # assume that is the midpoint.
+        current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
+        
+        price = current_price - current_price*self.spread/2 # half the spread is on the sell side
 
         # 2. Call decaying_bid_ladder on that start price, with the given step,
         #    and half the total_to_distribute
@@ -210,8 +218,16 @@ class Merkato(object):
         # will never be completely exhausted (run out).
 
         # 1. Get current price
-        current_price = 0 # Query for this value
-        price = current_price + self.spread/2 # half the spread is on the buy side
+        
+        # If the spread on the current exchange exceeds 10% for .05btc of volume on each
+        # side, then prompt the user to tell you the midpoint price. Todo.
+        pass
+        
+        # Otherwise, take the highest bid and lowest ask, add and divide by two, and
+        # assume that is the midpoint.
+        current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
+        
+        price = current_price + current_price*self.spread/2 # half the spread is on the buy side
 
         # 2. Call decaying_ask_ladder on that start price, with the given step,
         #    and half the total_to_distribute
