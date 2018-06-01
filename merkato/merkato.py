@@ -40,7 +40,7 @@ class Merkato(object):
         bought = []
         index = -1*new_txes # Pop this many elements off the back of the transaction history
         newTransactionHistory = new_history[index:]
-        self.log_new_transactions(newTransactionHistory)
+        
         for tx in newTransactionHistory:
 
             if tx['type'] == SELL:
@@ -60,7 +60,8 @@ class Merkato(object):
                 response = self.exchange.sell(amount, sell_price)
 
             update_merkato(self.mutex_UUID, LAST_ORDER, response)
-
+            
+        self.log_new_transactions(newTransactionHistory)
 
     def decaying_bid_ladder(self, total_amount, step, start_price):
         # Places an bid ladder from the start_price to 1/2 the start_price.
