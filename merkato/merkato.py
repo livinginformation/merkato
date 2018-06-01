@@ -115,7 +115,7 @@ class Merkato(object):
         # assume that is the midpoint.
         current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
         
-        price = current_price - self.spread/2 # half the spread is on the sell side
+        price = current_price - current_price*self.spread/2 # half the spread is on the sell side
 
         # 2. Call decaying_bid_ladder on that start price, with the given step,
         #    and half the total_to_distribute
@@ -227,7 +227,7 @@ class Merkato(object):
         # assume that is the midpoint.
         current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
         
-        price = current_price + self.spread/2 # half the spread is on the buy side
+        price = current_price + current_price*self.spread/2 # half the spread is on the buy side
 
         # 2. Call decaying_ask_ladder on that start price, with the given step,
         #    and half the total_to_distribute
