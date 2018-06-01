@@ -3,7 +3,7 @@ import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE
-from merkato.utils.database_utils import update_merkato, insert_merkato
+from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange
 import math
@@ -16,6 +16,7 @@ class Merkato(object):
     def __init__(self, configuration, coin, base, spread, coin_reserve, base_reserve):
         validate_merkato_initialization(configuration, coin, base, spread)
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
+        merkato_does_exist = merkato_exists(UUID)
         insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, coin_reserve, base_reserve)
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
@@ -26,7 +27,8 @@ class Merkato(object):
         self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
         self.bid_reserved_balance = coin_reserve
         self.ask_reserved_balance = base_reserve
-        self.distribute_initial_orders(base_reserve, coin_reserve)
+        if not merkato_does_exist:
+            self.distribute_initial_orders(base_reserve, coin_reserve)
     # Make a second init for recovering a Merkato from the merkatos table here
 
     def rebalance_orders(self, new_history, new_txes):
