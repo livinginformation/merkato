@@ -86,11 +86,15 @@ class Merkato(object):
 
         while current_order <= total_orders:
             step_adjusted_factor = step**current_order
-            current_ask_amount = total_amount/(scaling_factor / step_adjusted_factor) # This line is probably bugged, haven't thought about it too hard.
-            current_ask_price = start_price/step_adjusted_factor
-            amount += current_ask_amount
-
-            self.exchange.buy(current_ask_amount, current_ask_price)
+            current_bid_amount = total_amount/(scaling_factor / step_adjusted_factor) # This line is probably bugged, haven't thought about it too hard.
+            current_bid_price = start_price/step_adjusted_factor # maybe multiply?
+            amount += current_bid_amount
+            
+            # TODO Create lock
+            self.exchange.buy(current_bid_amount, current_bid_price)
+            self.remove_reserve(amount, BID_RESERVE)       
+            # TODO Release lock
+            
             current_order += 1
 
         print(amount)
@@ -191,7 +195,11 @@ class Merkato(object):
             current_ask_price = start_price*step_adjusted_factor
             amount += current_ask_amount
 
+            # TODO Create lock
             self.exchange.sell(current_ask_amount, current_ask_price)
+            self.remove_reserve(amount, ASK_RESERVE)       
+            # TODO Release lock
+
             current_order += 1
 
         print(amount)
