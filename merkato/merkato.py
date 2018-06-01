@@ -335,7 +335,7 @@ class Merkato(object):
 
 
 
-    def update_order_book(self):
+    def update(self):
         # Get current state of trade history before placing orders
         hist_len = len(self.history)
         now = str(time.time())
