@@ -377,24 +377,21 @@ class Graph(tk.Frame):
             ...
             ]
             '''
-            if "buy" in data["filled_orders"]:
 
-                for filled in data["filled_orders"]["buy"]:
-                    self.coin_balance.set(str(float(self.coin_balance.get()) + filled[1]))
-                    self.base_balance.set(str(float(self.base_balance.get()) - (filled[1] * filled[0])))
-                    bx = self.date_formatter(filled[2])  # date
-                    by = filled[0]
+            for filled in data["filled_orders"]:
+                if "buy" == filled["type"]:
+                    self.coin_balance.set(str(float(self.coin_balance.get()) + float(filled["amount"])))
+                    self.base_balance.set(str(float(self.base_balance.get()) - (float(filled["amount"]) * float(filled["price"]))))
+                    bx = self.date_formatter(filled["date"])  # date
+                    by = float(filled["price"])
                     self.x_bought.append(bx)
                     self.y_bought.append(by)
-        # -----------------------------------------------------
-        if "filled_orders" in data:
-            if "sell" in data["filled_orders"]:
 
-                for filled in data["filled_orders"]["sell"]:
-                    self.coin_balance.set(str(float(self.coin_balance.get()) - filled[1]))
-                    self.base_balance.set(str(float(self.base_balance.get()) + (filled[1] * filled[0])))
-                    sx = self.date_formatter(filled[2])  # date
-                    sy = filled[0]
+                elif "sell" == filled["type"]:
+                    self.coin_balance.set(str(float(self.coin_balance.get()) - float(filled["amount"])))
+                    self.base_balance.set(str(float(self.base_balance.get()) + (float(filled["amount"]) * float(filled["price"]))))
+                    sx = self.date_formatter(filled["date"])  # date
+                    sy = float(filled["price"])
                     self.x_sold.append(sx)
                     self.y_sold.append(sy)
 
