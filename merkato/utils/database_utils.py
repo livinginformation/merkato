@@ -34,7 +34,7 @@ def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', 
         print(str(e))
     finally:
         c = conn.cursor()
-        c.execute("""INSERT INTO merkatos 
+        c.execute("""REPLACE INTO merkatos 
                     (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, ask_reserved_balance, bid_reserved_balance) VALUES (?,?,?,?,?,?,?,?,?)""", 
                     (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, ask_reserved_balance, bid_reserved_balance))
         conn.commit()
@@ -85,7 +85,7 @@ def insert_exchange(exchange, public_api_key='', private_api_key='', limit_only=
         print(str(e))
     finally:
         c = conn.cursor()
-        c.execute("""INSERT INTO exchanges 
+        c.execute("""REPLACE INTO exchanges 
                     (exchange, public_api_key, private_api_key, limit_only) VALUES (?,?,?,?)""", 
                     (exchange, public_api_key, private_api_key, limit_only))
         conn.commit()
@@ -141,7 +141,21 @@ def exchange_exists(exchange):
 
         conn.commit()
         conn.close()
-        return result
+        return result > 0
+
+def merkato_exists(UUID):
+    try:
+        conn = sqlite3.connect('merkato.db')
+    except Exception as e:
+        print(str(e))
+    finally:
+        c = conn.cursor()
+        c.execute('''SELECT * FROM merkatos WHERE exchange_pair = ?''', (UUID,))
+        result = len(c.fetchall())
+
+        conn.commit()
+        conn.close()
+        return result > 0
 
 def no_exchanges_table_exists():
     try:

@@ -3,7 +3,7 @@ import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE
-from merkato.utils.database_utils import update_merkato, insert_merkato
+from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange
 import math
@@ -16,6 +16,7 @@ class Merkato(object):
     def __init__(self, configuration, coin, base, spread, coin_reserve, base_reserve):
         validate_merkato_initialization(configuration, coin, base, spread)
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
+        merkato_does_exist = merkato_exists(UUID)
         insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, coin_reserve, base_reserve)
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
@@ -26,6 +27,8 @@ class Merkato(object):
         self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
         self.bid_reserved_balance = coin_reserve
         self.ask_reserved_balance = base_reserve
+        if not merkato_does_exist:
+            self.distribute_initial_orders(base_reserve, coin_reserve)
     # Make a second init for recovering a Merkato from the merkatos table here
 
     def rebalance_orders(self, new_history, new_txes):
@@ -86,24 +89,41 @@ class Merkato(object):
 
         while current_order <= total_orders:
             step_adjusted_factor = step**current_order
-            current_ask_amount = total_amount/(scaling_factor / step_adjusted_factor) # This line is probably bugged, haven't thought about it too hard.
-            current_ask_price = start_price/step_adjusted_factor
-            amount += current_ask_amount
-
-            self.exchange.buy(current_ask_amount, current_ask_price)
+            current_bid_amount = total_amount/(scaling_factor / step_adjusted_factor) # This line is probably bugged, haven't thought about it too hard.
+            current_bid_price = start_price/step_adjusted_factor # maybe multiply?
+            amount += current_bid_amount
+            
+            # TODO Create lock
+            self.exchange.buy(current_bid_amount, current_bid_price)
+            self.remove_reserve(amount, BID_RESERVE)       
+            # TODO Release lock
+            
             current_order += 1
 
         print(amount)
 
+    def distribute_initial_orders(self, total_base, total_alt):
+        # waiting on vizualization for bids before running it as is
+        # self.distribute_bids(total_base)
+        self.distribute_asks(total_alt)
 
-    def distribute_bids(self, total_to_distribute, step):
+
+    def distribute_bids(self, total_to_distribute, step=.9725):
         # Allocates your market making balance on the bid side, in a way that
         # will never be completely exhausted (run out).
         # total_to_distribute is in the base currency (usually BTC)
 
         # 1. Get current price
-        current_price = 0 # Query for this value
-        price = current_price + self.spread/2 # half the spread is on the sell side
+
+        # If the spread on the current exchange exceeds 10% for .05btc of volume on each
+        # side, then prompt the user to tell you the midpoint price. Todo.
+        pass
+        
+        # Otherwise, take the highest bid and lowest ask, add and divide by two, and
+        # assume that is the midpoint.
+        current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
+        
+        price = current_price - current_price*self.spread/2 # half the spread is on the sell side
 
         # 2. Call decaying_bid_ladder on that start price, with the given step,
         #    and half the total_to_distribute
@@ -118,7 +138,7 @@ class Merkato(object):
         #    order placed in decaying_bid_ladder
         pass
 
-    def newTransactionHistory(self, newTransactionHistory):
+    def log_new_transactions(self, newTransactionHistory):
         file = open('my_tax_audit_logs.txt', 'a+')
         for transaction in newTransactionHistory:
             file.write(json.dump(transaction))
@@ -191,19 +211,31 @@ class Merkato(object):
             current_ask_price = start_price*step_adjusted_factor
             amount += current_ask_amount
 
+            # TODO Create lock
             self.exchange.sell(current_ask_amount, current_ask_price)
+            self.remove_reserve(amount, ASK_RESERVE)       
+            # TODO Release lock
+
             current_order += 1
 
         print(amount)
 
 
-    def distribute_asks(self, total_to_distribute, step):
+    def distribute_asks(self, total_to_distribute, step=1.0025):
         # Allocates your market making balance on the ask side, in a way that
         # will never be completely exhausted (run out).
 
         # 1. Get current price
-        current_price = 0 # Query for this value
-        price = current_price + self.spread/2 # half the spread is on the buy side
+        
+        # If the spread on the current exchange exceeds 10% for .05btc of volume on each
+        # side, then prompt the user to tell you the midpoint price. Todo.
+        pass
+        
+        # Otherwise, take the highest bid and lowest ask, add and divide by two, and
+        # assume that is the midpoint.
+        current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
+        
+        price = current_price + current_price*self.spread/2 # half the spread is on the buy side
 
         # 2. Call decaying_ask_ladder on that start price, with the given step,
         #    and half the total_to_distribute
@@ -335,7 +367,7 @@ class Merkato(object):
 
 
 
-    def update_order_book(self):
+    def update(self):
         # Get current state of trade history before placing orders
         hist_len = len(self.history)
         now = str(time.time())
