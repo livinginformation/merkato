@@ -89,7 +89,7 @@ class Bot(ttk.Frame):
             print("updating bot/graph")
             
             if not self.stub:
-                context = self.bot.update_order_book()
+                context = self.bot.update()
                 
             else:
                 context = self.graph.fake_data()
