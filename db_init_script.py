@@ -24,17 +24,19 @@ def main():
 
     base = "BTC"
     coin = "ETH"
-    spread = ".1"
-    merkato = Merkato(configuration, coin, base, spread)
+    spread = .1
+    coin_reserve = 40
+    base_reserve = 40
+    merkato = Merkato(configuration, coin, base, spread, coin_reserve, base_reserve)
     merkatos = get_all_merkatos()
     complete_merkato_configs = generate_complete_merkato_configs(merkatos)
     print(complete_merkato_configs)
     print(merkatos)
     while True:
-        time.sleep(10)
         context = merkato.update()
         pprint.pprint(context)
         visualize_orderbook(context["orderbook"])
+        time.sleep(10)
 
 if __name__ == '__main__':
     main()

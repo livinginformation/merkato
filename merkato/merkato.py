@@ -28,6 +28,7 @@ class Merkato(object):
         self.bid_reserved_balance = coin_reserve
         self.ask_reserved_balance = base_reserve
         if not merkato_does_exist:
+            print('new merkato')
             self.distribute_initial_orders(base_reserve, coin_reserve)
     # Make a second init for recovering a Merkato from the merkatos table here
 
@@ -55,7 +56,6 @@ class Merkato(object):
                 response = self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
-                print(BUY)
                 amount = tx['amount']
                 price = tx[PRICE]
                 bought.append(tx)
@@ -104,7 +104,7 @@ class Merkato(object):
 
     def distribute_initial_orders(self, total_base, total_alt):
         # waiting on vizualization for bids before running it as is
-        # self.distribute_bids(total_base)
+        self.distribute_bids(total_base)
         self.distribute_asks(total_alt)
 
 
@@ -369,6 +369,7 @@ class Merkato(object):
 
     def update(self):
         # Get current state of trade history before placing orders
+        print(self.history)
         hist_len = len(self.history)
         now = str(time.time())
         last_trade_price = self.exchange.get_last_trade_price()
