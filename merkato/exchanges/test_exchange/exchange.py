@@ -91,7 +91,10 @@ class TestExchange(ExchangeBase):
     def get_all_orders(self):
         ''' Returns all open orders for the current pair
         '''
-        return self.orderbook # We need to decide on the format this returns.
+        return {
+            "asks": self.orderbook.asks,
+            "bids": self.orderbook.bids
+        }
 
 
     def get_my_open_orders(self):

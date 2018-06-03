@@ -33,10 +33,10 @@ def main():
     print(complete_merkato_configs)
     print(merkatos)
     while True:
-        time.sleep(10)
         context = merkato.update()
         pprint.pprint(context)
         visualize_orderbook(context["orderbook"])
+        time.sleep(10)
 
 if __name__ == '__main__':
     main()
