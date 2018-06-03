@@ -96,15 +96,15 @@ class TestExchange(ExchangeBase):
 
     def get_my_open_orders(self):
         ''' Returns all open orders for the authenticated user '''
-        my_bids = filter(lambda order: order["user_id"] == self.user_id, self.orderbook.bids)
-        my_asks = filter(lambda order: order["user_id"] == self.user_id, self.orderbook.aks)
+        my_bids = list(filter(lambda order: order["user_id"] == self.user_id, self.orderbook.bids))
+        my_asks = list(filter(lambda order: order["user_id"] == self.user_id, self.orderbook.asks))
         return {
             "asks": my_asks,
             "bids": my_bids
         }
 
     def get_my_trade_history(self):
-        return filter(lambda order: order["user_id"] == self.user_id, self.order_history)
+        return list(filter(lambda order: order["user_id"] == self.user_id, self.order_history))
 
 
     def cancel_order(self, order_id):

@@ -104,7 +104,7 @@ class Merkato(object):
 
     def distribute_initial_orders(self, total_base, total_alt):
         # waiting on vizualization for bids before running it as is
-        # self.distribute_bids(total_base)
+        self.distribute_bids(total_base)
         self.distribute_asks(total_alt)
 
 
@@ -369,6 +369,7 @@ class Merkato(object):
 
     def update(self):
         # Get current state of trade history before placing orders
+        print(self.history)
         hist_len = len(self.history)
         now = str(time.time())
         last_trade_price = self.exchange.get_last_trade_price()

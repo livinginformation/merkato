@@ -25,7 +25,9 @@ def main():
     base = "BTC"
     coin = "ETH"
     spread = ".1"
-    merkato = Merkato(configuration, coin, base, spread)
+    coin_reserve = 40
+    base_reserve = 40
+    merkato = Merkato(configuration, coin, base, spread, coin_reserve, base_reserve)
     merkatos = get_all_merkatos()
     complete_merkato_configs = generate_complete_merkato_configs(merkatos)
     print(complete_merkato_configs)
