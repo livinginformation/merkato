@@ -24,7 +24,7 @@ def main():
 
     base = "BTC"
     coin = "ETH"
-    spread = ".1"
+    spread = .1
     coin_reserve = 40
     base_reserve = 40
     merkato = Merkato(configuration, coin, base, spread, coin_reserve, base_reserve)
