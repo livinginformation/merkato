@@ -9,12 +9,12 @@ class Orderbook:
         self.ask_ticker = 'BTC'
     
     def addBid(self, userID, amount, price):
-        is_market_order = price > self.asks[0].price
+        #is_market_order = price > self.asks[0].price
         order = create_order(userID, amount, price)
         self.bids.append(order)
         self.bids = sorted(self.bids, key=lambda bid: bid["price"], reverse=True)
-        if is_market_order:
-            return self.resolve_market_order()
+        #if is_market_order:
+        #    return self.resolve_market_order()
     
     def addAsk(self, userID, amount, price):
         # create ask

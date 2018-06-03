@@ -88,7 +88,8 @@ class Merkato(object):
         scaling_factor = 0
         total_orders = floor(math.log(2, step)) # 277 for a step of 1.0025
         current_order = 1
-
+        end_price = start_price/2
+        
         # Calculate scaling factor
         while current_order < total_orders:
             scaling_factor += 1/(step**current_order)
@@ -99,8 +100,8 @@ class Merkato(object):
 
         while current_order <= total_orders:
             step_adjusted_factor = step**current_order
-            current_bid_amount = total_amount/(scaling_factor / step_adjusted_factor) # This line is probably bugged, haven't thought about it too hard.
-            current_bid_price = start_price/step_adjusted_factor # maybe multiply?
+            current_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
+            current_bid_price = end_price/step_adjusted_factor
             amount += current_bid_amount
             
             # TODO Create lock
@@ -118,7 +119,7 @@ class Merkato(object):
         self.distribute_asks(total_alt)
 
 
-    def distribute_bids(self, total_to_distribute, step=.9725):
+    def distribute_bids(self, total_to_distribute, step=1.0025):
         # Allocates your market making balance on the bid side, in a way that
         # will never be completely exhausted (run out).
         # total_to_distribute is in the base currency (usually BTC)
