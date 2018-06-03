@@ -31,20 +31,20 @@ class Orderbook:
         lowest_ask = self.asks[0]
 
         if type == ASK:
-            while lowest_ask < price:
+            while float(lowest_ask["price"]) < price:
                 self.asks.pop(0)
                 add_resolved_order(lowest_ask, resolved_orders, self.bid_ticker, self.ask_ticker)
                 lowest_ask = self.asks[0]
         else:
-            while highest_bid > price:
+            while float(highest_bid["price"]) > price:
                 self.bids.pop(0)
                 add_resolved_order(highest_bid, resolved_orders, self.ask_ticker, self.bid_ticker)
                 highest_bid = self.bids[0]
         return resolved_orders
 
     def generate_fake_orders(self, price):
-        is_bid_market_order = price < self.bids[0].price
-        is_ask_market_order = price > self.asks[0].price
+        is_bid_market_order = price < self.bids[0]["price"]
+        is_ask_market_order = price > self.asks[0]["price"]
 
         if(is_ask_market_order):
             return self.resolve_market_order(ASK, price)

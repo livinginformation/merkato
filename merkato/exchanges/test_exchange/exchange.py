@@ -25,6 +25,7 @@ class TestExchange(ExchangeBase):
         self.price = price
         self.retries = 3
         self.limit_only = True
+        self.DEBUG = 3
         
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
@@ -37,6 +38,7 @@ class TestExchange(ExchangeBase):
 
     def _sell(self, amount, ask,):
         self.orderbook.addAsk(self.user_id, amount, ask)
+
 
 
     def sell(self, amount, ask):
@@ -77,7 +79,9 @@ class TestExchange(ExchangeBase):
 
     def generate_fake_data(self, delta_range=[-3,3]):
         positive_or_negative = [-.2, .2]
+        self.debug(3,"test exchange.py gen fake data", self.price)
         self.price = abs(self.price * (1 + random.randint(*delta_range) / 100))  # percent walk of price, never < 0
+        self.debug(3, "test exchange.py gen fake data: new price", self.price)
         new_orders = self.orderbook.generate_fake_orders(self.price)        
         if new_orders:
             apply_resolved_orders(self.user_accounts, new_orders)
@@ -107,6 +111,14 @@ class TestExchange(ExchangeBase):
         }
 
     def get_my_trade_history(self):
+        try:
+            if not self.order_history:
+                return []
+            alt = [order for order in self.order_history[USER_ID]]
+        except:
+            self.debug(3, "get_my_trade_history", self.order_history, self.user_id)
+            raise
+        return alt
         return list(filter(lambda order: order[USER_ID] == self.user_id, self.order_history))
 
 
@@ -138,7 +150,8 @@ class TestExchange(ExchangeBase):
 
 
     def get_last_trade_price(self):
-        return self.get_ticker()
+        self.generate_fake_data()
+        return self.price
 
 
     def get_lowest_ask(self):

@@ -64,6 +64,7 @@ def visualize_orderbook(orderbook, bps=999):
     draw_depth(orderbook, bps=bps)
     plt.grid()
     plt.show()
+    plt.close()
     
 if __name__ == "__main__":
     visualize_orderbook(example_tux_orderbook)

@@ -32,11 +32,19 @@ def main():
     complete_merkato_configs = generate_complete_merkato_configs(merkatos)
     print(complete_merkato_configs)
     print(merkatos)
+    context = merkato.update()
+    visualize_orderbook(context["orderbook"])
     while True:
         context = merkato.update()
-        pprint.pprint(context)
-        visualize_orderbook(context["orderbook"])
-        time.sleep(10)
+        print("\n"*10)
+        print("lowest ask:  ", context["orderbook"]["asks"][0])
+        print("current price:  ",context["price"][1])
+        print("highest bid:  ", context["orderbook"]["bids"][0])
+        if context["filled_orders"]:
+            print("---- Filled: -----")
+            pprint.pprint(context["filled_orders"])
+            visualize_orderbook(context["orderbook"])
+        time.sleep(.2)
 
 if __name__ == '__main__':
     main()
