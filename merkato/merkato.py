@@ -9,7 +9,7 @@ from merkato.utils import create_price_data, validate_merkato_initialization, ge
 import math
 from math import floor
 
-DEBUG = True
+DEBUG = False
 
 
 class Merkato(object):
@@ -30,7 +30,15 @@ class Merkato(object):
         if not merkato_does_exist:
             print('new merkato')
             self.distribute_initial_orders(base_reserve, coin_reserve)
-    # Make a second init for recovering a Merkato from the merkatos table here
+        self.DEBUG = 100
+
+    def debug(self, level, header, *args):
+        if level <= self.DEBUG:
+            print("-" * 10)
+            print("{}---> {}:".format(level, header))
+            for arg in args:
+                print("\t\t" + repr(arg))
+            print("-" * 10)
 
     def rebalance_orders(self, new_history, new_txes):
         # This function places a matching order for every new transaction since last run
@@ -44,6 +52,8 @@ class Merkato(object):
         bought = []
         index = -1*new_txes # Pop this many elements off the back of the transaction history
         newTransactionHistory = new_history[index:]
+        self.debug(2, "merkato.rebalance_orders")
+        self.debug(3, "merkato.rebalance_orders:  new txs", newTransactionHistory)
         
         for tx in newTransactionHistory:
 
@@ -101,7 +111,7 @@ class Merkato(object):
             
             current_order += 1
 
-        print(amount)
+        #print(amount)
 
     def distribute_initial_orders(self, total_base, total_alt):
         # waiting on vizualization for bids before running it as is
@@ -219,7 +229,7 @@ class Merkato(object):
 
             current_order += 1
 
-        print(amount)
+        #print(amount)
 
 
     def distribute_asks(self, total_to_distribute, step=1.0025):
@@ -301,7 +311,7 @@ class Merkato(object):
         # TODO: Make orders/orderbook variables less semantically similar
 
         orders = self.exchange.get_my_open_orders()
-        print(orders)
+        #print(orders)
 
         # Create a dictionary to store our desired orderbook
         orderbook = dict()
@@ -370,12 +380,12 @@ class Merkato(object):
 
     def update(self):
         # Get current state of trade history before placing orders
-        print(self.history)
+        #print(self.history)
         hist_len = len(self.history)
         now = str(time.time())
         last_trade_price = self.exchange.get_last_trade_price()
 
-        print("Time: " + now)
+        #print("Time: " + now)
 
         new_history = self.exchange.get_my_trade_history()
         new_hist_len = len(new_history)
