@@ -53,9 +53,9 @@ def draw_depth(bidasks, bps=999):
         asizeacc += s2
         avymaxs.append(asizeacc)
         
-    plt.vlines(bhys[1:], bhxmins[1:], bhxmaxs[1:], color="green")
+    plt.vlines(bhys[:], bhxmins[:], bhxmaxs[:], color="green")
     plt.hlines(bvxs, bvymins, bvymaxs, color="green")
-    plt.vlines(ahys[1:], ahxmins[1:], ahxmaxs[1:], color="red")
+    plt.vlines(ahys[:], ahxmins[:], ahxmaxs[:], color="red")
     plt.hlines(avxs, avymins, avymaxs, color="red")
         
 

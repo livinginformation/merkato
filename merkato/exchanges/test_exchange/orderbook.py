@@ -8,8 +8,8 @@ class Orderbook:
     def __init__(self, bids=[], asks=[]):
         self.bids = bids
         self.asks = asks
-        self.bid_ticker = 'XMR'
-        self.ask_ticker = 'BTC'
+        self.bid_ticker = 'XMR'  # TODO: this needs to com from TestExchange
+        self.ask_ticker = 'BTC'  # TODO: this needs to com from TestExchange
         self.current_order_id = 1
 
     def addBid(self, userID, amount, price):
@@ -37,12 +37,12 @@ class Orderbook:
         if type == ASK:
             while float(lowest_ask["price"]) < price:
                 self.asks.pop(0)
-                self.add_resolved_order(lowest_ask, resolved_orders, BUY)
+                self.add_resolved_order(lowest_ask, resolved_orders, SELL)
                 lowest_ask = self.asks[0]
         else:
             while float(highest_bid["price"]) > price:
                 self.bids.pop(0)
-                self.add_resolved_order(highest_bid, resolved_orders, SELL)
+                self.add_resolved_order(highest_bid, resolved_orders, BUY)
                 highest_bid = self.bids[0]
         return resolved_orders
 
@@ -72,9 +72,9 @@ class Orderbook:
         resolved_amount = float(order["price"]) / float(order["amount"])
         if order_type == BUY:
             amount = order["amount"] 
-        else: amount = resolved_amount
+        else: amount = resolved_amount # Causing bids to grow like cancer
 
-        new_order['amount'] = amount
+        new_order['amount'] = order["amount"] # I think we only care about coin amount. resolved amount would be like amount to subtract balance
 
         new_order['total'] = float(order['price']) * float(amount)
     

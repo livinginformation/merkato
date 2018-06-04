@@ -63,6 +63,7 @@ class Merkato(object):
                 price = tx[PRICE]
                 sold.append(tx)
                 buy_price = float(price) * ( 1  - (self.spread/2))
+                self.debug(4, "found sell", tx,"corresponding buy", buy_price)
                 response = self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
@@ -70,6 +71,7 @@ class Merkato(object):
                 price = tx[PRICE]
                 bought.append(tx)
                 sell_price = float(price) * ( 1  + (self.spread/2))
+                self.debug(4, "found buy",tx, "corresponding sell", sell_price)
                 response = self.exchange.sell(amount, sell_price)
 
             update_merkato(self.mutex_UUID, LAST_ORDER, response)
@@ -321,7 +323,7 @@ class Merkato(object):
         orderbook = dict()
 
         for order in orders:
-            print('orders', orders, 'order', order)
+            print( 'order', order)
 
             price    = orders[order][PRICE]
             coin     = orders[order]["coin"]
@@ -401,7 +403,7 @@ class Merkato(object):
             new_txes = new_hist_len - hist_len
             if DEBUG: print("New transactions: " + str(new_txes))
             new_transactions = self.rebalance_orders(new_history, new_txes)
-            self.merge_orders()
+            #self.merge_orders()
             
             self.history = new_history
 
