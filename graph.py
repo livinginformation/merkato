@@ -400,6 +400,22 @@ class Graph(tk.Frame):
         order_time_index = 2
 
         if "open_orders" in data:
+            '''
+            {'coin': 'PEPECASH', 'market': 'BTC', 'date': '2017-10-14 09:05:27', 'type': 'sell', 'price': '0.00000835',
+             'amount': '5988.02395209', 'total': '0.04999999', 'id': '85911467', 'filledamount': '0.00000000',
+             'initamount': '5988.02395209', 'market_pair': 'BTC_PEPECASH'}, '85902008': {'coin': 'PEPECASH',
+                                                                                         'market': 'BTC',
+                                                                                         'date': '2017-10-13 18:42:02',
+                                                                                         'type': 'buy',
+                                                                                         'price': '0.00000227',
+                                                                                         'amount': '70484.58149780',
+                                                                                         'total': '0.16000000',
+                                                                                         'id': '85902008',
+                                                                                         'filledamount': '0.00000000',
+                                                                                         'initamount': '70484.58149780',
+                                                                                         'market_pair': 'BTC_PEPECASH'}
+                                                                                         '''
+
 
             if "sell" in data["open_orders"]:
                 sell_data = data["open_orders"]["sell"]
