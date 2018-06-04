@@ -1,5 +1,8 @@
-from merkato.exchanges.test_exchange.utils import create_order, add_resolved_order 
+import datetime
+
+from merkato.exchanges.test_exchange.utils import create_order 
 from merkato.exchanges.test_exchange.constants import BID, ASK
+from merkato.constants import BUY, SELL
 
 class Orderbook:
     def __init__(self, bids=[], asks=[]):
@@ -7,7 +10,8 @@ class Orderbook:
         self.asks = asks
         self.bid_ticker = 'XMR'
         self.ask_ticker = 'BTC'
-    
+        self.current_order_id = 1
+
     def addBid(self, userID, amount, price):
         #is_market_order = price > self.asks[0].price
         order = create_order(userID, amount, price)
@@ -26,19 +30,19 @@ class Orderbook:
 
         
     def resolve_market_order(self, type, price):
-        resolved_orders = {}
+        resolved_orders = []
         highest_bid = self.bids[0]
         lowest_ask = self.asks[0]
 
         if type == ASK:
             while float(lowest_ask["price"]) < price:
                 self.asks.pop(0)
-                add_resolved_order(lowest_ask, resolved_orders, self.bid_ticker, self.ask_ticker)
+                self.add_resolved_order(lowest_ask, resolved_orders, BUY)
                 lowest_ask = self.asks[0]
         else:
             while float(highest_bid["price"]) > price:
                 self.bids.pop(0)
-                add_resolved_order(highest_bid, resolved_orders, self.ask_ticker, self.bid_ticker)
+                self.add_resolved_order(highest_bid, resolved_orders, SELL)
                 highest_bid = self.bids[0]
         return resolved_orders
 
@@ -50,3 +54,30 @@ class Orderbook:
             return self.resolve_market_order(ASK, price)
         elif(is_bid_market_order):
             return self.resolve_market_order(BID, price)
+
+    def add_resolved_order(self, order, resolved_orders, order_type):
+        new_order = { 
+            'id': self.current_order_id, 
+            'orderid': self.current_order_id, 
+            'market': 'BTC',
+            'date': datetime.datetime.now().isoformat(sep=" ")[:-7], 
+            'type': order_type,
+            'price': order['price'],
+            'fee': '0.00000000', 
+            'feepercent': '0.000',
+            'coin': self.bid_ticker,
+            'market_pair': self.ask_ticker + '_' + self.bid_ticker,
+            'user_id': order['user_id']
+        }
+        resolved_amount = float(order["price"]) / float(order["amount"])
+        if order_type == BUY:
+            amount = order["amount"] 
+        else: amount = resolved_amount
+
+        new_order['amount'] = amount
+
+        new_order['total'] = float(order['price']) * float(amount)
+    
+        self.current_order_id += 1
+
+        resolved_orders.append(new_order)

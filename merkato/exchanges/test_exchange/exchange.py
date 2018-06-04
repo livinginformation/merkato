@@ -84,8 +84,7 @@ class TestExchange(ExchangeBase):
         self.debug(3, "test exchange.py gen fake data: new price", self.price)
         new_orders = self.orderbook.generate_fake_orders(self.price)        
         if new_orders:
-            apply_resolved_orders(self.user_accounts, new_orders)
-            self.order_history.append(new_orders)
+            self.order_history.extend(new_orders)
 
 
     def get_all_orders(self):
@@ -114,12 +113,11 @@ class TestExchange(ExchangeBase):
         try:
             if not self.order_history:
                 return []
-            alt = [order for order in self.order_history[USER_ID]]
+            filtered_history = list(filter(lambda order: order[USER_ID] == self.user_id, self.order_history))
         except:
             self.debug(3, "get_my_trade_history", self.order_history, self.user_id)
             raise
-        return alt
-        return list(filter(lambda order: order[USER_ID] == self.user_id, self.order_history))
+        return filtered_history 
 
 
     def cancel_order(self, order_id):
