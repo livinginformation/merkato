@@ -52,6 +52,7 @@ class TestExchange(ExchangeBase):
             self._sell(amount, ask)
         except Exception as e:  # TODO - too broad exception handling
             self.debug(0, "sell", "ERROR", e)
+            raise Exception(e)
 
                 
     def _buy(self, amount, bid):
@@ -70,6 +71,7 @@ class TestExchange(ExchangeBase):
             self._buy(amount, bid)
         except Exception as e:  # TODO - too broad exception handling
             self.debug(0, "buy", "ERROR", e)
+            raise Exception(e)
             return False
 
 
