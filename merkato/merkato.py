@@ -98,6 +98,7 @@ class Merkato(object):
         current_order = 1
         amount = 0
 
+        prior_reserve = self.bid_reserved_balance
         while current_order <= total_orders:
             step_adjusted_factor = step**current_order
             current_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
@@ -106,12 +107,13 @@ class Merkato(object):
             
             # TODO Create lock
             self.exchange.buy(current_bid_amount, current_bid_price)
-            self.remove_reserve(amount, BID_RESERVE)       
+            self.remove_reserve(current_bid_amount, BID_RESERVE) 
             # TODO Release lock
             
             current_order += 1
 
         #print(amount)
+        print('allocated amount', prior_reserve - self.bid_reserved_balance)
 
     def distribute_initial_orders(self, total_base, total_alt):
         # waiting on vizualization for bids before running it as is
@@ -152,7 +154,7 @@ class Merkato(object):
     def log_new_transactions(self, newTransactionHistory):
         file = open('my_tax_audit_logs.txt', 'a+')
         for transaction in newTransactionHistory:
-            file.write(json.dump(transaction))
+            file.write(json.dumps(transaction))
         file.close()
 
 
@@ -216,6 +218,7 @@ class Merkato(object):
         current_order = 1
         amount = 0
 
+        prior_reserve = self.ask_reserved_balance
         while current_order <= total_orders:
             step_adjusted_factor = step**current_order
             current_ask_amount = total_amount/(scaling_factor * step_adjusted_factor)
@@ -224,12 +227,13 @@ class Merkato(object):
 
             # TODO Create lock
             self.exchange.sell(current_ask_amount, current_ask_price)
-            self.remove_reserve(amount, ASK_RESERVE)       
+            self.remove_reserve(current_ask_amount, ASK_RESERVE) 
             # TODO Release lock
 
             current_order += 1
 
         #print(amount)
+        print('allocated amount', prior_reserve - self.ask_reserved_balance)
 
 
     def distribute_asks(self, total_to_distribute, step=1.0025):
@@ -317,6 +321,7 @@ class Merkato(object):
         orderbook = dict()
 
         for order in orders:
+            print('orders', orders, 'order', order)
 
             price    = orders[order][PRICE]
             coin     = orders[order]["coin"]
