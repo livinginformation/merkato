@@ -1,12 +1,5 @@
 DEBUG = True
 
-def create_order(user_id, amount, price):
-    return {
-        "user_id": user_id,
-        "amount": amount,
-        "price":price
-    }    
-
 def apply_resolved_orders(current_accounts, resolved_orders):
     if resolved_orders:
         if DEBUG:
