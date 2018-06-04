@@ -100,14 +100,29 @@ class TestExchange(ExchangeBase):
 
     def get_my_open_orders(self):
         ''' Returns all open orders for the authenticated user '''
+        # my_filtered_bids = list(filter(lambda order: order[USER_ID] == self.user_id, self.orderbook.bids))
+        # my_filtered_asks = list(filter(lambda order: order[USER_ID] == self.user_id, self.orderbook.asks))
+        # final_bids = list(map(lambda x: [x[PRICE], x[AMOUNT]], my_filtered_bids))
+        # final_asks = list(map(lambda x: [x[PRICE], x[AMOUNT]], my_filtered_asks))
+        # all_orders = {
+        #     "asks": final_asks,
+        #     "bids": final_bids
+        # }
         my_filtered_bids = list(filter(lambda order: order[USER_ID] == self.user_id, self.orderbook.bids))
         my_filtered_asks = list(filter(lambda order: order[USER_ID] == self.user_id, self.orderbook.asks))
-        final_bids = list(map(lambda x: [x[PRICE], x[AMOUNT]], my_filtered_bids))
-        final_asks = list(map(lambda x: [x[PRICE], x[AMOUNT]], my_filtered_asks))
-        return {
-            "asks": final_asks,
-            "bids": final_bids
-        }
+        combined_orders = []
+
+        combined_orders.extend(my_filtered_asks)
+        combined_orders.extend(my_filtered_bids)
+
+        print('combined_orders', combined_orders)
+        my_open_orders = {}
+
+        for order in combined_orders:
+            print('id', order['id'])
+            order_id = order['id']
+            my_open_orders[order_id] = order
+        return my_open_orders
 
     def get_my_trade_history(self):
         try:
