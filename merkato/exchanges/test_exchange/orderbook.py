@@ -36,12 +36,12 @@ class Orderbook:
         if type == ASK:
             while float(lowest_ask["price"]) < price:
                 self.asks.pop(0)
-                self.add_resolved_order(lowest_ask, resolved_orders, SELL)
+                self.add_resolved_order(lowest_ask, resolved_orders)
                 lowest_ask = self.asks[0]
         else:
             while float(highest_bid["price"]) > price:
                 self.bids.pop(0)
-                self.add_resolved_order(highest_bid, resolved_orders, BUY)
+                self.add_resolved_order(highest_bid, resolved_orders)
                 highest_bid = self.bids[0]
         return resolved_orders
 
