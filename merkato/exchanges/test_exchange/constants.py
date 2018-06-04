@@ -1,22 +1,22 @@
 test_bids = [
         {
             "user_id": 1,
-            "amount": 10,
+            "amount": .010,
             "price": .75
         },
         {
             "user_id": 2,
-            "amount": 10,
+            "amount": .010,
             "price": .5
         },
         {
             "user_id": 2,
-            "amount": 10,
+            "amount": .010,
             "price": .25
         },
         {
             "user_id": 2,
-            "amount": 10,
+            "amount": .010,
             "price": .1
         }
     ]

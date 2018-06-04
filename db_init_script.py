@@ -36,13 +36,14 @@ def main():
     visualize_orderbook(context["orderbook"])
     while True:
         context = merkato.update()
-        print("\n"*10)
+        print("\n"*2)
+        if context["filled_orders"]:
+            print("---- Filled: -----")
+            pprint.pprint(context["filled_orders"])
         print("lowest ask:  ", context["orderbook"]["asks"][0])
         print("current price:  ",context["price"][1])
         print("highest bid:  ", context["orderbook"]["bids"][0])
         if context["filled_orders"]:
-            print("---- Filled: -----")
-            pprint.pprint(context["filled_orders"])
             visualize_orderbook(context["orderbook"])
         time.sleep(.2)
 
