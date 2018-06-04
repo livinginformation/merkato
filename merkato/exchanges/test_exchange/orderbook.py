@@ -81,15 +81,10 @@ class Orderbook:
             'market': 'BTC',
             'type': order_type
         }   
-       
-        resolved_amount = float(order["price"]) / float(order["amount"])
-        if order_type == BUY:
-            amount = order["amount"] 
-        else: amount = resolved_amount # Causing bids to grow like cancer
 
-        new_order['amount'] = order["amount"] # I think we only care about coin amount. resolved amount would be like amount to subtract balance
+        new_order['amount'] = amount
 
-        new_order['total'] = float(order['price']) * float(amount)
+        new_order['total'] = float(price) * float(amount)
        
         self.current_order_id += 1
 
