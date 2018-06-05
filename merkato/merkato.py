@@ -90,7 +90,6 @@ class Merkato(object):
         scaling_factor = 0
         total_orders = floor(math.log(2, step)) # 277 for a step of 1.0025
         current_order = 1
-        end_price = start_price/2
         
         # Calculate scaling factor
         while current_order < total_orders:
@@ -104,7 +103,7 @@ class Merkato(object):
         while current_order < total_orders:
             step_adjusted_factor = step**current_order
             current_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
-            current_bid_price = end_price/step_adjusted_factor
+            current_bid_price = start_price/step_adjusted_factor
             amount += current_bid_amount
             
             # TODO Create lock
@@ -114,7 +113,6 @@ class Merkato(object):
             
             current_order += 1
 
-        #print(amount)
         print('allocated amount', prior_reserve - self.bid_reserved_balance)
 
     def distribute_initial_orders(self, total_base, total_alt):
