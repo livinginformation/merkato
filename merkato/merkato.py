@@ -117,26 +117,20 @@ class Merkato(object):
 
     def distribute_initial_orders(self, total_base, total_alt):
         # waiting on vizualization for bids before running it as is
-        self.distribute_bids(total_base)
-        self.distribute_asks(total_alt)
+        
+        current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
+
+        ask_start = current_price + current_price*self.spread/2
+        bid_start = current_price - current_price*self.spread/2
+        
+        self.distribute_bids(bid_start, total_base)
+        self.distribute_asks(ask_start, total_alt)
 
 
-    def distribute_bids(self, total_to_distribute, step=1.0025):
+    def distribute_bids(self, price, total_to_distribute, step=1.0025):
         # Allocates your market making balance on the bid side, in a way that
         # will never be completely exhausted (run out).
         # total_to_distribute is in the base currency (usually BTC)
-
-        # 1. Get current price
-
-        # If the spread on the current exchange exceeds 10% for .05btc of volume on each
-        # side, then prompt the user to tell you the midpoint price. Todo.
-        pass
-        
-        # Otherwise, take the highest bid and lowest ask, add and divide by two, and
-        # assume that is the midpoint.
-        current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
-        
-        price = current_price - current_price*self.spread/2 # half the spread is on the sell side
 
         # 2. Call decaying_bid_ladder on that start price, with the given step,
         #    and half the total_to_distribute
@@ -236,21 +230,9 @@ class Merkato(object):
         print('allocated amount', prior_reserve - self.ask_reserved_balance)
 
 
-    def distribute_asks(self, total_to_distribute, step=1.0025):
+    def distribute_asks(self, price, total_to_distribute, step=1.0025):
         # Allocates your market making balance on the ask side, in a way that
         # will never be completely exhausted (run out).
-
-        # 1. Get current price
-        
-        # If the spread on the current exchange exceeds 10% for .05btc of volume on each
-        # side, then prompt the user to tell you the midpoint price. Todo.
-        pass
-        
-        # Otherwise, take the highest bid and lowest ask, add and divide by two, and
-        # assume that is the midpoint.
-        current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
-        
-        price = current_price + current_price*self.spread/2 # half the spread is on the buy side
 
         # 2. Call decaying_ask_ladder on that start price, with the given step,
         #    and half the total_to_distribute
