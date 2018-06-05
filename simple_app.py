@@ -108,6 +108,7 @@ if __name__ == "__main__":
     root.option_add("*TCombobox*Listbox*selectBackground", "#D15101")
 
     def t(dt):
+        #return matplotlib.dates.date2num(datetime.datetime.now() - datetime.timedelta(seconds=dt))
         return datetime.datetime.now() - datetime.timedelta(seconds=dt)
     def fake_start():
         ''' TODO Function Description
@@ -125,6 +126,33 @@ if __name__ == "__main__":
                 }
     #test = Bot(root, root, stub = 1, title="Stub GUI (very raw)", starting_stats=fake_start())
     #test.pack()
+
+    # ------------------------------
+    # debugging:
+    if False:
+        import sys
+        from pprint import pprint
+        fake = fake_start()
+        pprint(fake)
+
+        fig, ax = plt.subplots(1, 2)
+        ax[0].plot(fake["price_x"], fake["price_y"])
+        ax[0].plot(fake["x_lowest_sell_order"], fake["y_lowest_sell_order"])
+        ax[0].plot(fake["x_highest_buy_order"], fake["y_highest_buy_order"])
+        ax[0].scatter(fake["bought_x"], fake["bought_y"])
+        ax[0].scatter(fake["sold_x"], fake["sold_y"])
+
+        hfmt = matplotlib.dates.DateFormatter('%D %H:%M:%S')
+        ax[0].xaxis.set_major_formatter(hfmt)
+
+        fig.autofmt_xdate()
+        print(ax[0].get_xlim(),ax[0].get_ylim())
+        #ax[0].set_xlim(ax[0].get_xlim()[0],ax[0].get_xlim()[0]+1 )
+        plt.show()
+
+
+        sys.exit(0)
+    # ------------------------------
 
     app = App(root, tk.RIGHT)
     for i in range(1):
