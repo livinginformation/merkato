@@ -348,7 +348,7 @@ class Merkato(object):
                 print("Collision at", price)
 
                 existing_order        = orderbook[price]
-                existing_order_id     = existing_order['order_id']
+                existing_order_id     = existing_order['id']
                 existing_order_type   = existing_order['type']
                 existing_order_total  = float(existing_order['total'])
                 existing_order_amount = float(existing_order['amount'])
@@ -376,7 +376,7 @@ class Merkato(object):
                 else: update_merkato(self.mutex_UUID, LAST_ORDER, new_id)
 
                 if DEBUG: print("consolidation successful")
-                existing_order['order_id'] = new_id
+                existing_order['id'] = new_id
 
                 if DEBUG: print(existing_order)
 
