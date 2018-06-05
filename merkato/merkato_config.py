@@ -16,8 +16,8 @@ def load_config():
 
 def insert_config_into_exchanges(config):
     limit_only = config["limit_only"]
-    public_key = config["publickey"]
-    private_key = config["privatekey"]
+    public_key = config["public_api_key"]
+    private_key = config["private_api_key"]
     exchange = config["exchange"]
     if no_exchanges_table_exists():
         create_exchanges_table()
