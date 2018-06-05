@@ -26,8 +26,8 @@ def validate_credentials(config, url):
     post = urllib.parse.urlencode(query_parameters)
 
 
-    signature = hmac.new(config['privatekey'].encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-    head = {'Key': config['publickey'], 'Sign': signature}
+    signature = hmac.new(config['private_api_key'].encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
+    head = {'Key': config['public_api_key'], 'Sign': signature}
 
     request = requests.post(url, data=query_parameters, headers=head, timeout=timeout).json()
     return 'error' not in request

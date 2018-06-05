@@ -14,8 +14,8 @@ class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
     def __init__(self, config, coin, base):
-        self.privatekey = config['privatekey']
-        self.publickey  = config['publickey']
+        self.privatekey = config['private_api_key']
+        self.publickey  = config['public_api_key']
         self.limit_only = config['limit_only']
         self.retries = 5
         self.coin = coin
