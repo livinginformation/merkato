@@ -63,6 +63,7 @@ class Graph(tk.Frame):
 
         self.x_price = price_x
         self.y_price = price_y
+
         self.line_price = Line2D(self.x_price, self.y_price, color="blue")
         self.ax[0].add_line(self.line_price)
 
@@ -96,7 +97,7 @@ class Graph(tk.Frame):
         self.ax[0].grid(color='gray', linestyle='--', linewidth=.5)
         self.ax[0].set_title(self.parent.name, fontsize=10)
         self.canvas.draw()
-
+        #self.draw_graph()
 
         self.toolbar_frame = tk.Frame(self)
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self.toolbar_frame,)
@@ -503,6 +504,7 @@ class Graph(tk.Frame):
                 else:
                     # self.ax[0].autoscale(axis="y")
                     self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
+                    self.ax[0].set_xlim(self.x_price[0], self.x_price[-1])
 
             else:
                 print("trying:  ", self.x_low, self.x_hi, self.y_low, self.y_hi)
@@ -510,12 +512,22 @@ class Graph(tk.Frame):
                 self.ax[0].set_ylim(self.y_low, self.y_hi)
 
         self.ax[0].grid(color='gray', linestyle='--', linewidth=.5)
-        #self.fig.autofmt_xdate()
+
+        #self.ax[0].set_xticklabels([str(d) for d in self.x_price])
         self.ax[0].set_title(self.parent.name, fontsize=10)
+
+        hfmt = matplotlib.dates.DateFormatter('%H:%M:%S')
+        self.ax[0].xaxis.set_major_formatter(hfmt)
+        #self.ax[0].set_xlim(self.x_price[0], self.x_price[-1])
+        self.fig.autofmt_xdate()
 
         self.canvas.draw()
 
-
+    def check_dates(self,dates):
+        for d in dates:
+            print(d.isoformat(),datetime.datetime.toordinal(d))
+            if not isinstance(d,datetime.date):
+                raise Exception("Found bad date: %s %s " % (type(d),d))
 
     def refresh(self, data, active=True):
         '''
