@@ -101,7 +101,7 @@ class Merkato(object):
         amount = 0
 
         prior_reserve = self.bid_reserved_balance
-        while current_order <= total_orders:
+        while current_order < total_orders:
             step_adjusted_factor = step**current_order
             current_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
             current_bid_price = end_price/step_adjusted_factor
@@ -221,7 +221,7 @@ class Merkato(object):
         amount = 0
 
         prior_reserve = self.ask_reserved_balance
-        while current_order <= total_orders:
+        while current_order < total_orders:
             step_adjusted_factor = step**current_order
             current_ask_amount = total_amount/(scaling_factor * step_adjusted_factor)
             current_ask_price = start_price*step_adjusted_factor
