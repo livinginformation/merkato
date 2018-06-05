@@ -11,6 +11,8 @@ import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.lines import Line2D
 
+import datetime
+
 import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
 
@@ -105,26 +107,27 @@ if __name__ == "__main__":
     )
     root.option_add("*TCombobox*Listbox*selectBackground", "#D15101")
 
-
+    def t(dt):
+        return datetime.datetime.now() - datetime.timedelta(seconds=dt)
     def fake_start():
         ''' TODO Function Description
         '''
-        return {"price_x" : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        return {"price_x" : [t(i) for i in range(110,0,-10)],
                 "price_y" : [250, 250, 240, 240, 250, 255, 250, 240, 240, 250, 250],
-                "bought_x" : [3, 8 ],
+                "bought_x" : [t(70), t(20) ],
                 "bought_y" : [244, 244],
-                "sold_x" : [5.85, 10],
+                "sold_x" : [t(45), t(5)],
                 "sold_y" : [253, 253],
-                "x_lowest_sell_order" : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "x_lowest_sell_order" : [t(i) for i in range(100,0,-10)],
                 "y_lowest_sell_order" : [253, 253, 253, 253, 253, 253, 253, 253, 253, 253, ],
-                "x_highest_buy_order" : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "x_highest_buy_order" : [t(i) for i in range(100,0,-10)],
                 "y_highest_buy_order" : [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
                 }
     #test = Bot(root, root, stub = 1, title="Stub GUI (very raw)", starting_stats=fake_start())
     #test.pack()
 
     app = App(root, tk.RIGHT)
-    for i in range(20):
+    for i in range(1):
         bot = Bot(root, app(), app, stub=1, starting_stats=fake_start())
         app.add_screen(bot,
             "null", 

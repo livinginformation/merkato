@@ -10,7 +10,7 @@ test_bids = [
             'orderid': 3, 
             'market': 'BTC',
             'type': 'sell',
-            'amount': 3,
+            'amount': .003,
             'total': 2.25 
         },
         {
@@ -24,7 +24,7 @@ test_bids = [
             'orderid': 4, 
             'market': 'BTC',
             'type': 'sell',
-            'amount': 3,
+            'amount': .003,
             'total': 1.5 
         },
         {
@@ -38,7 +38,7 @@ test_bids = [
             'orderid': 5, 
             'market': 'BTC',
             'type': 'sell',
-            'amount': 3,
+            'amount': .003,
             'total': .75 
         },
         {
@@ -52,7 +52,7 @@ test_bids = [
             'orderid': 6, 
             'market': 'BTC',
             'type': 'sell',
-            'amount': 3,
+            'amount': .003,
             'total': .3 
         },
     ]
@@ -69,7 +69,7 @@ test_asks = [
             'orderid': 7, 
             'market': 'BTC',
             'type': 'buy',
-            'amount': 3,
+            'amount': .003,
             'total': 3.75 
         },
         {
@@ -83,7 +83,7 @@ test_asks = [
             'orderid': 8, 
             'market': 'BTC',
             'type': 'buy',
-            'amount': 3,
+            'amount': .003,
             'total': 4.5 
         },
         {
@@ -97,7 +97,7 @@ test_asks = [
             'orderid': 9, 
             'market': 'BTC',
             'type': 'buy',
-            'amount': 3,
+            'amount': .003,
             'total': 5.25 
         },
         {
@@ -111,7 +111,7 @@ test_asks = [
             'orderid': 10, 
             'market': 'BTC',
             'type': 'buy',
-            'amount': 3,
+            'amount': .003,
             'total': 6 
         },
     ]
