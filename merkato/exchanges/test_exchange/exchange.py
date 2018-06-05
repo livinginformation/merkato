@@ -121,7 +121,6 @@ class TestExchange(ExchangeBase):
         my_open_orders = {}
 
         for order in combined_orders:
-            print('id', order['id'])
             order_id = order['id']
             my_open_orders[order_id] = order
         return my_open_orders
