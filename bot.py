@@ -1,4 +1,5 @@
-#from merkato.merkato import Merkato
+from merkato.merkato import Merkato
+from merkato.utils import database_utils
 
 from   graph import Graph
 from   my_widget import MyWidget
@@ -29,6 +30,9 @@ class Bot(ttk.Frame):
         self.stub = stub
         self.is_active = False
         self.title_var = tk.StringVar()
+        self.coin_title = "coin"
+        self.base_title = "base"
+        self.exchange_title = "<exchange>"
         
         if self.stub:
             self.name = "XMR/BTC   Kraken"
@@ -49,22 +53,23 @@ class Bot(ttk.Frame):
 
         # --------------------
         self.exchange_frame = ttk.Frame(self, style="app.TFrame")
-        self.exchange_name = MyWidget(self.app, self.exchange_frame, handle="exchange", choices= ["tux", "polo", "kraken", "gdax"])
+        self.exchange_menu, self.exchange_index = database_utils.get_all_exchanges()
+        self.exchange_name = MyWidget(self.app, self.exchange_frame, handle="exchange", choices= self.exchange_menu)
         self.coin = MyWidget(self.app, self.exchange_frame, handle="coin", choices= ["XMR", "LTC", "PEPE"])
         self.base = MyWidget(self.app, self.exchange_frame, handle="base", choices= ["BTC","USDT"])
-        self.public_key = MyWidget(self.app, self.exchange_frame, handle="pub. key", choices="entry")
-        self.private_key = MyWidget(self.app, self.exchange_frame, handle="priv. key", is_password=True, choices="entry")
+        #self.public_key = MyWidget(self.app, self.exchange_frame, handle="pub. key", choices="entry")
+        #self.private_key = MyWidget(self.app, self.exchange_frame, handle="priv. key", is_password=True, choices="entry")
 
-        self.ask_budget = MyWidget(self.app, self.exchange_frame, handle="sell budget", startVal=0.0, choices="entry")
-        self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="buy budget", startVal=0.0, choices="entry")
+        self.ask_budget = MyWidget(self.app, self.exchange_frame, handle="coin reserve", startVal=0.0, choices="entry")
+        self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="base reserve", startVal=0.0, choices="entry")
         self.spread = MyWidget(self.app, self.exchange_frame, handle="spread [%]", startVal=5.0, choices="entry")
         self.execute = ttk.Button(self.exchange_frame, text = "Launch", cursor = "shuttle", command= self.start)
 
         self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.coin.grid(row=1, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.base.grid(row=2, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
-        self.public_key.grid(row=3, column=0,  sticky=tk.NE, padx=(10, 5), pady=(5, 5))
-        self.private_key.grid(row=4, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        #self.public_key.grid(row=3, column=0,  sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        #self.private_key.grid(row=4, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
         self.ask_budget.grid(row=5, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.bid_budget.grid(row=6, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.spread.grid(row=7, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
@@ -103,25 +108,28 @@ class Bot(ttk.Frame):
                 self.title_var.set(str(self.name) + "   err")
 
     def start(self):
-        for widget in [self.public_key, self.private_key, self.exchange_name,self.coin, self.base, self.ask_budget, self.bid_budget]:
+        for widget in [self.exchange_name,self.coin, self.base, self.ask_budget, self.bid_budget]:
             print("{}:\t\t{}".format(widget.handle,widget.get()[0]))
 
-        config = {}
+        #config = {}
         self.merk_args = {}
 
-        config['privatekey'] = self.private_key.get()[0]
-        config['publickey']  = self.public_key.get()[0]
-        config['limit_only'] = True
+        #config['privatekey'] = self.private_key.get()[0]
+        #config['publickey']  = self.public_key.get()[0]
+        #config['limit_only'] = True
 
-        self.merk_args["configuration"] = config
-        self.merk_args["exchange"] = self.exchange_name.get()[0]
+        self.merk_args["configuration"] = self.exchange_index[ self.exchange_name.get()[0]]
+        #self.merk_args["exchange"] = self.exchange_name.get()[0]
         self.merk_args["coin"] = self.coin.get()[0]
         self.merk_args["base"] = self.base.get()[0]
-        self.merk_args["ask_budget"] = self.ask_budget.get()[0]
-        self.merk_args["bid_budget"] = self.bid_budget.get()[0]
-        self.merk_args["spread"] = self.spread.get()[0]
+        self.merk_args["coin_reserve"] = float(self.ask_budget.get()[0])
+        self.merk_args["base_reserve"] = float(self.bid_budget.get()[0])
+        self.merk_args["spread"] = float(self.spread.get()[0]) / 100.0
 
-        self.name = str(self.merk_args["coin"]) + "/" + str(self.merk_args["base"]) + "    " + str(self.merk_args["exchange"])
+        self.coin_title = self.merk_args["coin"]
+        self.base_title = self.merk_args["base"]
+        self.exchange_title = self.merk_args["configuration"]["exchange"]
+        self.name = str(self.merk_args["coin"]) + "/" + str(self.merk_args["base"]) + "    " + self.exchange_title
         self.title_var.set(str(self.name))
 
         if not self.stub:
@@ -129,7 +137,7 @@ class Bot(ttk.Frame):
                 self.bot = Merkato(**self.merk_args)
 
             except Exception as e:
-                MessageBox.showerror("Bot Start Fail", str(e))
+                MessageBox.showerror("Bot Start Fail", str(e) + repr(self.merk_args))
 
             else:
                 self.exchange_frame.destroy()

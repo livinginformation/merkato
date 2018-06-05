@@ -1,4 +1,4 @@
-
+import merkato.utils.database_utils as db
 #from exchange import Exchange
 from merkato.merkato import Merkato
 
@@ -153,8 +153,28 @@ if __name__ == "__main__":
 
         sys.exit(0)
     # ------------------------------
+    try:
+        db.create_exchanges_table()
+    except Exception as e:
+        if "index id_exchange already exists" in str(e):
+            pass
+        else:
+            raise
 
+    db.insert_exchange("test", public_api_key='abc', private_api_key='123', limit_only=True)
+
+    # ------------------------------
     app = App(root, tk.RIGHT)
+
+    bot = Bot(root, app(), app,)
+    app.add_screen(bot,
+                   "null",
+                   textvariable=bot.title_var,
+                   bg="gray75",
+                   fg="black",
+                   selectcolor="lightblue"
+                   )
+
     for i in range(1):
         bot = Bot(root, app(), app, stub=1, starting_stats=fake_start())
         app.add_screen(bot,
