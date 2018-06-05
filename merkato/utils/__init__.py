@@ -8,8 +8,8 @@ def update_config_with_credentials(config):
 	print("API Credentials needed")
 	public_key  = input("Public Key: ")
 	private_key = input("Private Key: ")
-	config['publickey'] = public_key
-	config['privatekey'] = private_key
+	config['public_api_key'] = public_key
+	config['private_api_key'] = private_key
 
 
 def get_exchange():
@@ -41,7 +41,7 @@ def create_price_data(orders, order):
 	return price_data
 
 def validate_merkato_initialization(configuration, coin, base, spread):
-	if all (keys in configuration for keys in ("publickey","exchange", "privatekey", "limit_only")):
+	if all (keys in configuration for keys in ("public_api_key","exchange", "private_api_key", "limit_only")):
 		return
 	raise ValueError('config does not contain needed values.')
 
@@ -61,8 +61,8 @@ def generate_complete_merkato_configs(merkato_tuples):
 		exchange = get_exchange_from_db(tuple[0])
 		
 		config['exchange'] = tuple[0]
-		config['publickey'] = exchange[1]
-		config['privatekey'] = exchange[2]
+		config['public_api_key'] = exchange[1]
+		config['private_api_key'] = exchange[2]
 
 		complete_config['configuration'] = config
 		complete_config['base'] = tuple[2]
