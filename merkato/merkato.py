@@ -329,7 +329,7 @@ class Merkato(object):
             coin     = orders[order]["coin"]
             amount   = float(orders[order]["amount"]) # Amount in asset
             total    = float(orders[order]["total"])  # Total in BTC
-            order_id = orders[order]['order_id']
+            order_id = orders[order]['orderid']
 
             if DEBUG: print(orders[order])
 
@@ -348,7 +348,7 @@ class Merkato(object):
                 print("Collision at", price)
 
                 existing_order        = orderbook[price]
-                existing_order_id     = existing_order['order_id']
+                existing_order_id     = existing_order['orderid']
                 existing_order_type   = existing_order['type']
                 existing_order_total  = float(existing_order['total'])
                 existing_order_amount = float(existing_order['amount'])
@@ -376,7 +376,7 @@ class Merkato(object):
                 else: update_merkato(self.mutex_UUID, LAST_ORDER, new_id)
 
                 if DEBUG: print("consolidation successful")
-                existing_order['order_id'] = new_id
+                existing_order['orderid'] = new_id
 
                 if DEBUG: print(existing_order)
 
@@ -403,7 +403,7 @@ class Merkato(object):
             new_txes = new_hist_len - hist_len
             if DEBUG: print("New transactions: " + str(new_txes))
             new_transactions = self.rebalance_orders(new_history, new_txes)
-            #self.merge_orders()
+            self.merge_orders()
             
             self.history = new_history
 
