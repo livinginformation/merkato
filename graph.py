@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.lines import Line2D
+import datetime
 
 from   my_widget import MyWidget
 
@@ -147,9 +148,11 @@ class Graph(tk.Frame):
         self.fake_prev_order = "sell"
         if self.stub:
             self.fake_spread = 4
-            x_this = self.x_price[-1] + 1
-            self.fake_orders = {"buy": [(244, 0.5, x_this), (241, 0.5, x_this),(236, 0.5, x_this),(231, 0.5, x_this),(226, 0.5, x_this),(221, 0.5, x_this),(216, 0.5, x_this)],
-                               "sell": [(253, 0.5, x_this),(258, 0.5, x_this), (263, 0.5, x_this), (263, 0.5, x_this), (268, 0.5, x_this), (273, 0.5, x_this), (278, 0.5, x_this)]}
+            x_this = datetime.datetime.now()
+            #self.fake_orders = {"buy": [(244, 0.5, x_this), (241, 0.5, x_this),(236, 0.5, x_this),(231, 0.5, x_this),(226, 0.5, x_this),(221, 0.5, x_this),(216, 0.5, x_this)],
+            #                   "sell": [(253, 0.5, x_this),(258, 0.5, x_this), (263, 0.5, x_this), (263, 0.5, x_this), (268, 0.5, x_this), (273, 0.5, x_this), (278, 0.5, x_this)]}
+            self.fake_orders = [dict(price=this_price, date=x_this, type="buy", amount=0.5) for this_price in range(244,100,-10)]
+            self.fake_orders.extend([dict(price=this_price, date=x_this, type="sell", amount=0.5) for this_price in range(253,400,10)])
             #self._root().after(5000, self.refresh, self.fake_data())
 
     def draw_orderbook(self, orderbook=None):
@@ -221,9 +224,9 @@ class Graph(tk.Frame):
 
             self.ax_depth.clear()
             self.ax_depth.grid(color='gray', linestyle='--', linewidth=.5)
-            self.ax_depth.vlines(bhys[1:], bhxmins[1:], bhxmaxs[1:], color="green")
+            self.ax_depth.vlines(bhys[:], bhxmins[:], bhxmaxs[:], color="green")
             self.ax_depth.hlines(bvxs, bvymins, bvymaxs, color="green")
-            self.ax_depth.vlines(ahys[1:], ahxmins[1:], ahxmaxs[1:], color="red")
+            self.ax_depth.vlines(ahys[:], ahxmins[:], ahxmaxs[:], color="red")
             self.ax_depth.hlines(avxs, avymins, avymaxs, color="red")
 
 
@@ -288,38 +291,44 @@ class Graph(tk.Frame):
 
 
     def fake_data(self):
-        x_this = self.x_price[-1] + 1
+        print("------------- faking data ------------")
+
+        x_this = datetime.datetime.now()
         old_price = self.y_price[-1]
 
         price = abs(old_price + random.randint(-5, 5))
-
+        print(x_this, price)
+        print("fake orders", repr(self.fake_orders))
         data = {
             "price": (x_this, price),
-            "open_orders": dict(self.fake_orders)
+            "open_orders": list(self.fake_orders)
 
         }
 
-        trigger_buy = old_price > 241 and price < 241 and self.fake_prev_order == "sell"
-        trigger_sell = old_price < 258 and price > 258 and self.fake_prev_order == "buy"
         
         # ----------
-        
-        closed = {"filled_orders": {"buy": [],
-                                    "sell": []}}
+        print("------------- fake: filling orders ------------")
 
-        this_fake_orders = self.fake_orders.copy()
+        closed = {"filled_orders": []}
 
-        for order in this_fake_orders["buy"]:
-            if price <= order[0]:
-                closed["filled_orders"]["buy"].append((order[0], order[1], x_this - .5))
-                self.fake_orders["sell"].append((order[0] + self.fake_spread, order[1], x_this - .5))
-                self.fake_orders["buy"].remove(order)
+        this_fake_orders = list(self.fake_orders)
+        fdt = datetime.timedelta(seconds=3)
+        for order in this_fake_orders:
+            if order["type"] == "buy":
+                if price <= float(order["price"]):
+                    closed["filled_orders"].append(dict(amount=float(order["amount"]), price=float(order["price"]), date=x_this - fdt, type="buy"))    # was (order[0], order[1], x_this - .5))
+                    self.fake_orders.append(dict(amount=float(order["amount"]), price=float(order["price"]) + self.fake_spread, date=x_this - fdt, type="sell"))  # was ((order[0] + self.fake_spread, order[1], x_this - .5))
+                    self.fake_orders.remove(order)
 
-        for order in self.fake_orders["sell"]:
-            if price >= order[0]:
-                closed["filled_orders"]["sell"].append((order[0], order[1], x_this - .5))
-                self.fake_orders["buy"].append((order[0] - self.fake_spread, order[1], x_this - .5))
-                self.fake_orders["sell"].remove(order)
+            if order["type"] == "sell":
+                if price >= float(order["price"]):
+                    closed["filled_orders"].append(dict(amount=float(order["amount"]), price=float(order["price"]), date=x_this - fdt, type="sell"))    # was (order[0], order[1], x_this - .5))
+                    self.fake_orders.append(dict(amount=float(order["amount"]), price=float(order["price"]) - self.fake_spread, date=x_this - fdt, type="buy"))  # was ((order[0] + self.fake_spread, order[1], x_this - .5))
+                    self.fake_orders.remove(order)
+
+
+
+
 
         # -----------
 
@@ -337,7 +346,7 @@ class Graph(tk.Frame):
         #     print(data)
         #     data.update(closed)
 
-        if closed["filled_orders"]["buy"] or closed["filled_orders"]["sell"]:
+        if closed["filled_orders"]:
             print("#------------\nORDER ALERT:")
             data.update(closed)
         order_book = {"asks": [], "bids": []}
@@ -356,16 +365,21 @@ class Graph(tk.Frame):
         return data
 
 
-    def date_formatter(self, date):
+    def date_as_object(self, date):
         ''' TODO Function Description
         '''
         # TODO: do something with date
-        return date
+        if isinstance(date,datetime.date):
+            print("already a datetime object")
+            return date
+        date_object = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+        return date_object
 
     def ingest_data(self, data):
+        print("------------- ingesting data ------------")
         if "price" in data:
             px, py = data["price"]
-            self.x_price.append(self.date_formatter(px))
+            self.x_price.append(self.date_as_object(px))
             self.y_price.append(py)
         # -----------------------------------------------------
 
@@ -382,7 +396,7 @@ class Graph(tk.Frame):
                 if "buy" == filled["type"]:
                     self.coin_balance.set(str(float(self.coin_balance.get()) + float(filled["amount"])))
                     self.base_balance.set(str(float(self.base_balance.get()) - (float(filled["amount"]) * float(filled["price"]))))
-                    bx = self.date_formatter(filled["date"])  # date
+                    bx = self.date_as_object(filled["date"])  # date
                     by = float(filled["price"])
                     self.x_bought.append(bx)
                     self.y_bought.append(by)
@@ -390,7 +404,7 @@ class Graph(tk.Frame):
                 elif "sell" == filled["type"]:
                     self.coin_balance.set(str(float(self.coin_balance.get()) - float(filled["amount"])))
                     self.base_balance.set(str(float(self.base_balance.get()) + (float(filled["amount"]) * float(filled["price"]))))
-                    sx = self.date_formatter(filled["date"])  # date
+                    sx = self.date_as_object(filled["date"])  # date
                     sy = float(filled["price"])
                     self.x_sold.append(sx)
                     self.y_sold.append(sy)
@@ -415,37 +429,33 @@ class Graph(tk.Frame):
                                                                                          'initamount': '70484.58149780',
                                                                                          'market_pair': 'BTC_PEPECASH'}
                                                                                          '''
+            sell_amounts = [float(order["price"]) for order in data["open_orders"] if order["type"] == "sell"]
+            buy_amounts = [float(order["price"]) for order in data["open_orders"] if order["type"] == "buy"]
 
 
-            if "sell" in data["open_orders"]:
-                sell_data = data["open_orders"]["sell"]
+            if sell_amounts:
+                lowest_sell = min(sell_amounts)
+                self.x_lowest_sell_order.append(datetime.datetime.now()+ datetime.timedelta(seconds=5))
+                self.y_lowest_sell_order.append(lowest_sell)
+                if len(sell_amounts) > 1:  # then we have a meaningful "high" order
+                    # todo: something with this data
+                    highest_sell = max(sell_amounts)
 
-                if sell_data:
-                    lowest_sell = sorted(sell_data, key=itemgetter(order_price_index))[0]
-                    self.x_lowest_sell_order.append(self.date_formatter(self.x_price[-1]))
-                    self.y_lowest_sell_order.append(lowest_sell[order_price_index])
-
-                    if len(sell_data) > 1:  # then we have a meaningful "high" order
-                        # todo: something with this data
-                        highest_sell = sorted(sell_data, key=itemgetter(order_price_index))[-1]
-
-            if "buy" in data["open_orders"]:
-                buy_data = data["open_orders"]["buy"]
-
-                if buy_data:
-                    highest_buy = sorted(buy_data, key=itemgetter(order_price_index))[-1]
-                    self.x_highest_buy_order.append(self.date_formatter(self.x_price[-1]))
-                    self.y_highest_buy_order.append(highest_buy[order_price_index])
-
-                    if len(buy_data) > 1:  # then we have a meaningful "low" order
-                        # todo: something with this data
-                        lowest_buy = sorted(buy_data, key=itemgetter(order_price_index))[0]
+            if buy_amounts:
+                highest_buy = max(buy_amounts)
+                self.x_highest_buy_order.append(datetime.datetime.now()+ datetime.timedelta(seconds=5))
+                self.y_highest_buy_order.append(highest_buy)
+                if len(buy_amounts) > 1:  # then we have a meaningful "high" order
+                    # todo: something with this data
+                    lowest_buy = min(buy_amounts)
 
         # -----------------------------------------------------
         if "orderbook" in data:
             self.orderbook = data["orderbook"]
 
     def draw_graph(self):
+        print("------------- drawing graph ------------")
+
         self.x_low, self.x_hi = self.ax[0].get_xlim()
         self.y_low, self.y_hi = self.ax[0].get_ylim()
         start = time.time()
@@ -482,24 +492,25 @@ class Graph(tk.Frame):
             self.draw_depth()
         except:
             pass
+        if True:
+            if self.x_axis_auto_scroll.optState.get():
 
-        if self.x_axis_auto_scroll.optState.get():
+                if len(self.x_price) > this_window_size:
+                    self.ax[0].set_xlim(self.x_price[-1 * this_window_size + 1], self.x_price[-1])
+                    # self.ax[0].autoscale(axis="y")
+                    self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
 
-            if len(self.x_price) > this_window_size:
-                self.ax[0].set_xlim(self.x_price[-1 * this_window_size + 1], self.x_price[-1])
-                # self.ax[0].autoscale(axis="y")
-                self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
+                else:
+                    # self.ax[0].autoscale(axis="y")
+                    self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
 
             else:
-                # self.ax[0].autoscale(axis="y")
-                self.ax[0].set_ylim(self.y_price[-1] * .85, self.y_price[-1] * 1.15)
-
-        else:
-            print("trying:  ", self.x_low, self.x_hi, self.y_low, self.y_hi)
-            self.ax[0].set_xlim(self.x_low, self.x_hi)
-            self.ax[0].set_ylim(self.y_low, self.y_hi)
+                print("trying:  ", self.x_low, self.x_hi, self.y_low, self.y_hi)
+                self.ax[0].set_xlim(self.x_low, self.x_hi)
+                self.ax[0].set_ylim(self.y_low, self.y_hi)
 
         self.ax[0].grid(color='gray', linestyle='--', linewidth=.5)
+        #self.fig.autofmt_xdate()
         self.ax[0].set_title(self.parent.name, fontsize=10)
 
         self.canvas.draw()
