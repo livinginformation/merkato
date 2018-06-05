@@ -329,7 +329,7 @@ class Merkato(object):
             coin     = orders[order]["coin"]
             amount   = float(orders[order]["amount"]) # Amount in asset
             total    = float(orders[order]["total"])  # Total in BTC
-            order_id = orders[order]['order_id']
+            order_id = orders[order]['id']
 
             if DEBUG: print(orders[order])
 
