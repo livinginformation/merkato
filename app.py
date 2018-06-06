@@ -40,7 +40,6 @@ class App:
 
     # return a master frame reference for the external frames (screens)
     def __call__(self):
-
         return self.screen_fr
 
     def make_new(self):

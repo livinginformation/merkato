@@ -16,16 +16,16 @@ from tkinter import ttk
 class Bot(ttk.Frame):
 
     def __init__(self, 
-        app, 
-        parent, 
-        owner, 
-        exchange_config = None, 
-        stub = False, 
-        auto_start = False, 
-        starting_stats = {"price_x": []}, 
-        *args, 
-        **kwargs
-    ):
+                app,
+                parent,
+                owner,
+                exchange_config = None,
+                stub = False,
+                auto_start = False,
+                starting_stats=None,
+                *args,
+                **kwargs
+                ):
         ttk.Frame.__init__(self, parent, style="app.TFrame", *args, **kwargs)
         self.app = app # root
         self.parent = parent # containing frame
@@ -82,6 +82,8 @@ class Bot(ttk.Frame):
         self.kill_button = ttk.Button(self.util_frame, text="Kill", cursor="shuttle", command=self.kill)
         self.kill_button.grid(row=0, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
         # --------------------
+        if not starting_stats:
+            starting_stats= {"price_x": []}
         self.graph = Graph(self.app, self, stub=self.stub, **starting_stats)
 
         self.graph.grid(row = 0, column=0, rowspan=3, padx=(5,10))
