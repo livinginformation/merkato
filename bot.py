@@ -128,6 +128,8 @@ class Bot(ttk.Frame):
 
         self.coin_title = self.merk_args["coin"]
         self.base_title = self.merk_args["base"]
+        self.graph.profit_base.config(text="%s \u0394bal:" % self.base_title[:4])
+        self.graph.profit_alt.config(text="%s \u0394bal:" % self.coin_title[:4])
         self.exchange_title = self.merk_args["configuration"]["exchange"]
         self.name = str(self.merk_args["coin"]) + "/" + str(self.merk_args["base"]) + "    " + self.exchange_title
         self.title_var.set(str(self.name))

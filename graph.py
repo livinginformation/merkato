@@ -7,7 +7,7 @@ import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.lines import Line2D
 import datetime
-
+from pprint import pprint
 from   my_widget import MyWidget
 
 import tkinter.messagebox as MessageBox
@@ -378,6 +378,14 @@ class Graph(tk.Frame):
 
     def ingest_data(self, data):
         print("------------- ingesting data ------------")
+        for k,v in data.items():
+            if not k =="filled_orders":
+                pprint(k)
+                pprint(v)
+            else:
+                pprint(k)
+                if v:
+                    pprint(v[0])
         if "price" in data:
             px, py = data["price"]
             self.x_price.append(self.date_as_object(px))
@@ -415,6 +423,8 @@ class Graph(tk.Frame):
         order_time_index = 2
 
         if "open_orders" in data:
+            if isinstance(data["open_orders"], dict):
+                data["open_orders"] = [v for k,v in data["open_orders"].items()]
             '''
             {'coin': 'PEPECASH', 'market': 'BTC', 'date': '2017-10-14 09:05:27', 'type': 'sell', 'price': '0.00000835',
              'amount': '5988.02395209', 'total': '0.04999999', 'id': '85911467', 'filledamount': '0.00000000',
@@ -459,7 +469,6 @@ class Graph(tk.Frame):
 
         self.x_low, self.x_hi = self.ax[0].get_xlim()
         self.y_low, self.y_hi = self.ax[0].get_ylim()
-        start = time.time()
         self.ax[0].clear()
         print("cleared self.ax[0]")
 

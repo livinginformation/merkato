@@ -153,15 +153,27 @@ if __name__ == "__main__":
 
         sys.exit(0)
     # ------------------------------
+    '''
+    try:
+        db.create_merkatos_table()
+    except Exception as e:
+        print(str(e))
+        if "index id_exchange_pair already exists" in str(e):
+            pass
+        else:
+            raise
     try:
         db.create_exchanges_table()
     except Exception as e:
+        print(str(e))
         if "index id_exchange already exists" in str(e):
             pass
         else:
             raise
+    
 
     db.insert_exchange("test", public_api_key='abc', private_api_key='123', limit_only=True)
+    '''
 
     # ------------------------------
     app = App(root, tk.RIGHT)

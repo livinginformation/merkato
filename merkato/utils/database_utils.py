@@ -157,7 +157,11 @@ def merkato_exists(UUID):
     finally:
         c = conn.cursor()
         c.execute('''SELECT * FROM merkatos WHERE exchange_pair = ?''', (UUID,))
-        result = len(c.fetchall())
+        query = c.fetchall()
+        result = len(query)
+        print("merkato exists result")
+        pprint(query)
+        pprint(result)
 
         conn.commit()
         conn.close()

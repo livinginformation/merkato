@@ -13,9 +13,13 @@ def main():
 
     if no_merkatos_table_exists():
         create_merkatos_table()
+    else:
+        print("ERROR: should not find merkatos if new db")
 
     if no_exchanges_table_exists():
         create_exchanges_table()
+    else:
+        print("ERROR: should not find exchange table if new db")
 
     configuration = parse()
     if not configuration:
@@ -30,6 +34,7 @@ def main():
     spread = .1
     coin_reserve = 40
     base_reserve = 40
+
     merkato = Merkato(configuration, coin, base, spread, coin_reserve, base_reserve)
     merkatos = get_all_merkatos()
     complete_merkato_configs = generate_complete_merkato_configs(merkatos)
