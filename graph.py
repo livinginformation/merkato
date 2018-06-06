@@ -7,7 +7,7 @@ import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.lines import Line2D
 import datetime
-
+from pprint import pprint
 from   my_widget import MyWidget
 
 import tkinter.messagebox as MessageBox
@@ -112,9 +112,9 @@ class Graph(tk.Frame):
         self.x_axis_window_size_input.grid(row=1, column=0, sticky=tk.NW, padx=(28.0), pady=(2,10))
         # --------------------------------------
         self.stats_frame = ttk.Frame(self.options_frame, style="app.TFrame")
-        self.profit_base = ttk.Label(self.stats_frame, text="base \u0394bal:", style="app.TLabel")
+        self.profit_base = ttk.Label(self.stats_frame, text="%s \u0394bal:" % self.parent.base_title[:4], style="app.TLabel")
         self.profit_base2 = ttk.Label(self.stats_frame, textvariable=self.base_balance, style="app.TLabel")
-        self.profit_alt = ttk.Label(self.stats_frame, text="coin \u0394bal:", style="app.TLabel")
+        self.profit_alt = ttk.Label(self.stats_frame, text="%s \u0394bal:" % self.parent.coin_title[:4], style="app.TLabel")
         self.profit_alt2 = ttk.Label(self.stats_frame, textvariable=self.coin_balance, style="app.TLabel")
         self.mean_price_lab = ttk.Label(self.stats_frame, text="\u03BC price:", style="app.TLabel")
         self.mean_price_lab2 = ttk.Label(self.stats_frame, textvariable=self.mean_price, style="app.TLabel")
@@ -378,6 +378,14 @@ class Graph(tk.Frame):
 
     def ingest_data(self, data):
         print("------------- ingesting data ------------")
+        for k,v in data.items():
+            if not k =="filled_orders":
+                pprint(k)
+                pprint(v)
+            else:
+                pprint(k)
+                if v:
+                    pprint(v[0])
         if "price" in data:
             px, py = data["price"]
             self.x_price.append(self.date_as_object(px))
@@ -415,6 +423,8 @@ class Graph(tk.Frame):
         order_time_index = 2
 
         if "open_orders" in data:
+            if isinstance(data["open_orders"], dict):
+                data["open_orders"] = [v for k,v in data["open_orders"].items()]
             '''
             {'coin': 'PEPECASH', 'market': 'BTC', 'date': '2017-10-14 09:05:27', 'type': 'sell', 'price': '0.00000835',
              'amount': '5988.02395209', 'total': '0.04999999', 'id': '85911467', 'filledamount': '0.00000000',
@@ -459,7 +469,6 @@ class Graph(tk.Frame):
 
         self.x_low, self.x_hi = self.ax[0].get_xlim()
         self.y_low, self.y_hi = self.ax[0].get_ylim()
-        start = time.time()
         self.ax[0].clear()
         print("cleared self.ax[0]")
 
@@ -483,16 +492,24 @@ class Graph(tk.Frame):
             self.line_highest_buy_order.set_data(self.x_highest_buy_order, self.y_highest_buy_order)
             self.ax[0].add_line(self.line_highest_buy_order)
 
+
+
+        try:
+            self.draw_depth()
+        except:
+            pass
+
+        self.format_graph()
+
+        self.canvas.draw()
+
+    def format_graph(self):
         try:
             this_window_size = max(int(self.x_axis_window_size_input.get()[0]), 5)
 
         except:
             this_window_size = 50
 
-        try:
-            self.draw_depth()
-        except:
-            pass
         if True:
             if self.x_axis_auto_scroll.optState.get():
 
@@ -518,10 +535,9 @@ class Graph(tk.Frame):
 
         hfmt = matplotlib.dates.DateFormatter('%H:%M:%S')
         self.ax[0].xaxis.set_major_formatter(hfmt)
+        self.ax[0].tick_params(axis='x', labelsize=8)
         #self.ax[0].set_xlim(self.x_price[0], self.x_price[-1])
         self.fig.autofmt_xdate()
-
-        self.canvas.draw()
 
     def check_dates(self,dates):
         for d in dates:

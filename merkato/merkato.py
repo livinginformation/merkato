@@ -8,7 +8,7 @@ from merkato.exchanges.tux_exchange.utils import translate_ticker
 from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange
 import math
 from math import floor
-
+import datetime
 DEBUG = False
 
 
@@ -369,7 +369,7 @@ class Merkato(object):
         # Get current state of trade history before placing orders
         #print(self.history)
         hist_len = len(self.history)
-        now = str(time.time())
+        now = str(datetime.datetime.now().isoformat()[:-7].replace("T", " "))
         last_trade_price = self.exchange.get_last_trade_price()
 
         #print("Time: " + now)

@@ -65,7 +65,7 @@ class Orderbook:
         # new_order['total'] = float(order['price']) * float(amount)
     
         # self.current_order_id += 1
-        order['date'] = datetime.datetime.now().isoformat(sep=" ")[:-7], 
+        order['date'] = datetime.datetime.now().isoformat(sep=" ")[:-7]
         resolved_orders.append(order)
     
     def create_order(self, user_id, amount, price, order_type):

@@ -1,5 +1,7 @@
 import sqlite3
 
+from pprint import pprint
+
 def create_merkatos_table():
     try:
         conn = sqlite3.connect('merkato.db')
@@ -106,6 +108,7 @@ def update_exchange(exchange, key, value):
 def get_all_exchanges():
     try:
         conn = sqlite3.connect('merkato.db')
+        conn.row_factory = sqlite3.Row
     except Exception as e:
         print(str(e))
     finally:
@@ -114,7 +117,10 @@ def get_all_exchanges():
         all_exchanges = c.fetchall()
         conn.commit()
         conn.close()
-        return all_exchanges
+        exchange_index = {config["exchange"]:dict(config) for config in all_exchanges}
+        exchange_menu = [name for name,config in exchange_index.items()]
+        pprint(exchange_index)
+        return exchange_menu, exchange_index
 
 def get_exchange(exchange):
     try:
@@ -152,7 +158,6 @@ def merkato_exists(UUID):
         c = conn.cursor()
         c.execute('''SELECT * FROM merkatos WHERE exchange_pair = ?''', (UUID,))
         result = len(c.fetchall())
-
         conn.commit()
         conn.close()
         return result > 0
