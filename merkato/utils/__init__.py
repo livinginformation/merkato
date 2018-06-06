@@ -2,7 +2,7 @@ import json
 from merkato.exchanges.test_exchange.exchange import TestExchange
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import known_exchanges
-from merkato.utils.database_utils import get_exchange as get_exchange_from_db
+from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange
 
 def update_config_with_credentials(config):
 	print("API Credentials needed")
@@ -71,3 +71,29 @@ def generate_complete_merkato_configs(merkato_tuples):
 		merkato_complete_configs.append(complete_config)
 
 	return merkato_complete_configs
+
+def get_allocated_pair_balances(exchange, base, coin):
+    allocated_pair_balances = {
+        'base': 0,
+        'coin': 0
+    }
+
+    merkatos = get_merkatos_by_exchange(exchange)
+    for merkato in merkatos:
+        if merkato['base'] == base:
+            allocated_pair_balances['base'] += merkato['bid_reserved_balance']
+
+        if merkato['alt'] == coin:
+            allocated_pair_balances['coin'] += merkato['ask_reserved_balance']
+    return allocated_pair_balances
+
+def check_reserve_balances(total_balances, allocated_balances, coin_reserve, base_reserve):
+    remaining_balances = {
+        'base': total_balances['base']['amount'] - allocated_balances['base'],
+        'coin': total_balances['coin']['amount'] - allocated_balances['coin']
+    }
+    if remaining_balances['base'] < base_reserve:
+        raise ValueError('Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
+    if remaining_balances['coin'] < coin_reserve:
+        raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
+

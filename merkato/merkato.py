@@ -5,7 +5,7 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
-from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange
+from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances
 import math
 from math import floor
 import datetime
@@ -16,10 +16,15 @@ class Merkato(object):
     def __init__(self, configuration, coin, base, spread, coin_reserve, base_reserve):
         validate_merkato_initialization(configuration, coin, base, spread)
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
-        merkato_does_exist = merkato_exists(UUID)
-        insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, coin_reserve, base_reserve)
+        
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
+        total_pair_balances = self.exchange.get_balances()
+        allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
+        check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve, base_reserve)
+
+        merkato_does_exist = merkato_exists(UUID)
+        insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, coin_reserve, base_reserve)
         self.mutex_UUID = UUID
         self.distribution_strategy = 1
         self.spread = spread # i.e '.15

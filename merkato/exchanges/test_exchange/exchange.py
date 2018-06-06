@@ -159,8 +159,13 @@ class TestExchange(ExchangeBase):
 
 
     def get_balances(self):
-        # broken, TODO        
-        return ""
+        pair_balances = {"base" : {"amount": 10000000000,
+                                   "name" : self.base},
+                         "coin": {"amount": 10000000000,
+                                  "name": self.coin},
+                        }
+
+        return pair_balances
 
 
     def get_last_trade_price(self):

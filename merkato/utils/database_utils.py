@@ -187,3 +187,23 @@ def get_merkato(exchange_name_pair):
         conn.commit()
         conn.close()
         return exchange
+
+def get_merkatos_by_exchange(exchange):
+    try:
+        conn = sqlite3.connect('merkato.db')
+        conn.row_factory = dict_factory
+    except Exception as e:
+        print(str(e))
+    finally:
+        c = conn.cursor()
+        c.execute('''SELECT * FROM merkatos WHERE exchange = ?''', (exchange,))
+        exchanges = c.fetchall()
+        conn.commit()
+        conn.close()
+        return exchanges
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
