@@ -13,18 +13,14 @@ def main():
 
     if no_merkatos_table_exists():
         create_merkatos_table()
-    else:
-        print("ERROR: should not find merkatos if new db")
 
     if no_exchanges_table_exists():
         create_exchanges_table()
-    else:
-        print("ERROR: should not find exchange table if new db")
 
     configuration = parse()
+
     if not configuration:
         configuration = get_config()
-
 
     if not configuration:
         raise Exception("Failed to get configuration.")

@@ -1,5 +1,8 @@
 from merkato.merkato import Merkato
 from merkato.utils import database_utils
+from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table
+from merkato.utils import generate_complete_merkato_configs
+
 
 from   graph import Graph
 from   my_widget import MyWidget
@@ -136,6 +139,10 @@ class Bot(ttk.Frame):
 
         if not self.stub:
             try:
+                merkatos = get_all_merkatos()
+                complete_merkato_configs = generate_complete_merkato_configs(merkatos)
+                print(merkatos)
+                print(complete_merkato_configs)
                 self.bot = Merkato(**self.merk_args)
 
             except Exception as e:

@@ -3,6 +3,7 @@ import tkinter
 import tkinter.ttk
 import tkinter as tk
 from collections import OrderedDict
+from bot import Bot
 
 class App:
     # adapted from notebook.py Copyright 2003, Iuri Wickert (iwickert yahoo.com)
@@ -27,6 +28,12 @@ class App:
         #self.rb_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.rb_fr = VSFrame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.rb_fr.pack(side=side, fill=tk.BOTH)
+        #  ----------------------------------------------------------------------------
+        self.new_frame = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
+        self.new_frame.pack(side=tk.BOTTOM)
+        self.new_button = tk.Button(self.new_frame, text="New", command=self.make_new, )
+        self.new_button.pack()
+        #  ----------------------------------------------------------------------------
         self.screen_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.screen_fr.pack(fill=tk.BOTH)
         self.roster = OrderedDict() # Bot
@@ -36,6 +43,15 @@ class App:
 
         return self.screen_fr
 
+    def make_new(self):
+        new_bot = Bot(self.master, self.screen_fr, self)
+        self.add_screen(new_bot,
+                   "null",
+                   textvariable=new_bot.title_var,
+                   bg="gray75",
+                   fg="black",
+                   selectcolor="lightblue"
+                   )
     # add a new frame (screen) to the (bottom/left of the) notebook
     def add_screen(self, fr, title, **kwargs):
 

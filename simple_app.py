@@ -124,69 +124,28 @@ if __name__ == "__main__":
                 "x_highest_buy_order" : [t(i) for i in range(100,0,-10)],
                 "y_highest_buy_order" : [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
                 }
-    #test = Bot(root, root, stub = 1, title="Stub GUI (very raw)", starting_stats=fake_start())
-    #test.pack()
 
     # ------------------------------
-    # debugging:
-    if False:
-        import sys
-        from pprint import pprint
-        fake = fake_start()
-        pprint(fake)
-
-        fig, ax = plt.subplots(1, 2)
-        ax[0].plot(fake["price_x"], fake["price_y"])
-        ax[0].plot(fake["x_lowest_sell_order"], fake["y_lowest_sell_order"])
-        ax[0].plot(fake["x_highest_buy_order"], fake["y_highest_buy_order"])
-        ax[0].scatter(fake["bought_x"], fake["bought_y"])
-        ax[0].scatter(fake["sold_x"], fake["sold_y"])
-
-        hfmt = matplotlib.dates.DateFormatter('%D %H:%M:%S')
-        ax[0].xaxis.set_major_formatter(hfmt)
-
-        fig.autofmt_xdate()
-        print(ax[0].get_xlim(),ax[0].get_ylim())
-        #ax[0].set_xlim(ax[0].get_xlim()[0],ax[0].get_xlim()[0]+1 )
-        plt.show()
-
-
-        sys.exit(0)
-    # ------------------------------
-    '''
-    try:
+    if db.no_merkatos_table_exists():
         db.create_merkatos_table()
-    except Exception as e:
-        print(str(e))
-        if "index id_exchange_pair already exists" in str(e):
-            pass
-        else:
-            raise
-    try:
+
+    if db.no_exchanges_table_exists():
         db.create_exchanges_table()
-    except Exception as e:
-        print(str(e))
-        if "index id_exchange already exists" in str(e):
-            pass
-        else:
-            raise
-    
 
     db.insert_exchange("test", public_api_key='abc', private_api_key='123', limit_only=True)
-    '''
 
     # ------------------------------
     app = App(root, tk.RIGHT)
 
-    bot = Bot(root, app(), app,)
-    app.add_screen(bot,
-                   "null",
-                   textvariable=bot.title_var,
-                   bg="gray75",
-                   fg="black",
-                   selectcolor="lightblue"
-                   )
-
+    for i in range(3):
+        bot = Bot(root, app(), app,)
+        app.add_screen(bot,
+                       "null",
+                       textvariable=bot.title_var,
+                       bg="gray75",
+                       fg="black",
+                       selectcolor="lightblue"
+                       )
     for i in range(1):
         bot = Bot(root, app(), app, stub=1, starting_stats=fake_start())
         app.add_screen(bot,
