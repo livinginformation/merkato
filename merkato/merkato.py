@@ -62,7 +62,7 @@ class Merkato(object):
                 amount = tx['amount']
                 price = tx[PRICE]
                 sold.append(tx)
-                buy_price = float(price) * ( 1  - (self.spread/2))
+                buy_price = float(price) * ( 1  - self.spread)
                 self.debug(4, "found sell", tx,"corresponding buy", buy_price)
                 response = self.exchange.buy(amount, buy_price)
 
@@ -70,7 +70,7 @@ class Merkato(object):
                 amount = tx['amount']
                 price = tx[PRICE]
                 bought.append(tx)
-                sell_price = float(price) * ( 1  + (self.spread/2))
+                sell_price = float(price) * ( 1  + self.spread)
                 self.debug(4, "found buy",tx, "corresponding sell", sell_price)
                 response = self.exchange.sell(amount, sell_price)
 
