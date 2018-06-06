@@ -24,20 +24,20 @@ import time
 class Graph(tk.Frame):
 
     def __init__(self, 
-        app, 
-        parent, 
-        delay = 1000, 
-        stub=False, 
-        price_x=[], 
-        price_y=[], 
-        bought_x=[], 
-        bought_y=[], 
-        sold_x=[], 
-        sold_y=[],
-        x_lowest_sell_order=[],
-        y_lowest_sell_order=[],
-        x_highest_buy_order=[],
-        y_highest_buy_order=[]
+                app,
+                parent,
+                delay = 1000,
+                stub=False,
+                price_x=None,
+                price_y=None,
+                bought_x=None,
+                bought_y=None,
+                sold_x=None,
+                sold_y=None,
+                x_lowest_sell_order=None,
+                y_lowest_sell_order=None,
+                x_highest_buy_order=None,
+                y_highest_buy_order=None
     ):
         tk.Frame.__init__(self, parent, bg="black")
         self.app = app
@@ -55,33 +55,32 @@ class Graph(tk.Frame):
         self.performance.set("0")
         self.orderbook = None
 
-
         #self.label = tk.Label(self, text=self.parent.pair, font=LARGE_FONT)
         self.label = ttk.Label(self, text=self.parent.name, style="app.TLabel")
 
         self.fig, self.ax = plt.subplots(1, 2, sharey=True, tight_layout=True,  gridspec_kw = {'width_ratios':[4, 1]})
 
-        self.x_price = price_x
-        self.y_price = price_y
+        self.x_price = price_x if price_x else []
+        self.y_price = price_y if price_y else []
 
         self.line_price = Line2D(self.x_price, self.y_price, color="blue")
         self.ax[0].add_line(self.line_price)
 
-        self.x_bought = bought_x
-        self.y_bought = bought_y
+        self.x_bought = bought_x if bought_x else []
+        self.y_bought = bought_y if bought_y else []
         self.boughtScatter = self.ax[0].scatter(self.x_bought, self.y_bought, color="lime", marker="P", s=100)
 
-        self.x_sold = sold_x
-        self.y_sold = sold_y
+        self.x_sold = sold_x if sold_x else []
+        self.y_sold = sold_y if sold_y else []
         self.scatter_sold = self.ax[0].scatter(self.x_sold, self.y_sold, color="salmon", marker="D", s=100)
 
-        self.x_lowest_sell_order = x_lowest_sell_order
-        self.y_lowest_sell_order = y_lowest_sell_order
+        self.x_lowest_sell_order = x_lowest_sell_order if x_lowest_sell_order else []
+        self.y_lowest_sell_order = y_lowest_sell_order if y_lowest_sell_order else []
         self.line_lowest_sell_order = Line2D(self.x_lowest_sell_order, self.y_lowest_sell_order, color="red")
         self.ax[0].add_line(self.line_lowest_sell_order)
 
-        self.x_highest_buy_order = x_highest_buy_order
-        self.y_highest_buy_order = y_highest_buy_order
+        self.x_highest_buy_order = x_highest_buy_order if x_highest_buy_order else []
+        self.y_highest_buy_order = y_highest_buy_order if y_highest_buy_order else []
         self.line_highest_buy_order = Line2D(self.x_highest_buy_order, self.y_highest_buy_order, color="green")
         self.ax[0].add_line(self.line_highest_buy_order)
 
@@ -97,6 +96,7 @@ class Graph(tk.Frame):
         self.ax[0].grid(color='gray', linestyle='--', linewidth=.5)
         self.ax[0].set_title(self.parent.name, fontsize=10)
         self.canvas.draw()
+        self.fig.canvas.mpl_connect('scroll_event', self.process_scroll)
         #self.draw_graph()
 
         self.toolbar_frame = tk.Frame(self)
@@ -155,6 +155,9 @@ class Graph(tk.Frame):
             self.fake_orders = [dict(price=this_price, date=x_this, type="buy", amount=0.5) for this_price in range(244,100,-10)]
             self.fake_orders.extend([dict(price=this_price, date=x_this, type="sell", amount=0.5) for this_price in range(253,400,10)])
             #self._root().after(5000, self.refresh, self.fake_data())
+
+    def process_scroll(self, event):
+        pass
 
     def draw_orderbook(self, orderbook=None):
         if orderbook:

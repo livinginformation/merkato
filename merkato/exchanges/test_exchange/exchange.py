@@ -14,13 +14,13 @@ from merkato.exchanges.test_exchange.constants import test_asks, test_bids
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 
 class TestExchange(ExchangeBase):
-    def __init__(self, config, coin, base, user_id=20, accounts = {}, price = 1):
+    def __init__(self, config, coin, base, user_id=20, accounts=None, price = 1):
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
         self.orderbook = Orderbook(test_bids, test_asks)
         self.user_id = user_id
-        self.user_accounts = accounts
+        self.user_accounts = accounts if accounts else {}
         self.order_history = []
         self.price = price
         self.retries = 3
