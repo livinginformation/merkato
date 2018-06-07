@@ -111,8 +111,8 @@ class Merkato(object):
         prior_reserve = self.bid_reserved_balance
         while current_order < total_orders:
             step_adjusted_factor = step**current_order
-            current_bid_amount = total_amount/(scaling_factor * step_adjusted_factor)
-            current_bid_price = start_price/step_adjusted_factor
+            current_bid_amount = float(total_amount/(scaling_factor * step_adjusted_factor))
+            current_bid_price = float(start_price/step_adjusted_factor)
             amount += current_bid_amount
             
             # TODO Create lock
