@@ -25,9 +25,6 @@ class TuxExchange(ExchangeBase):
         self.debug = 100
         
     def _debug(self, level, header, *args):
-        if header == 'ERROR':
-            raise ValueError(args[0])
-
         if level <= self.debug:
             print("-"*10)
             print("{}---> {}:".format(level, header))
@@ -57,7 +54,7 @@ class TuxExchange(ExchangeBase):
                 # Get current highest bid on the orderbook
                 # If ask price is lower than the highest bid, return.
 
-                if self.get_highest_bid() > ask:
+                if float(self.get_highest_bid()) > ask:
                     self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, ticker, ask, "tux"))
                     return False # Maybe needs failed or something
 
@@ -74,8 +71,7 @@ class TuxExchange(ExchangeBase):
                     time.sleep(5)
 
             except Exception as e:  # TODO - too broad exception handling
-                self._debug(0, "sell", "ERROR", e)
-                break
+                raise ValueError(e)
 
 
     def _buy(self, amount, bid):
@@ -86,7 +82,6 @@ class TuxExchange(ExchangeBase):
         '''
         query_parameters = getQueryParameters(BUY, self.ticker, amount, bid)
         response = self._create_signed_request(query_parameters)
-
         return response['success']
 
 
@@ -105,7 +100,6 @@ class TuxExchange(ExchangeBase):
 
             try:
                 success = self._buy(amount, bid)
-
                 if success:
                     self._debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, "tux"))
                     return success
@@ -116,8 +110,7 @@ class TuxExchange(ExchangeBase):
                     time.sleep(5)
 
             except Exception as e:  # TODO - too broad exception handling
-                self._debug(0, "buy", "ERROR", e)
-                return False
+                raise ValueError(e)
 
 
     def get_all_orders(self):
@@ -266,10 +259,8 @@ class TuxExchange(ExchangeBase):
         # return response needing signature, nonce created if not supplied
         if not nonce:
             nonce = int(time.time() * 1000)
-
         query_parameters.update({"nonce": nonce})
         post = urllib.parse.urlencode(query_parameters)
-
         signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
         head = {'Key': self.publickey, 'Sign': signature}
 
