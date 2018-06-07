@@ -170,4 +170,11 @@ if __name__ == "__main__":
             selectcolor="lightblue"
         )
     root.after(1000, app.update_frames)
-    root.mainloop()
+
+    while True:
+        try:
+            root.update_idletasks()
+            root.update()
+        except UnicodeDecodeError:
+            print("Caught Scroll Error")
+
