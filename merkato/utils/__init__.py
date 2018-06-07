@@ -68,6 +68,8 @@ def generate_complete_merkato_configs(merkato_tuples):
 		complete_config['base'] = tuple[2]
 		complete_config['coin'] = tuple[3]
 		complete_config['spread'] = tuple[4]
+        complete_config['ask_reserved_balance'] = tuple[8]
+        complete_config['bid_reserved_balance'] = tuple[9]
 		merkato_complete_configs.append(complete_config)
 
 	return merkato_complete_configs
