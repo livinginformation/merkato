@@ -24,8 +24,11 @@ class TuxExchange(ExchangeBase):
         self.name = 'tux'
         self.debug = 100
         
-    def debug(self, level, header, *args):
-        if level <= self.DEBUG:
+    def _debug(self, level, header, *args):
+        if header == 'ERROR':
+            raise ValueError(args[0])
+
+        if level <= self.debug:
             print("-"*10)
             print("{}---> {}:".format(level, header))
 
@@ -55,23 +58,23 @@ class TuxExchange(ExchangeBase):
                 # If ask price is lower than the highest bid, return.
 
                 if self.get_highest_bid() > ask:
-                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, ticker, ask, "tux"))
+                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, ticker, ask, "tux"))
                     return False # Maybe needs failed or something
 
             try:
                 success = self._sell(amount, ask)
 
                 if success:
-                    self.debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
+                    self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
                     return success
 
                 else:
-                    self.debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, "tux", attempt, self.retries))
+                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
 
             except Exception as e:  # TODO - too broad exception handling
-                self.debug(0, "sell", "ERROR", e)
+                self._debug(0, "sell", "ERROR", e)
                 break
 
 
@@ -95,25 +98,25 @@ class TuxExchange(ExchangeBase):
                 # Get current lowest ask on the orderbook
                 # If bid price is higher than the lowest ask, return.
 
-                if self.get_lowest_ask() < bid:
+                if float(self.get_lowest_ask()) < bid:
 
-                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
+                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
                     return False # Maybe needs failed or something
 
             try:
                 success = self._buy(amount, bid)
 
                 if success:
-                    self.debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, "tux"))
+                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, "tux"))
                     return success
 
                 else:
-                    self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
+                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
 
             except Exception as e:  # TODO - too broad exception handling
-                self.debug(0, "buy", "ERROR", e)
+                self._debug(0, "buy", "ERROR", e)
                 return False
 
 
@@ -127,7 +130,7 @@ class TuxExchange(ExchangeBase):
         response = requests.get(self.url, params=params)
 
         response_json = json.loads(response.text)
-        self.debug(10, "get_all_orders", response.text)
+        self._debug(10, "get_all_orders", response.text)
 
         return response_json
 
@@ -142,8 +145,7 @@ class TuxExchange(ExchangeBase):
         # Return orders in standardized format (list of buys/sells)
         # Tux returns {id: {order}, id: {order}, ...}, we want
         # [{order}, {order}, ...]
-        
-        return list(orders.values())
+        return orders
 
 
     def cancel_order(self, order_id):
@@ -151,11 +153,11 @@ class TuxExchange(ExchangeBase):
             :param order_id: string
         '''
 
-        self.debug(10, "cancel_order","---> cancelling order")
+        self._debug(10, "cancel_order","---> cancelling order")
 
 
         if order_id == 0:
-            self.debug(3, "cancel_order","---> Order ID was zero, bailing")
+            self._debug(3, "cancel_order","---> Order ID was zero, bailing")
 
             return False
 
@@ -180,7 +182,7 @@ class TuxExchange(ExchangeBase):
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
-        self.debug(10, "get_ticker", response_json[coin])
+        self._debug(10, "get_ticker", response_json[coin])
 
         return response_json[coin]
 
@@ -198,7 +200,7 @@ class TuxExchange(ExchangeBase):
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
-        self.debug(10, "get_24h_volume", response_json[coin])
+        self._debug(10, "get_24h_volume", response_json[coin])
 
         return response_json[coin]
 
@@ -211,8 +213,8 @@ class TuxExchange(ExchangeBase):
         tuxParams = {"method" : "getmybalances"}
 
         response = self._create_signed_request(tuxParams)
-        self.debug(10, "get_balances", response)
-
+        self._debug(10, "get_balances", response)
+        print('response', response)
         pair_balances = {"base" : {"amount": response[self.base],
                                    "name" : self.base},
                          "coin": {"amount": response[self.coin],
@@ -225,7 +227,7 @@ class TuxExchange(ExchangeBase):
     def get_my_trade_history(self, start=0, end=0):
         ''' TODO Function Definition
         '''
-        self.debug(10, "get_my_trade_history","---> Getting trade history...")
+        self._debug(10, "get_my_trade_history","---> Getting trade history...")
 
         query_parameters = { "method": "getmytradehistory" }
 

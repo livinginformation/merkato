@@ -2,7 +2,7 @@
 
 import json
 import os.path
-from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table, get_merkato
+from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table, get_exchange as get_exchange_from_db
 from merkato.exchanges.tux_exchange.utils import validate_credentials
 from merkato.constants import EXCHANGE
 from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection
@@ -10,8 +10,8 @@ from merkato.utils import update_config_with_credentials, get_exchange, get_conf
 def load_config():
     # Loads an existing configuration file
     # Returns a dictionary
-    exchange_name_pair = input("what is the exchange_pair_name name? ")
-    return get_merkato(exchange_name_pair)
+    exchange_name = input("what is the exchange name? ")
+    return get_exchange_from_db(exchange_name)
     # TODO: Error handling and config validation
 
 def insert_config_into_exchanges(config):
@@ -34,10 +34,11 @@ def create_config():
             config[EXCHANGE] = 'tux'
 
             update_config_with_credentials(config)
-            credentials_are_invalid = validate_credentials(config, url)
-            while credentials_are_invalid:
+            credentials_are_valid = validate_credentials(config, url)
+            print('credentials_are_valid', credentials_are_valid)
+            while not credentials_are_valid:
                 config = update_config_with_credentials(config)
-                credentials_are_invalid = validate_credentials(config, url)
+                credentials_are_valid = validate_credentials(config, url)
             insert_config_into_exchanges(config)
             return config
         
