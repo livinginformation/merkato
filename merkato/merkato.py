@@ -21,7 +21,7 @@ class Merkato(object):
         self.exchange = exchange_class(configuration, coin=coin, base=base)
         total_pair_balances = self.exchange.get_balances()
         allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
-        check_reserve_balances(total_pair_balances, allocated_pair_balances, bid_reserved_balance, ask_reserved_balance)
+        check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
 
         merkato_does_exist = merkato_exists(UUID)
         insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
@@ -34,7 +34,7 @@ class Merkato(object):
         self.ask_reserved_balance = ask_reserved_balance
         if not merkato_does_exist:
             print('new merkato')
-            self.distribute_initial_orders(ask_reserved_balance, bid_reserved_balance)
+            self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
         self.DEBUG = 100
 
     def debug(self, level, header, *args):
