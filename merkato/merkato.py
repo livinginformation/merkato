@@ -156,6 +156,39 @@ class Merkato(object):
             file.write(json.dumps(transaction))
         file.close()
 
+    def detect_low_liquidity(self):
+        bid = self.exchange.get_highest_bid()
+        ask = self.exchange.get_lowest_ask()
+
+        current_price = (bid + ask)/2
+        spread_percent = 2(current_price - bid)/current_price
+
+        if spread_percent > .05:
+            return True
+
+        acceptable_liquidity = self.check_acceptable_liquidity(current_price)
+        
+        if not acceptable_liquidity:
+            return True
+
+    
+    def check_acceptable_liquidity(self, current_price):
+        acceptable_bid_price = current_price * .95
+        acceptable_ask_price = current_price * 1.05
+        accepted_bid_liquidity = 0
+        accepted_ask_liquidity = 0
+        orders = self.exchange.get_all_orders()
+        for order in orders['bids']:
+            if order[PRICE] > acceptable_bid_price:
+                accepted_bid_liquidity += order['amount']
+        for order in orders['asks']:
+            if order[PRICE] < acceptable_ask_price:
+                accepted_ask_liquidity += order['amount']
+        if accepted_bid_liquidity > 200 and accepted_ask_liquidity > 200:
+            return True
+        else:
+            return False
+
 
     def create_bid_ladder(self, total_btc, low_price, high_price, increment):
         # This function has been deprecated in favor of decaying_bid_ladder and
