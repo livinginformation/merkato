@@ -134,5 +134,4 @@ class App:
                 button.config(bg="red")
                 button.config(fg="black")
                 print(str(e)) # TODO: email user
-                raise # todo  delete me
         self.master.after(10000, self.update_frames)

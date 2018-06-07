@@ -449,7 +449,7 @@ class Graph(tk.Frame):
 
             if sell_amounts:
                 lowest_sell = min(sell_amounts)
-                self.x_lowest_sell_order.append(datetime.datetime.now()+ datetime.timedelta(seconds=5))
+                self.x_lowest_sell_order.append(datetime.datetime.now())
                 self.y_lowest_sell_order.append(lowest_sell)
                 if len(sell_amounts) > 1:  # then we have a meaningful "high" order
                     # todo: something with this data
@@ -457,7 +457,7 @@ class Graph(tk.Frame):
 
             if buy_amounts:
                 highest_buy = max(buy_amounts)
-                self.x_highest_buy_order.append(datetime.datetime.now()+ datetime.timedelta(seconds=5))
+                self.x_highest_buy_order.append(datetime.datetime.now())
                 self.y_highest_buy_order.append(highest_buy)
                 if len(buy_amounts) > 1:  # then we have a meaningful "high" order
                     # todo: something with this data
