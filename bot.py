@@ -3,7 +3,7 @@ from merkato.utils import database_utils
 from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table
 from merkato.utils import generate_complete_merkato_configs
 
-
+import traceback
 from   graph import Graph
 from   my_widget import MyWidget
 import tkinter.messagebox as MessageBox
@@ -12,6 +12,30 @@ import tkinter
 import tkinter.ttk
 import tkinter as tk
 from tkinter import ttk
+
+class popupWindow(object):
+    def __init__(self,master, text, value):
+        self.master=master
+        self.value = value
+        top=self.top=tk.Toplevel(master)
+        self.l= tk.Label(top, text=text)
+        self.l.pack()
+        self.e= tk.Entry(top)
+        self.e.insert(0, str(self.value))
+        self.e.pack()
+        self.b= tk.Button(top,text='Ok',command=self.cleanup)
+        self.b.pack()
+    def cleanup(self):
+        try:
+            self.value=float(self.e.get())
+            self.e.destroy()
+            self.b.destroy()
+            self.l.config(text="Please, wait while orders placed.")
+            self.master.update_idletasks()
+            self.master.update()
+            self.top.destroy()
+        except Exception as e:
+            MessageBox.showerror("Entry Error", str(e) + "\nTry again!")
 
 class Bot(ttk.Frame):
 
@@ -94,17 +118,20 @@ class Bot(ttk.Frame):
 
 
     def update(self):
+        context = {}
 
         if self.stub or self.bot: # then we have something to update
             print("---------------  updating %s ----------------------" % self.name)
             
             if not self.stub:
-                context = self.bot.update()
+                if self.bot.initialized:
+                    context = self.bot.update()
                 
             else:
                 context = self.graph.fake_data()
 
-            self.graph.refresh(data=context, active=self.is_active)
+            if context:
+                self.graph.refresh(data=context, active=self.is_active)
             
             try:
                 self.title_var.set(str(self.name) + "   " + str(self.graph.performance.get()))
@@ -130,6 +157,7 @@ class Bot(ttk.Frame):
         self.merk_args["ask_reserved_balance"] = float(self.ask_budget.get()[0])
         self.merk_args["bid_reserved_balance"] = float(self.bid_budget.get()[0])
         self.merk_args["spread"] = float(self.spread.get()[0]) / 100.0
+        self.merk_args["user_interface"] = self
 
         self.coin_title = self.merk_args["coin"]
         self.base_title = self.merk_args["base"]
@@ -143,7 +171,8 @@ class Bot(ttk.Frame):
             try:
               self.bot = Merkato(**self.merk_args)
             except Exception as e:
-                MessageBox.showerror("Bot Start Fail", str(e) + repr(self.merk_args))
+                e2 = traceback.format_exc()
+                MessageBox.showerror("Bot Start Fail", str(e2) + "\n" + repr(self.merk_args))
 
             else:
                 self.exchange_frame.destroy()
@@ -151,6 +180,12 @@ class Bot(ttk.Frame):
     def kill(self):
         # TODO: tell self.bot to cancel all orders and delete merkato from DB
         self._root().after(10, self.owner.kill_screen, self)
+
+    def confirm_price(self, price):
+        self.confirmation = popupWindow(self.app, "Confirm starting price: %s" % price, price)
+        self.app.wait_window(self.confirmation.top)
+        price = self.confirmation.value
+        return price
 
 
 
