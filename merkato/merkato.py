@@ -13,7 +13,7 @@ DEBUG = False
 
 
 class Merkato(object):
-    def __init__(self, configuration, coin, base, spread, coin_reserve, base_reserve):
+    def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance):
         validate_merkato_initialization(configuration, coin, base, spread)
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
         
@@ -21,20 +21,20 @@ class Merkato(object):
         self.exchange = exchange_class(configuration, coin=coin, base=base)
         total_pair_balances = self.exchange.get_balances()
         allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
-        check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve, base_reserve)
+        check_reserve_balances(total_pair_balances, allocated_pair_balances, bid_reserved_balance, ask_reserved_balance)
 
         merkato_does_exist = merkato_exists(UUID)
-        insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, coin_reserve, base_reserve)
+        insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
         self.mutex_UUID = UUID
         self.distribution_strategy = 1
         self.spread = spread # i.e '.15
         # Create ladders from the bid and ask bidget here
         self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
-        self.bid_reserved_balance = coin_reserve
-        self.ask_reserved_balance = base_reserve
+        self.bid_reserved_balance = bid_reserved_balance
+        self.ask_reserved_balance = ask_reserved_balance
         if not merkato_does_exist:
             print('new merkato')
-            self.distribute_initial_orders(base_reserve, coin_reserve)
+            self.distribute_initial_orders(ask_reserved_balance, coin_reserve)
         self.DEBUG = 100
 
     def debug(self, level, header, *args):
