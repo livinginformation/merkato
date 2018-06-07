@@ -15,6 +15,7 @@ from tkinter import ttk
 
 class popupWindow(object):
     def __init__(self,master, text, value):
+        self.master=master
         self.value = value
         top=self.top=tk.Toplevel(master)
         self.l= tk.Label(top, text=text)
@@ -27,6 +28,11 @@ class popupWindow(object):
     def cleanup(self):
         try:
             self.value=float(self.e.get())
+            self.e.destroy()
+            self.b.destroy()
+            self.l.config(text="Please, wait while orders placed.")
+            self.master.update_idletasks()
+            self.master.update()
             self.top.destroy()
         except Exception as e:
             MessageBox.showerror("Entry Error", str(e) + "\nTry again!")
