@@ -127,8 +127,8 @@ class Bot(ttk.Frame):
         #self.merk_args["exchange"] = self.exchange_name.get()[0]
         self.merk_args["coin"] = self.coin.get()[0]
         self.merk_args["base"] = self.base.get()[0]
-        self.merk_args["coin_reserve"] = float(self.ask_budget.get()[0])
-        self.merk_args["base_reserve"] = float(self.bid_budget.get()[0])
+        self.merk_args["ask_reserved_balance"] = float(self.ask_budget.get()[0])
+        self.merk_args["bid_reserved_balance"] = float(self.bid_budget.get()[0])
         self.merk_args["spread"] = float(self.spread.get()[0]) / 100.0
 
         self.coin_title = self.merk_args["coin"]

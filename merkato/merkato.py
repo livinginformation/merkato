@@ -34,7 +34,7 @@ class Merkato(object):
         self.ask_reserved_balance = ask_reserved_balance
         if not merkato_does_exist:
             print('new merkato')
-            self.distribute_initial_orders(ask_reserved_balance, coin_reserve)
+            self.distribute_initial_orders(ask_reserved_balance, bid_reserved_balance)
         self.DEBUG = 100
 
     def debug(self, level, header, *args):
