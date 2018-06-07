@@ -13,7 +13,7 @@ DEBUG = False
 
 
 class Merkato(object):
-    def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance):
+    def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None):
         validate_merkato_initialization(configuration, coin, base, spread)
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
         
@@ -32,6 +32,7 @@ class Merkato(object):
         self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
         self.bid_reserved_balance = bid_reserved_balance
         self.ask_reserved_balance = ask_reserved_balance
+        self.user_interface = user_interface
         if not merkato_does_exist:
             print('new merkato')
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
@@ -124,6 +125,8 @@ class Merkato(object):
         # waiting on vizualization for bids before running it as is
         
         current_price = (self.exchange.get_highest_bid() + self.exchange.get_lowest_ask())/2
+        if self.user_interface:
+            current_price = self.user_interface.confirm_price(current_price)
 
         ask_start = current_price + current_price*self.spread/2
         bid_start = current_price - current_price*self.spread/2

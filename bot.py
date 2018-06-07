@@ -13,6 +13,24 @@ import tkinter.ttk
 import tkinter as tk
 from tkinter import ttk
 
+class popupWindow(object):
+    def __init__(self,master, text, value):
+        self.value = value
+        top=self.top=tk.Toplevel(master)
+        self.l= tk.Label(top, text=text)
+        self.l.pack()
+        self.e= tk.Entry(top)
+        self.e.insert(0, str(self.value))
+        self.e.pack()
+        self.b= tk.Button(top,text='Ok',command=self.cleanup)
+        self.b.pack()
+    def cleanup(self):
+        try:
+            self.value=float(self.e.get())
+            self.top.destroy()
+        except Exception as e:
+            MessageBox.showerror("Entry Error", str(e) + "\nTry again!")
+
 class Bot(ttk.Frame):
 
     def __init__(self,
@@ -130,6 +148,7 @@ class Bot(ttk.Frame):
         self.merk_args["ask_reserved_balance"] = float(self.ask_budget.get()[0])
         self.merk_args["bid_reserved_balance"] = float(self.bid_budget.get()[0])
         self.merk_args["spread"] = float(self.spread.get()[0]) / 100.0
+        self.merk_args["user_interface"] = self
 
         self.coin_title = self.merk_args["coin"]
         self.base_title = self.merk_args["base"]
@@ -151,6 +170,12 @@ class Bot(ttk.Frame):
     def kill(self):
         # TODO: tell self.bot to cancel all orders and delete merkato from DB
         self._root().after(10, self.owner.kill_screen, self)
+
+    def confirm_price(self, price):
+        self.confirmation = popupWindow(self.app, "Confirm starting price: %s" % price, price)
+        self.app.wait_window(self.confirmation.top)
+        price = self.confirmation.value
+        return price
 
 
 
