@@ -125,6 +125,7 @@ def get_all_exchanges():
 def get_exchange(exchange):
     try:
         conn = sqlite3.connect('merkato.db')
+        conn.row_factory = dict_factory
     except Exception as e:
         print(str(e))
     finally:

@@ -26,12 +26,12 @@ def main():
         raise Exception("Failed to get configuration.")
 
     base = "BTC"
-    coin = "ETH"
+    coin = "XMR"
     spread = .1
-    coin_reserve = 40
-    base_reserve = 40
+    coin_reserve = 1
+    base_reserve = .1
 
-    merkato = Merkato(configuration, coin, base, spread, coin_reserve, base_reserve)
+    merkato = Merkato(configuration, coin, base, spread, base_reserve, coin_reserve)
     merkatos = get_all_merkatos()
     complete_merkato_configs = generate_complete_merkato_configs(merkatos)
     print(complete_merkato_configs)

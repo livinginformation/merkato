@@ -41,9 +41,9 @@ def create_price_data(orders, order):
     return price_data
 
 def validate_merkato_initialization(configuration, coin, base, spread):
-    if all (keys in configuration for keys in ("public_api_key","exchange", "private_api_key", "limit_only")):
+    if len(configuration) == 4:
         return
-    raise ValueError('config does not contain needed values.')
+    raise ValueError('config does not contain needed values.', configuration)
 
 
 def get_relevant_exchange(exchange_name):
@@ -61,8 +61,8 @@ def generate_complete_merkato_configs(merkato_tuples):
         exchange = get_exchange_from_db(tuple[0])
         
         config['exchange'] = tuple[0]
-        config['public_api_key'] = exchange[1]
-        config['private_api_key'] = exchange[2]
+        config['public_api_key'] = exchange['public_api_key']
+        config['private_api_key'] = exchange['private_api_key']
 
         complete_config['configuration'] = config
         complete_config['base'] = tuple[2]
@@ -91,9 +91,10 @@ def get_allocated_pair_balances(exchange, base, coin):
 
 def check_reserve_balances(total_balances, allocated_balances, coin_reserve, base_reserve):
     remaining_balances = {
-        'base': total_balances['base']['amount'] - allocated_balances['base'],
-        'coin': total_balances['coin']['amount'] - allocated_balances['coin']
+        'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'],
+        'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin']
     }
+    print('remaning', remaining_balances, 'base_reserve', base_reserve)
     if remaining_balances['base'] < base_reserve:
         raise ValueError('Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
     if remaining_balances['coin'] < coin_reserve:
