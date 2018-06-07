@@ -55,7 +55,7 @@ class TuxExchange(ExchangeBase):
                 # If ask price is lower than the highest bid, return.
 
                 if float(self.get_highest_bid()) > ask:
-                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, ticker, ask, "tux"))
+                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "tux"))
                     return False # Maybe needs failed or something
 
             try:
@@ -66,7 +66,7 @@ class TuxExchange(ExchangeBase):
                     return success
 
                 else:
-                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, ticker, ask, "tux", attempt, self.retries))
+                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(5)
 
