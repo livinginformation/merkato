@@ -15,17 +15,17 @@ from tkinter import ttk
 
 class Bot(ttk.Frame):
 
-    def __init__(self, 
-                app,
-                parent,
-                owner,
-                exchange_config = None,
-                stub = False,
-                auto_start = False,
-                starting_stats=None,
-                *args,
-                **kwargs
-                ):
+    def __init__(self,
+                 app,
+                 parent,
+                 owner,
+                 persist = None,
+                 stub = False,
+                 auto_start = False,
+                 starting_stats=None,
+                 *args,
+                 **kwargs
+                 ):
         ttk.Frame.__init__(self, parent, style="app.TFrame", *args, **kwargs)
         self.app = app # root
         self.parent = parent # containing frame
@@ -38,7 +38,7 @@ class Bot(ttk.Frame):
         self.exchange_title = "<exchange>"
         
         if self.stub:
-            self.name = "XMR/BTC   Kraken"
+            self.name = "XMR/BTC  Stub"
 
         else:
             self.name = "New Merkato"
@@ -49,10 +49,10 @@ class Bot(ttk.Frame):
         #self.auth_frame = ttk.Frame(self, style="app.TFrame")
         self.bot = None
 
-        if exchange_config:
-            self.name = exchange_config["coin"] + "/" + exchange_config["base"] + "    " + exchange_config["exchange"]
+        if persist:
+            self.name = persist["coin"] + "/" + persist["base"] + "    " + persist["configuration"]["exchange"]
             self.title_var.set(str(self.name))
-            self.bot = Merkato(**exchange_config) #presumably from db
+            self.bot = Merkato(**persist) #presumably from db
 
         # --------------------
         self.exchange_frame = ttk.Frame(self, style="app.TFrame")
@@ -80,7 +80,7 @@ class Bot(ttk.Frame):
         # --------------------
         self.util_frame = ttk.Frame(self, style="app.TFrame")
         self.kill_button = ttk.Button(self.util_frame, text="Kill", cursor="shuttle", command=self.kill)
-        self.kill_button.grid(row=0, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
+        self.kill_button.grid(row=0, column=0, sticky=tk.SE, padx=(10,5), pady=(15,5))
         # --------------------
         if not starting_stats:
             starting_stats= {"price_x": []}
@@ -96,7 +96,7 @@ class Bot(ttk.Frame):
     def update(self):
 
         if self.stub or self.bot: # then we have something to update
-            print("updating bot/graph")
+            print("---------------  updating %s ----------------------" % self.name)
             
             if not self.stub:
                 context = self.bot.update()
@@ -141,12 +141,7 @@ class Bot(ttk.Frame):
 
         if not self.stub:
             try:
-                merkatos = get_all_merkatos()
-                complete_merkato_configs = generate_complete_merkato_configs(merkatos)
-                print(merkatos)
-                print(complete_merkato_configs)
-                self.bot = Merkato(**self.merk_args)
-
+              self.bot = Merkato(**self.merk_args)
             except Exception as e:
                 MessageBox.showerror("Bot Start Fail", str(e) + repr(self.merk_args))
 

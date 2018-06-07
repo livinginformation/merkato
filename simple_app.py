@@ -1,7 +1,8 @@
 import merkato.utils.database_utils as db
+from merkato.utils import generate_complete_merkato_configs
 #from exchange import Exchange
 from merkato.merkato import Merkato
-
+from pprint import pprint
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -133,11 +134,24 @@ if __name__ == "__main__":
         db.create_exchanges_table()
 
     db.insert_exchange("test", public_api_key='abc', private_api_key='123', limit_only=True)
+    merkatos = db.get_all_merkatos()
+    complete_merkato_configs = generate_complete_merkato_configs(merkatos)
 
     # ------------------------------
     app = App(root, tk.RIGHT)
 
-    for i in range(3):
+    for persisted in complete_merkato_configs:
+        pprint(persisted)
+        bot = Bot(root, app(), app, persist=persisted)
+        app.add_screen(bot,
+                       "null",
+                       textvariable=bot.title_var,
+                       bg="gray75",
+                       fg="black",
+                       selectcolor="lightblue"
+                       )
+
+    for i in range(1):
         bot = Bot(root, app(), app,)
         app.add_screen(bot,
                        "null",
