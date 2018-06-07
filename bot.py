@@ -3,7 +3,7 @@ from merkato.utils import database_utils
 from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table
 from merkato.utils import generate_complete_merkato_configs
 
-
+import traceback
 from   graph import Graph
 from   my_widget import MyWidget
 import tkinter.messagebox as MessageBox
@@ -118,17 +118,20 @@ class Bot(ttk.Frame):
 
 
     def update(self):
+        context = {}
 
         if self.stub or self.bot: # then we have something to update
             print("---------------  updating %s ----------------------" % self.name)
             
             if not self.stub:
-                context = self.bot.update()
+                if self.bot.initialized:
+                    context = self.bot.update()
                 
             else:
                 context = self.graph.fake_data()
 
-            self.graph.refresh(data=context, active=self.is_active)
+            if context:
+                self.graph.refresh(data=context, active=self.is_active)
             
             try:
                 self.title_var.set(str(self.name) + "   " + str(self.graph.performance.get()))
@@ -168,7 +171,8 @@ class Bot(ttk.Frame):
             try:
               self.bot = Merkato(**self.merk_args)
             except Exception as e:
-                MessageBox.showerror("Bot Start Fail", str(e) + repr(self.merk_args))
+                e2 = traceback.format_exc()
+                MessageBox.showerror("Bot Start Fail", str(e2) + "\n" + repr(self.merk_args))
 
             else:
                 self.exchange_frame.destroy()

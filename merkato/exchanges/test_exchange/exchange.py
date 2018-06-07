@@ -46,7 +46,7 @@ class TestExchange(ExchangeBase):
             # Get current highest bid on the orderbook
             # If ask price is lower than the highest bid, return.
             if self.get_highest_bid() > ask:
-                self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, ticker, ask, "tux"))
+                self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, ask, "tux"))
                 return False # Maybe needs failed or something
         try:
             self._sell(amount, ask)
