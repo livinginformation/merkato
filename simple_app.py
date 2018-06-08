@@ -170,6 +170,7 @@ if __name__ == "__main__":
             selectcolor="lightblue"
         )
     root.after(1000, app.update_frames)
+    root.after(100,app.finish_new_button())
 
     while True:
         try:

@@ -29,10 +29,7 @@ class App:
         self.rb_fr = VSFrame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.rb_fr.pack(side=side, fill=tk.BOTH)
         #  ----------------------------------------------------------------------------
-        self.new_frame = tk.Frame(self.rb_fr, borderwidth=2, relief=tk.RIDGE, bg="black")
-        self.new_frame.pack(side=tk.BOTTOM, padx=(10,10))
-        self.new_button = tk.Button(self.new_frame, text="New", command=self.make_new, )
-        self.new_button.pack()
+
         #  ----------------------------------------------------------------------------
         self.screen_fr = tk.Frame(master, borderwidth=2, relief=tk.RIDGE, bg="black")
         self.screen_fr.pack(fill=tk.BOTH)
@@ -41,6 +38,12 @@ class App:
     # return a master frame reference for the external frames (screens)
     def __call__(self):
         return self.screen_fr
+
+    def finish_new_button(self):
+        self.new_frame = tk.Frame(self.rb_fr.interior, borderwidth=2, relief=tk.RIDGE, bg="black")
+        self.new_frame.pack(side=tk.BOTTOM, padx=(10, 10), pady=(10,10))
+        self.new_button = tk.Button(self.new_frame, text="New", command=self.make_new, )
+        self.new_button.pack()
 
     def make_new(self):
         new_bot = Bot(self.master, self.screen_fr, self)
