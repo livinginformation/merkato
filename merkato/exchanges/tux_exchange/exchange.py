@@ -41,8 +41,9 @@ class TuxExchange(ExchangeBase):
             :param ask: float
             :param ticker: string
         '''
-        query_parameters = getQueryParameters(SELL, self.ticker, amount, ask)
+        query_parameters = getQueryParameters(SELL, self.coin, amount, ask)
         response = self._create_signed_request(query_parameters)
+        print('response', response)
 
         return response['success']
 
@@ -80,8 +81,10 @@ class TuxExchange(ExchangeBase):
             :param bid: float
             :param ticker: string
         '''
-        query_parameters = getQueryParameters(BUY, self.ticker, amount, bid)
+        query_parameters = getQueryParameters(BUY, self.coin, amount, bid)
+        print('query params', query_parameters)
         response = self._create_signed_request(query_parameters)
+        print('response', response)
         return response['success']
 
 
@@ -207,7 +210,6 @@ class TuxExchange(ExchangeBase):
 
         response = self._create_signed_request(tuxParams)
         self._debug(10, "get_balances", response)
-        print('response', response)
         pair_balances = {"base" : {"amount": response[self.base],
                                    "name" : self.base},
                          "coin": {"amount": response[self.coin],
