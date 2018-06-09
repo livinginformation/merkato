@@ -2,7 +2,7 @@ import json
 from merkato.exchanges.test_exchange.exchange import TestExchange
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import known_exchanges
-from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange
+from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange, get_merkato
 
 def update_config_with_credentials(config):
     print("API Credentials needed")
@@ -100,3 +100,14 @@ def check_reserve_balances(total_balances, allocated_balances, coin_reserve, bas
     if remaining_balances['coin'] < coin_reserve:
         raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
 
+def get_old_history(new_history, UUID):
+    merkato = get_merkato(UUID)
+    print('merkato', merkato)
+    last_order = merkato[7]
+    print('last order', last_order)
+    for index, order in enumerate(new_history):
+        print('orderId', order['orderId'])
+        is_last_order = order['orderId'] == last_order
+        if is_last_order:
+            return new_history[index:]
+    return new_history
