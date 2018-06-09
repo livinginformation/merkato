@@ -69,7 +69,7 @@ class Merkato(object):
 
             if tx['type'] == SELL:
                 if DEBUG: print(SELL)
-                print('amoutn', type(tx['amount']), type(tx[PRICE]))
+                print('amount', type(tx['amount']), type(tx[PRICE]))
                 amount = float(tx['amount']) * float(tx[PRICE])
                 price = tx[PRICE]
                 sold.append(tx)
