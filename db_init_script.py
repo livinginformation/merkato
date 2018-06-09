@@ -32,10 +32,6 @@ def main():
     base_reserve = .4
 
     merkato = Merkato(configuration, coin, base, spread, base_reserve, coin_reserve)
-    merkatos = get_all_merkatos()
-    complete_merkato_configs = generate_complete_merkato_configs(merkatos)
-    print(complete_merkato_configs)
-    print(merkatos)
     context = merkato.update()
     visualize_orderbook(context["orderbook"])
     while True:
