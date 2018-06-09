@@ -184,7 +184,7 @@ def get_merkato(exchange_name_pair):
     finally:
         c = conn.cursor()
         c.execute('''SELECT * FROM merkatos WHERE exchange_pair = ?''', (exchange_name_pair,))
-        exchange = c.fetchall()[0][0]
+        exchange = c.fetchall()[0]
         conn.commit()
         conn.close()
         return exchange
