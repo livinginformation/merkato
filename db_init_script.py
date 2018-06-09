@@ -28,8 +28,8 @@ def main():
     base = "BTC"
     coin = "XMR"
     spread = .1
-    coin_reserve = 1
-    base_reserve = .1
+    coin_reserve = 20
+    base_reserve = .5
 
     merkato = Merkato(configuration, coin, base, spread, base_reserve, coin_reserve)
     merkatos = get_all_merkatos()
