@@ -5,7 +5,7 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
-from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances
+from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_old_history
 import math
 from math import floor
 import datetime
@@ -14,31 +14,34 @@ DEBUG = False
 
 class Merkato(object):
     def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None):
-        self.initialized = False
         validate_merkato_initialization(configuration, coin, base, spread)
-        print('coin', coin, 'base', base)
+        self.initialized = False
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
-        
-        exchange_class = get_relevant_exchange(configuration[EXCHANGE])
-        self.exchange = exchange_class(configuration, coin=coin, base=base)
-        total_pair_balances = self.exchange.get_balances()
-        allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
-        check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
-
-        merkato_does_exist = merkato_exists(UUID)
-        insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
         self.mutex_UUID = UUID
         self.distribution_strategy = 1
         self.spread = spread # i.e '.15
         # Create ladders from the bid and ask bidget here
-        self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
         self.bid_reserved_balance = bid_reserved_balance
         self.ask_reserved_balance = ask_reserved_balance
         self.user_interface = user_interface
+        exchange_class = get_relevant_exchange(configuration[EXCHANGE])
+        self.exchange = exchange_class(configuration, coin=coin, base=base)
+
+        merkato_does_exist = merkato_exists(UUID)
+
         if not merkato_does_exist:
             print('new merkato')
-            self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
+            # self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
+            total_pair_balances = self.exchange.get_balances()
+            print('total_pair_balances', total_pair_balances)
+            allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
+            check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
+            insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
+            self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
+        else:
+            self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
+            print('selv.history', self.history)
         self.DEBUG = 100
         self.initialized = True  # to avoid being updated before orders placed
 
@@ -60,8 +63,8 @@ class Merkato(object):
         # new_txes is the number of new transactions contained in new_history
         sold = []
         bought = []
-        index = -1*new_txes # Pop this many elements off the back of the transaction history
-        newTransactionHistory = new_history[index:]
+        index = 1*new_txes # Pop this many elements off the back of the transaction history
+        newTransactionHistory = new_history[:index]
         self.debug(2, "merkato.rebalance_orders")
         self.debug(3, "merkato.rebalance_orders:  new txs", newTransactionHistory)
         
@@ -100,14 +103,14 @@ class Merkato(object):
 
         scaling_factor = 0
         total_orders = floor(math.log(2, step)) # 277 for a step of 1.0025
-        current_order = 1
+        current_order = 0
         
         # Calculate scaling factor
         while current_order < total_orders:
             scaling_factor += 1/(step**current_order)
             current_order += 1
 
-        current_order = 1
+        current_order = 0
         amount = 0
 
         prior_reserve = self.bid_reserved_balance
@@ -119,6 +122,7 @@ class Merkato(object):
             
             # TODO Create lock
             response = self.exchange.buy(current_bid_amount, current_bid_price)
+            print('bid response', response)
             update_merkato(self.mutex_UUID, LAST_ORDER, response)
             self.remove_reserve(current_bid_amount, BID_RESERVE) 
             # TODO Release lock
@@ -250,14 +254,14 @@ class Merkato(object):
 
         scaling_factor = 0
         total_orders = floor(math.log(2, step)) # 277 for a step of 1.0025
-        current_order = 1
+        current_order = 0
 
         # Calculate scaling factor
         while current_order < total_orders:
             scaling_factor += 1/(step**current_order)
             current_order += 1
 
-        current_order = 1
+        current_order = 0
         amount = 0
 
         prior_reserve = self.ask_reserved_balance
@@ -269,6 +273,7 @@ class Merkato(object):
 
             # TODO Create lock
             response = self.exchange.sell(current_ask_amount, current_ask_price)
+            print('ask response', response)
             update_merkato(self.mutex_UUID, LAST_ORDER, response)
             self.remove_reserve(current_ask_amount, ASK_RESERVE) 
             # TODO Release lock
@@ -426,6 +431,7 @@ class Merkato(object):
 
         new_history = self.exchange.get_my_trade_history()
         new_hist_len = len(new_history)
+        print('new_hist', new_history)
         new_transactions = []
         
         if new_hist_len > hist_len:
