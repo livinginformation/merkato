@@ -31,17 +31,19 @@ class Merkato(object):
 
         if not merkato_does_exist:
             print('new merkato')
-            # self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
+            self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
             total_pair_balances = self.exchange.get_balances()
             print('total_pair_balances', total_pair_balances)
             allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
             check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
             insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
+            self.history = self.exchange.get_my_trade_history()
+            update_merkato(self.mutex_UUID, LAST_ORDER, self.history[0]['id'])
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
-            self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
+
         else:
             self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
-            print('selv.history', self.history)
+            print('self.history', self.history)
         self.DEBUG = 100
         self.initialized = True  # to avoid being updated before orders placed
 
@@ -88,7 +90,7 @@ class Merkato(object):
                 self.debug(4, "found buy",tx, "corresponding sell", sell_price)
                 response = self.exchange.sell(amount, sell_price)
 
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
+            update_merkato(self.mutex_UUID, LAST_ORDER, tx['id'])
             
         self.log_new_transactions(newTransactionHistory)
         
