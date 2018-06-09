@@ -2,7 +2,7 @@ import time
 import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
-from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE
+from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances
@@ -37,6 +37,7 @@ class Merkato(object):
         self.user_interface = user_interface
         if not merkato_does_exist:
             print('new merkato')
+            self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
         self.DEBUG = 100
         self.initialized = True  # to avoid being updated before orders placed
@@ -68,7 +69,8 @@ class Merkato(object):
 
             if tx['type'] == SELL:
                 if DEBUG: print(SELL)
-                amount = tx['amount']
+                print('amoutn', type(tx['amount']), type(tx[PRICE]))
+                amount = float(tx['amount']) * float(tx[PRICE])
                 price = tx[PRICE]
                 sold.append(tx)
                 buy_price = float(price) * ( 1  - self.spread)
@@ -116,7 +118,8 @@ class Merkato(object):
             amount += current_bid_amount
             
             # TODO Create lock
-            self.exchange.buy(current_bid_amount, current_bid_price)
+            response = self.exchange.buy(current_bid_amount, current_bid_price)
+            update_merkato(self.mutex_UUID, LAST_ORDER, response)
             self.remove_reserve(current_bid_amount, BID_RESERVE) 
             # TODO Release lock
             
@@ -139,7 +142,7 @@ class Merkato(object):
         self.distribute_asks(ask_start, total_alt)
 
 
-    def distribute_bids(self, price, total_to_distribute, step=1.1):
+    def distribute_bids(self, price, total_to_distribute, step=1.02):
         # Allocates your market making balance on the bid side, in a way that
         # will never be completely exhausted (run out).
         # total_to_distribute is in the base currency (usually BTC)
@@ -265,7 +268,8 @@ class Merkato(object):
             amount += current_ask_amount
 
             # TODO Create lock
-            self.exchange.sell(current_ask_amount, current_ask_price)
+            response = self.exchange.sell(current_ask_amount, current_ask_price)
+            update_merkato(self.mutex_UUID, LAST_ORDER, response)
             self.remove_reserve(current_ask_amount, ASK_RESERVE) 
             # TODO Release lock
 
@@ -276,7 +280,7 @@ class Merkato(object):
         print('allocated amount', prior_reserve - self.ask_reserved_balance)
 
 
-    def distribute_asks(self, price, total_to_distribute, step=1.1):
+    def distribute_asks(self, price, total_to_distribute, step=1.02):
         # Allocates your market making balance on the ask side, in a way that
         # will never be completely exhausted (run out).
 
