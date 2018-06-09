@@ -27,9 +27,9 @@ def main():
 
     base = "BTC"
     coin = "XMR"
-    spread = .1
-    coin_reserve = 20
-    base_reserve = .5
+    spread = .02
+    coin_reserve = 17
+    base_reserve = .4
 
     merkato = Merkato(configuration, coin, base, spread, base_reserve, coin_reserve)
     merkatos = get_all_merkatos()
@@ -49,7 +49,7 @@ def main():
         print("highest bid:  ", context["orderbook"]["bids"][0])
         if context["filled_orders"]:
             visualize_orderbook(context["orderbook"])
-        time.sleep(.2)
+        time.sleep(1)
 
 if __name__ == '__main__':
     main()

@@ -70,7 +70,7 @@ class TuxExchange(ExchangeBase):
                 else:
                     self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
                     attempt += 1
-                    time.sleep(.5)
+                    time.sleep(1)
 
             except Exception as e:  # TODO - too broad exception handling
                 raise ValueError(e)
@@ -91,7 +91,7 @@ class TuxExchange(ExchangeBase):
 
     def buy(self, amount, bid):
         attempt = 0
-
+        bid_amount = amount / bid
         while attempt < self.retries:
             if self.limit_only:
                 # Get current lowest ask on the orderbook
@@ -103,15 +103,15 @@ class TuxExchange(ExchangeBase):
                     return False # Maybe needs failed or something
 
             try:
-                success = self._buy(amount, bid)
+                success = self._buy(bid_amount, bid)
                 if success:
-                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(amount, self.ticker, bid, "tux"))
+                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "tux"))
                     return success
 
                 else:
                     self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
                     attempt += 1
-                    time.sleep(.5)
+                    time.sleep(1)
 
             except Exception as e:  # TODO - too broad exception handling
                 raise ValueError(e)
