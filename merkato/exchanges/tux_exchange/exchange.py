@@ -42,6 +42,7 @@ class TuxExchange(ExchangeBase):
             :param ticker: string
         '''
         query_parameters = getQueryParameters(SELL, self.coin, amount, ask)
+        print('query params', query_parameters)
         response = self._create_signed_request(query_parameters)
         print('response', response)
 
@@ -69,7 +70,7 @@ class TuxExchange(ExchangeBase):
                 else:
                     self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
                     attempt += 1
-                    time.sleep(5)
+                    time.sleep(.5)
 
             except Exception as e:  # TODO - too broad exception handling
                 raise ValueError(e)
@@ -110,7 +111,7 @@ class TuxExchange(ExchangeBase):
                 else:
                     self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
                     attempt += 1
-                    time.sleep(5)
+                    time.sleep(.5)
 
             except Exception as e:  # TODO - too broad exception handling
                 raise ValueError(e)

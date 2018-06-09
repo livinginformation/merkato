@@ -13,7 +13,7 @@ def getQueryParameters(type, ticker, amount, price):
         "market": "BTC",
         "coin": ticker,
         "amount": formatted_amount,
-        "price": formatted_price
+        "price": formatted_price,
     }
 
 def validate_credentials(config, url):
