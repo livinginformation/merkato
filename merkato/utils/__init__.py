@@ -103,7 +103,7 @@ def check_reserve_balances(total_balances, allocated_balances, coin_reserve, bas
 def get_old_history(new_history, UUID):
     merkato = get_merkato(UUID)
     print('merkato', merkato)
-    last_order = merkato[7]
+    last_order = merkato[6]
     print('last order', last_order)
     for index, order in enumerate(new_history):
         print('orderId', order['orderId'])
