@@ -10,7 +10,7 @@ def create_merkatos_table():
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS merkatos
-                    (exchange text, exchange_pair text, base text, alt text, spread text, profit_limit integer, last_order text, ask_reserved_balance float, bid_reserved_balance float)''')
+                    (exchange text, exchange_pair text, base text, alt text, spread float, profit_limit integer, last_order text, ask_reserved_balance float, bid_reserved_balance float)''')
         c.execute('''CREATE UNIQUE INDEX id_exchange_pair ON merkatos (exchange_pair)''')
         conn.commit()
         conn.close()
@@ -125,6 +125,7 @@ def get_all_exchanges():
 def get_exchange(exchange):
     try:
         conn = sqlite3.connect('merkato.db')
+        conn.row_factory = dict_factory
     except Exception as e:
         print(str(e))
     finally:

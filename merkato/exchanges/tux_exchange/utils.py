@@ -5,16 +5,15 @@ import time
 import hashlib
 
 def getQueryParameters(type, ticker, amount, price):
-    formatted_amount = "{:.8f}".format(amount)
-    formatted_price = "{:.8f}".format(price)
-    formatted_method = "{:.8f}".format(type)
-    formatted_coin = "{:.8f}".format(ticker)
+    formatted_amount = "{:.8f}".format(float(amount))
+    formatted_price = "{:.8f}".format(float(price))
+    print('ticker', ticker)
     return {
-        "method": formatted_method,
-        "market": "{:.8f}".format("BTC"),
-        "coin": formatted_coin,
+        "method": type,
+        "market": "BTC",
+        "coin": ticker,
         "amount": formatted_amount,
-        "price": formatted_price
+        "price": formatted_price,
     }
 
 def validate_credentials(config, url):
