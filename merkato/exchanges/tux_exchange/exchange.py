@@ -227,8 +227,10 @@ class TuxExchange(ExchangeBase):
 
         query_parameters = { "method": "getmytradehistory" }
 
-        if start != 0 and end != 0:
+        if start != 0:
             query_parameters["start"] = start
+            
+        if start !=0 and end != 0:
             query_parameters["end"] = end
 
         return self._create_signed_request(query_parameters)
