@@ -14,6 +14,7 @@ DEBUG = False
 
 class Merkato(object):
     def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None):
+        self.DEBUG = 100
         validate_merkato_initialization(configuration, coin, base, spread)
         self.initialized = False
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
@@ -46,7 +47,6 @@ class Merkato(object):
             last_order_id = get_last_order(self.mutex_UUID)
             orders_since_shutdown = self.exchange.get_my_trade_history(last_order_id)
             self.rebalance_orders(orders_since_shutdown)
-        self.DEBUG = 100
         self.initialized = True  # to avoid being updated before orders placed
 
     def _debug(self, level, header, *args):
