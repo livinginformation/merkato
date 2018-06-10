@@ -45,6 +45,7 @@ class Merkato(object):
             #self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
             last_order_id = get_last_order(self.mutex_UUID)
             orders_since_shutdown = self.exchange.get_my_trade_history(last_order_id)
+            self.rebalance_orders(orders_since_shutdown)
         self.DEBUG = 100
         self.initialized = True  # to avoid being updated before orders placed
 
@@ -64,11 +65,9 @@ class Merkato(object):
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
-        sold = []
-        bought = []
         self.debug(2, "merkato.rebalance_orders")
-        
-        for tx in new_txes:
+        ordered_transactions = reversed(new_txes)
+        for tx in ordered_transactions:
 
             if tx['type'] == SELL:
                 if DEBUG: print(SELL) #todo: change # to new format
