@@ -14,6 +14,7 @@ DEBUG = False
 
 class Merkato(object):
     def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None):
+        self.DEBUG = 100
         validate_merkato_initialization(configuration, coin, base, spread)
         self.initialized = False
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
