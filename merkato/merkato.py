@@ -49,7 +49,7 @@ class Merkato(object):
         self.DEBUG = 100
         self.initialized = True  # to avoid being updated before orders placed
 
-    def debug(self, level, header, *args):
+    def _debug(self, level, header, *args):
         if level <= self.DEBUG:
             print("-" * 10)
             print("{}---> {}:".format(level, header))
@@ -65,7 +65,7 @@ class Merkato(object):
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
-        self.debug(2, "merkato.rebalance_orders")
+        self._debug(2, "merkato.rebalance_orders")
         ordered_transactions = reversed(new_txes)
         for tx in ordered_transactions:
 
@@ -75,14 +75,14 @@ class Merkato(object):
                 amount = float(tx['amount']) * float(tx[PRICE])
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
-                self.debug(4, "found sell", tx,"corresponding buy", buy_price)
+                self._debug(4, "found sell", tx,"corresponding buy", buy_price)
                 response = self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
                 amount = tx['amount']
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
-                self.debug(4, "found buy",tx, "corresponding sell", sell_price)
+                self._debug(4, "found buy",tx, "corresponding sell", sell_price)
                 response = self.exchange.sell(amount, sell_price)
 
             update_merkato(self.mutex_UUID, LAST_ORDER, tx['id'])
