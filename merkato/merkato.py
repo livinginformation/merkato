@@ -5,7 +5,7 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
-from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_old_history
+from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order
 import math
 from math import floor
 import datetime
@@ -43,8 +43,8 @@ class Merkato(object):
 
         else:
             #self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
-            orders_since_shutdown = self.exchange.get_my_trade_history()
-            print('self.history', self.history)
+            last_order_id = get_last_order(self.mutex_UUID)
+            orders_since_shutdown = self.exchange.get_my_trade_history(last_order_id)
         self.DEBUG = 100
         self.initialized = True  # to avoid being updated before orders placed
 
