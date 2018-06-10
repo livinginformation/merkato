@@ -74,7 +74,6 @@ class Merkato(object):
                 # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
                 amount = float(tx['amount']) * float(tx[PRICE])
                 price = tx[PRICE]
-                sold.append(tx)
                 buy_price = float(price) * ( 1  - self.spread)
                 self.debug(4, "found sell", tx,"corresponding buy", buy_price)
                 response = self.exchange.buy(amount, buy_price)
@@ -82,16 +81,15 @@ class Merkato(object):
             if tx['type'] == BUY:
                 amount = tx['amount']
                 price = tx[PRICE]
-                bought.append(tx)
                 sell_price = float(price) * ( 1  + self.spread)
                 self.debug(4, "found buy",tx, "corresponding sell", sell_price)
                 response = self.exchange.sell(amount, sell_price)
 
             update_merkato(self.mutex_UUID, LAST_ORDER, tx['id'])
             
-        self.log_new_transactions(newTransactionHistory)
+        self.log_new_transactions(ordered_transactions)
         
-        return newTransactionHistory
+        return ordered_transactions
 
     def decaying_bid_ladder(self, total_amount, step, start_price):
         # Places an bid ladder from the start_price to 1/2 the start_price.
@@ -421,23 +419,19 @@ class Merkato(object):
 
     def update(self):
         # Get current state of trade history before placing orders
-        #print(self.history)
-        hist_len = len(self.history)
+        print("Update entered")
+        
         now = str(datetime.datetime.now().isoformat()[:-7].replace("T", " "))
         last_trade_price = self.exchange.get_last_trade_price()
 
-        #print("Time: " + now)
-
-        new_history = self.exchange.get_my_trade_history()
-        new_hist_len = len(new_history)
-        print('new_hist', new_history)
+        new_history = self.exchange.get_my_trade_history(get_last_order(self.mutex_UUID))
+        
         new_transactions = []
         
-        if new_hist_len > hist_len:
+        if len(new_history) > 0:
             # We have new transactions
-            new_txes = new_hist_len - hist_len
-            if DEBUG: print("New transactions: " + str(new_txes))
-            new_transactions = self.rebalance_orders(new_history, new_txes)
+            if DEBUG: print("New transactions: " + str(new_history))
+            new_transactions = self.rebalance_orders(new_history)
             #self.merge_orders()
             
             self.history = new_history
@@ -449,6 +443,7 @@ class Merkato(object):
                    "balances": self.exchange.get_balances(),
                    "orderbook": self.exchange.get_all_orders()
                    }
+        
         return context
 
 
