@@ -37,12 +37,13 @@ class Merkato(object):
             allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
             check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
             insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
-            self.history = self.exchange.get_my_trade_history()
-            update_merkato(self.mutex_UUID, LAST_ORDER, self.history[0]['id'])
+            history = self.exchange.get_my_trade_history()
+            update_merkato(self.mutex_UUID, LAST_ORDER, history[0]['id'])
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
 
         else:
-            self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
+            #self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
+            orders_since_shutdown = self.exchange.get_my_trade_history()
             print('self.history', self.history)
         self.DEBUG = 100
         self.initialized = True  # to avoid being updated before orders placed
