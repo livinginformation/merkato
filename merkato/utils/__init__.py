@@ -106,3 +106,11 @@ def get_last_order( UUID):
     last_order = merkato[6]
     print('last order', last_order)
     return last_order
+
+def get_new_history(current_history, last_order):
+    for index, order in enumerate(current_history):
+        print('orderId', order['orderId'], 'last_order', last_order)
+        is_last_order = order['orderId'] == last_order
+        if is_last_order:
+            return current_history[:index]
+    return []

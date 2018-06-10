@@ -5,7 +5,7 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
-from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order
+from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history
 import math
 from math import floor
 import datetime
@@ -27,7 +27,7 @@ class Merkato(object):
         self.user_interface = user_interface
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
-
+        self.DEBUG = 100
         merkato_does_exist = merkato_exists(UUID)
 
         if not merkato_does_exist:
@@ -39,14 +39,15 @@ class Merkato(object):
             check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
             insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
             history = self.exchange.get_my_trade_history()
-            update_merkato(self.mutex_UUID, LAST_ORDER, history[0]['id'])
+            update_merkato(self.mutex_UUID, LAST_ORDER, history[0]['orderId'])
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
 
         else:
             #self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
-            last_order_id = get_last_order(self.mutex_UUID)
-            orders_since_shutdown = self.exchange.get_my_trade_history(last_order_id)
-            self.rebalance_orders(orders_since_shutdown)
+            current_history = self.exchange.get_my_trade_history()
+            last_order = get_last_order(self.mutex_UUID)
+            new_history = get_new_history(current_history, last_order)
+            self.rebalance_orders(new_history)
         self.initialized = True  # to avoid being updated before orders placed
 
     def _debug(self, level, header, *args):
@@ -66,7 +67,8 @@ class Merkato(object):
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
         self._debug(2, "merkato.rebalance_orders")
-        ordered_transactions = reversed(new_txes)
+        ordered_transactions = new_txes
+        print('ordered transactions rebalanced', ordered_transactions)
         for tx in ordered_transactions:
 
             if tx['type'] == SELL:
@@ -76,16 +78,16 @@ class Merkato(object):
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
                 self._debug(4, "found sell", tx,"corresponding buy", buy_price)
-                response = self.exchange.buy(amount, buy_price)
+                self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
                 amount = tx['amount']
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
                 self._debug(4, "found buy",tx, "corresponding sell", sell_price)
-                response = self.exchange.sell(amount, sell_price)
+                self.exchange.sell(amount, sell_price)
 
-            update_merkato(self.mutex_UUID, LAST_ORDER, tx['id'])
+            update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
             
         self.log_new_transactions(ordered_transactions)
         
@@ -120,7 +122,6 @@ class Merkato(object):
             # TODO Create lock
             response = self.exchange.buy(current_bid_amount, current_bid_price)
             print('bid response', response)
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
             self.remove_reserve(current_bid_amount, BID_RESERVE) 
             # TODO Release lock
             
@@ -239,7 +240,6 @@ class Merkato(object):
             response = self.exchange.buy(buy_amount, bid_price)
             bid_price += float(increment)
             time.sleep(.3)
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
 
     def decaying_ask_ladder(self, total_amount, step, start_price):
@@ -271,7 +271,6 @@ class Merkato(object):
             # TODO Create lock
             response = self.exchange.sell(current_ask_amount, current_ask_price)
             print('ask response', response)
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
             self.remove_reserve(current_ask_amount, ASK_RESERVE) 
             # TODO Release lock
 
@@ -335,7 +334,6 @@ class Merkato(object):
             response = self.exchange.sell(ask_amount, ask_price)
             ask_price += float(increment)
             time.sleep(.3)
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
         pass
 
@@ -424,8 +422,11 @@ class Merkato(object):
         now = str(datetime.datetime.now().isoformat()[:-7].replace("T", " "))
         last_trade_price = self.exchange.get_last_trade_price()
 
-        new_history = self.exchange.get_my_trade_history(get_last_order(self.mutex_UUID))
-        
+        current_history = self.exchange.get_my_trade_history()
+        last_order = get_last_order(self.mutex_UUID)
+        new_history = get_new_history(current_history, last_order)
+
+        print('update: new_history', new_history)
         new_transactions = []
         
         if len(new_history) > 0:
@@ -434,8 +435,6 @@ class Merkato(object):
             new_transactions = self.rebalance_orders(new_history)
             #self.merge_orders()
             
-            self.history = new_history
-
         # context to be used for GUI plotting
         context = {"price": (now, last_trade_price),
                    "filled_orders": new_transactions,
