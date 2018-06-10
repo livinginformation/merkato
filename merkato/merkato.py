@@ -56,7 +56,7 @@ class Merkato(object):
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
-    def rebalance_orders(self, new_history, new_txes):
+    def rebalance_orders(self, new_txes):
         # This function places a matching order for every new transaction since last run
         #
         # TODO: Modify so that the parent function only passes in the new transactions, don't
@@ -66,16 +66,13 @@ class Merkato(object):
         # new_txes is the number of new transactions contained in new_history
         sold = []
         bought = []
-        index = 1*new_txes # Pop this many elements off the back of the transaction history
-        newTransactionHistory = new_history[:index]
         self.debug(2, "merkato.rebalance_orders")
-        self.debug(3, "merkato.rebalance_orders:  new txs", newTransactionHistory)
         
-        for tx in newTransactionHistory:
+        for tx in new_txes:
 
             if tx['type'] == SELL:
-                if DEBUG: print(SELL)
-                print('amount', type(tx['amount']), type(tx[PRICE]))
+                if DEBUG: print(SELL) #todo: change # to new format
+                # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
                 amount = float(tx['amount']) * float(tx[PRICE])
                 price = tx[PRICE]
                 sold.append(tx)
