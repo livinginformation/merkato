@@ -172,6 +172,8 @@ class Bot(ttk.Frame):
               self.bot = Merkato(**self.merk_args)
             except Exception as e:
                 e2 = traceback.format_exc()
+                safe_show = self.merk_args.copy()
+                safe_show["configuration"] = "obfuscated: " + str(safe_show["configuration"]["exchange"])
                 MessageBox.showerror("Bot Start Fail", str(e2) + "\n" + repr(self.merk_args))
 
             else:
