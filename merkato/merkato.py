@@ -27,7 +27,6 @@ class Merkato(object):
         self.user_interface = user_interface
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
-        self.DEBUG = 100
         merkato_does_exist = merkato_exists(UUID)
 
         if not merkato_does_exist:
@@ -58,30 +57,34 @@ class Merkato(object):
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
-    def rebalance_orders(self, new_txes):
+    def rebalance_orders(self, new_txes, profit_margin=0):
         # This function places a matching order for every new transaction since last run
+        #
+        # profit_margin is a number from 0 to 1 representing the percent of the spread to return
+        # to the user's balance before placing the matching order.
         #
         # TODO: Modify so that the parent function only passes in the new transactions, don't
         # do the index check internally.
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
+        factor = self.spread*profit_margin/2
         self._debug(2, "merkato.rebalance_orders")
         ordered_transactions = new_txes
         print('ordered transactions rebalanced', ordered_transactions)
         for tx in ordered_transactions:
 
             if tx['type'] == SELL:
-                if DEBUG: print(SELL) #todo: change # to new format
                 # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
-                amount = float(tx['amount']) * float(tx[PRICE])
+                
+                amount = float(tx['amount']) * float(tx[PRICE])*(1-factor)
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
                 self._debug(4, "found sell", tx,"corresponding buy", buy_price)
                 self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
-                amount = tx['amount']
+                amount = tx['amount']*(1-factor)
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
                 self._debug(4, "found buy",tx, "corresponding sell", sell_price)
@@ -130,19 +133,6 @@ class Merkato(object):
 
         print('allocated amount', prior_reserve - self.bid_reserved_balance)
 
-    def distribute_initial_orders(self, total_base, total_alt):
-        # waiting on vizualization for bids before running it as is
-        
-        current_price = (float(self.exchange.get_highest_bid()) + float(self.exchange.get_lowest_ask()))/2
-        if self.user_interface:
-            current_price = self.user_interface.confirm_price(current_price)
-
-        ask_start = current_price + current_price*self.spread/2
-        bid_start = current_price - current_price*self.spread/2
-        
-        self.distribute_bids(bid_start, total_base)
-        self.distribute_asks(ask_start, total_alt)
-
 
     def distribute_bids(self, price, total_to_distribute, step=1.02):
         # Allocates your market making balance on the bid side, in a way that
@@ -161,85 +151,6 @@ class Merkato(object):
         # 4. Store the remainder of total_to_distribute, as well as the final
         #    order placed in decaying_bid_ladder
         pass
-
-    def log_new_transactions(self, newTransactionHistory):
-        file = open('my_tax_audit_logs.txt', 'a+')
-        for transaction in newTransactionHistory:
-            file.write(json.dumps(transaction))
-        file.close()
-
-    def detect_low_liquidity(self):
-        bid = self.exchange.get_highest_bid()
-        ask = self.exchange.get_lowest_ask()
-
-        current_price = (bid + ask)/2
-        spread_percent = 2(current_price - bid)/current_price
-
-        if spread_percent > .05:
-            return True
-
-        acceptable_liquidity = self.check_acceptable_liquidity(current_price)
-        
-        if not acceptable_liquidity:
-            return True
-
-    
-    def check_acceptable_liquidity(self, current_price):
-        acceptable_bid_price = current_price * .95
-        acceptable_ask_price = current_price * 1.05
-        accepted_bid_liquidity = 0
-        accepted_ask_liquidity = 0
-        orders = self.exchange.get_all_orders()
-        for order in orders['bids']:
-            if order[PRICE] > acceptable_bid_price:
-                accepted_bid_liquidity += order['amount']
-        for order in orders['asks']:
-            if order[PRICE] < acceptable_ask_price:
-                accepted_ask_liquidity += order['amount']
-        if accepted_bid_liquidity > 200 and accepted_ask_liquidity > 200:
-            return True
-        else:
-            return False
-
-
-    def create_bid_ladder(self, total_btc, low_price, high_price, increment):
-        # This function has been deprecated in favor of decaying_bid_ladder and
-        # distribute_bids. Having the ability to place a ladder within Merkato
-        # (independent of market making) may eventually be useful, but will require
-        # some reworking of this function (due to amount/price scaling).
-        #
-        #  low_price, high_price, and increment are strings
-        # total_btc is a float.
-        #
-        # This function will never make a market order.
-
-        order_range = float(high_price) - float(low_price)
-
-        increments = round(float(order_range)/float(increment))
-
-        bid_amount = float(total_btc)/float(increments)
-
-        if DEBUG: print("order range: " + str(order_range))
-        if DEBUG: print("increments: " + str(increments))
-        if DEBUG: print("bid_amount: " + str(bid_amount))
-
-        bid_price = float(low_price)
-
-        # Sanity check
-        orders = self.exchange.get_all_orders()
-        lowest_ask = orders['asks'][0][0]
-
-        if float(high_price) >= float(lowest_ask):
-            print("Aborting: Bid ladder would make a market order.")
-            return
-
-        while bid_price <= float(high_price):
-            if DEBUG: print("setting bid at " + "{:.8f}".format(bid_price))
-            buy_amount = bid_amount/bid_price
-            if DEBUG: print("Buy amount: " + str(buy_amount))
-            response = self.exchange.buy(buy_amount, bid_price)
-            bid_price += float(increment)
-            time.sleep(.3)
 
 
     def decaying_ask_ladder(self, total_amount, step, start_price):
@@ -299,43 +210,18 @@ class Merkato(object):
         pass
 
 
-    def create_ask_ladder(self, total_amount, low_price, high_price, increment):
-        # This function has been deprecated in favor of decaying_ask_ladder and
-        # distribute_asks. Having the ability to place a ladder within Merkato
-        # (independent of market making) may eventually be useful, but will require
-        # some reworking of this function (due to amount/price scaling).
-        #
-        #  low_price, high_price, and increment are all strings
-        # total_amount is a float
-        #
-        # This function will never make a market order.
+    def distribute_initial_orders(self, total_base, total_alt):
+        # waiting on vizualization for bids before running it as is
+        
+        current_price = (float(self.exchange.get_highest_bid()) + float(self.exchange.get_lowest_ask()))/2
+        if self.user_interface:
+            current_price = self.user_interface.confirm_price(current_price)
 
-        order_range = float(high_price) - float(low_price)
-
-        increments = float(order_range)/float(increment)
-
-        ask_amount = float(total_amount)/float(increments)
-
-        if DEBUG: print("order range: " + str(order_range))
-        if DEBUG: print("increments: " + str(increments))
-        if DEBUG: print("Ask amount: " + str(round(ask_amount)))
-
-        ask_price = float(low_price)
-
-        # Sanity check TODO: remove sanity check to exchange layer
-        highest_bid = self.exchange.get_highest_bid()
-
-        if ask_price <= float(highest_bid):
-            print("Aborting: Ask ladder would make a market order.")
-            return
-
-        while ask_price <= float(high_price):
-            if DEBUG: print("setting ask at " + "{:.8f}".format(ask_price))
-            response = self.exchange.sell(ask_amount, ask_price)
-            ask_price += float(increment)
-            time.sleep(.3)
-
-        pass
+        ask_start = current_price + current_price*self.spread/2
+        bid_start = current_price - current_price*self.spread/2
+        
+        self.distribute_bids(bid_start, total_base)
+        self.distribute_asks(ask_start, total_alt)
 
 
     def merge_orders(self):
