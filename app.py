@@ -142,7 +142,7 @@ class App:
                 button.config(fg="black")
                 e2 = traceback.format_exc()
                 print(str(e2))  # TODO: email user
-                safe_show = bot.bot.mutex_UUID
+                safe_show = bot.bot.mutex_UUID if bot.bot else "<uninitialized bot>"
                 if self.block_on_error:
                     MessageBox.showerror("Bot Error!", str(e2) + "\n" + repr(safe_show))
 

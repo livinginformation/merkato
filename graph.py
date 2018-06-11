@@ -392,7 +392,8 @@ class Graph(tk.Frame):
                     pprint(v[0])
         """
         if "price" in data:
-            px, py = float(data["price"])
+            px, py = data["price"]
+            py = float(py)
             self.x_price.append(self.date_as_object(px))
             self.y_price.append(py)
         # -----------------------------------------------------

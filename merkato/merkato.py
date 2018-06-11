@@ -11,6 +11,9 @@ from math import floor
 import datetime
 DEBUG = False
 
+import os
+import csv
+
 
 class Merkato(object):
     def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None, profit_margin=0):
