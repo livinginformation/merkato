@@ -5,16 +5,20 @@ import tkinter as tk
 from collections import OrderedDict
 from bot import Bot
 
+import traceback
+import tkinter.messagebox as MessageBox
+
 class App:
     # adapted from notebook.py Copyright 2003, Iuri Wickert (iwickert yahoo.com)
     # initialization. receives the master widget
     # reference and the notebook orientation
-    def __init__(self, master, side=tk.LEFT):
+    def __init__(self, master, block_on_error=False, side=tk.LEFT):
 
         self.active_fr = None
         self.count = 0
         self.choice = tk.IntVar(0)
         self.master = master  # Bot
+        self.block_on_error = block_on_error
 
         # allows the TOP and BOTTOM
         # radiobuttons' positioning.
@@ -136,5 +140,11 @@ class App:
             except Exception as e:
                 button.config(bg="red")
                 button.config(fg="black")
-                print(str(e)) # TODO: email user
+                e2 = traceback.format_exc()
+                print(str(e2))  # TODO: email user
+                safe_show = bot.bot.mutex_UUID if bot.bot else "<uninitialized bot>"
+                if self.block_on_error:
+                    MessageBox.showerror("Bot Error!", str(e2) + "\n" + repr(safe_show))
+
+
         self.master.after(10000, self.update_frames)

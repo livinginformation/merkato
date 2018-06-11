@@ -381,6 +381,7 @@ class Graph(tk.Frame):
 
     def ingest_data(self, data):
         print("------------- ingesting data ------------")
+        """
         for k,v in data.items():
             if not k =="filled_orders":
                 pprint(k)
@@ -389,8 +390,10 @@ class Graph(tk.Frame):
                 pprint(k)
                 if v:
                     pprint(v[0])
+        """
         if "price" in data:
-            px, py = float(data["price"])
+            px, py = data["price"]
+            py = float(py)
             self.x_price.append(self.date_as_object(px))
             self.y_price.append(py)
         # -----------------------------------------------------

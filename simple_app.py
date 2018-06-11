@@ -57,6 +57,8 @@ expected bot data format from merkato
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('-b', '--blockOnError', action='store_true', help="DEBUGGING ONLY: blocks all bots on error")
+    args = parser.parse_args()
 
     root = tk.Tk()
 
@@ -141,7 +143,7 @@ if __name__ == "__main__":
     complete_merkato_configs = generate_complete_merkato_configs(merkatos)
 
     # ------------------------------
-    app = App(root, tk.RIGHT)
+    app = App(master=root, block_on_error=args.blockOnError, side=tk.RIGHT)
 
     for persisted in complete_merkato_configs:
         pprint(persisted)
