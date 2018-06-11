@@ -35,7 +35,8 @@ def main():
     print("1. If so, type 'Y'")
     print("2. If not, 'N'")
     should_start = input("Selection: ")
-    if should_start != 'N' or should_start != 'n':
+    print('should_start', should_start)
+    if should_start != 'Y' and should_start != 'y':
         return False
 
     merkato = Merkato(configuration, coin, base, spread, base_reserve, coin_reserve)
