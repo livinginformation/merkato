@@ -13,6 +13,7 @@ from matplotlib import style
 from matplotlib.lines import Line2D
 
 import datetime
+import argparse
 
 import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
@@ -55,6 +56,8 @@ expected bot data format from merkato
 """
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
     root = tk.Tk()
 
     def _scrollwheel(event):
