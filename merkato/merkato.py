@@ -58,14 +58,18 @@ class Merkato(object):
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
-    def rebalance_orders(self, new_txes):
+    def rebalance_orders(self, new_txes, profit_margin=0):
         # This function places a matching order for every new transaction since last run
+        #
+        # profit_margin is a number from 0 to 1 representing the percent of the spread to return
+        # to the user's balance before placing the matching order.
         #
         # TODO: Modify so that the parent function only passes in the new transactions, don't
         # do the index check internally.
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
+        factor = self.spread*profit_margin
         self._debug(2, "merkato.rebalance_orders")
         ordered_transactions = new_txes
         print('ordered transactions rebalanced', ordered_transactions)
@@ -74,14 +78,15 @@ class Merkato(object):
             if tx['type'] == SELL:
                 if DEBUG: print(SELL) #todo: change # to new format
                 # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
-                amount = float(tx['amount']) * float(tx[PRICE])
+                
+                amount = float(tx['amount']) * float(tx[PRICE])*(1-factor)
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
                 self._debug(4, "found sell", tx,"corresponding buy", buy_price)
                 self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
-                amount = tx['amount']
+                amount = tx['amount']*(1-factor)
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
                 self._debug(4, "found buy",tx, "corresponding sell", sell_price)
