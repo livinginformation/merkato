@@ -82,7 +82,7 @@ class Bot(ttk.Frame):
         self.exchange_frame = ttk.Frame(self, style="app.TFrame")
         self.exchange_menu, self.exchange_index = database_utils.get_all_exchanges()
         self.exchange_name = MyWidget(self.app, self.exchange_frame, handle="exchange", choices= self.exchange_menu)
-        self.coin = MyWidget(self.app, self.exchange_frame, handle="coin", choices= ["XMR", "LTC", "ETH", "DOGE","" "PEPE"])
+        self.coin = MyWidget(self.app, self.exchange_frame, handle="coin", choices= ["XMR", "LTC", "ETH", "DOGE", "PEPE"])
         self.base = MyWidget(self.app, self.exchange_frame, handle="base", choices= ["BTC","USDT"])
         #self.public_key = MyWidget(self.app, self.exchange_frame, handle="pub. key", choices="entry")
         #self.private_key = MyWidget(self.app, self.exchange_frame, handle="priv. key", is_password=True, choices="entry")
