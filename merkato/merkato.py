@@ -5,7 +5,7 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
-from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_old_history
+from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history
 import math
 from math import floor
 import datetime
@@ -14,6 +14,7 @@ DEBUG = False
 
 class Merkato(object):
     def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None):
+        self.DEBUG = 100
         validate_merkato_initialization(configuration, coin, base, spread)
         self.initialized = False
         UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
@@ -26,26 +27,30 @@ class Merkato(object):
         self.user_interface = user_interface
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
-
+        self.DEBUG = 100
         merkato_does_exist = merkato_exists(UUID)
 
         if not merkato_does_exist:
             print('new merkato')
-            # self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
+            self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
             total_pair_balances = self.exchange.get_balances()
             print('total_pair_balances', total_pair_balances)
             allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
             check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
             insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
+            history = self.exchange.get_my_trade_history()
+            update_merkato(self.mutex_UUID, LAST_ORDER, history[0]['orderId'])
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
-            self.history = self.exchange.get_my_trade_history() # TODO: Reconstruct from DB
+
         else:
-            self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
-            print('selv.history', self.history)
-        self.DEBUG = 100
+            #self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
+            current_history = self.exchange.get_my_trade_history()
+            last_order = get_last_order(self.mutex_UUID)
+            new_history = get_new_history(current_history, last_order)
+            self.rebalance_orders(new_history)
         self.initialized = True  # to avoid being updated before orders placed
 
-    def debug(self, level, header, *args):
+    def _debug(self, level, header, *args):
         if level <= self.DEBUG:
             print("-" * 10)
             print("{}---> {}:".format(level, header))
@@ -53,7 +58,7 @@ class Merkato(object):
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
-    def rebalance_orders(self, new_history, new_txes):
+    def rebalance_orders(self, new_txes):
         # This function places a matching order for every new transaction since last run
         #
         # TODO: Modify so that the parent function only passes in the new transactions, don't
@@ -61,38 +66,32 @@ class Merkato(object):
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
-        sold = []
-        bought = []
-        index = 1*new_txes # Pop this many elements off the back of the transaction history
-        newTransactionHistory = new_history[:index]
-        self.debug(2, "merkato.rebalance_orders")
-        self.debug(3, "merkato.rebalance_orders:  new txs", newTransactionHistory)
-        
-        for tx in newTransactionHistory:
+        self._debug(2, "merkato.rebalance_orders")
+        ordered_transactions = new_txes
+        print('ordered transactions rebalanced', ordered_transactions)
+        for tx in ordered_transactions:
 
             if tx['type'] == SELL:
-                if DEBUG: print(SELL)
-                print('amount', type(tx['amount']), type(tx[PRICE]))
+                if DEBUG: print(SELL) #todo: change # to new format
+                # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
                 amount = float(tx['amount']) * float(tx[PRICE])
                 price = tx[PRICE]
-                sold.append(tx)
                 buy_price = float(price) * ( 1  - self.spread)
-                self.debug(4, "found sell", tx,"corresponding buy", buy_price)
-                response = self.exchange.buy(amount, buy_price)
+                self._debug(4, "found sell", tx,"corresponding buy", buy_price)
+                self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
                 amount = tx['amount']
                 price = tx[PRICE]
-                bought.append(tx)
                 sell_price = float(price) * ( 1  + self.spread)
-                self.debug(4, "found buy",tx, "corresponding sell", sell_price)
-                response = self.exchange.sell(amount, sell_price)
+                self._debug(4, "found buy",tx, "corresponding sell", sell_price)
+                self.exchange.sell(amount, sell_price)
 
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
+            update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
             
-        self.log_new_transactions(newTransactionHistory)
+        self.log_new_transactions(ordered_transactions)
         
-        return newTransactionHistory
+        return ordered_transactions
 
     def decaying_bid_ladder(self, total_amount, step, start_price):
         # Places an bid ladder from the start_price to 1/2 the start_price.
@@ -123,7 +122,6 @@ class Merkato(object):
             # TODO Create lock
             response = self.exchange.buy(current_bid_amount, current_bid_price)
             print('bid response', response)
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
             self.remove_reserve(current_bid_amount, BID_RESERVE) 
             # TODO Release lock
             
@@ -242,7 +240,6 @@ class Merkato(object):
             response = self.exchange.buy(buy_amount, bid_price)
             bid_price += float(increment)
             time.sleep(.3)
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
 
     def decaying_ask_ladder(self, total_amount, step, start_price):
@@ -274,7 +271,6 @@ class Merkato(object):
             # TODO Create lock
             response = self.exchange.sell(current_ask_amount, current_ask_price)
             print('ask response', response)
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
             self.remove_reserve(current_ask_amount, ASK_RESERVE) 
             # TODO Release lock
 
@@ -338,7 +334,6 @@ class Merkato(object):
             response = self.exchange.sell(ask_amount, ask_price)
             ask_price += float(increment)
             time.sleep(.3)
-            update_merkato(self.mutex_UUID, LAST_ORDER, response)
 
         pass
 
@@ -422,27 +417,23 @@ class Merkato(object):
 
     def update(self):
         # Get current state of trade history before placing orders
-        #print(self.history)
-        hist_len = len(self.history)
+        print("Update entered")
+        
         now = str(datetime.datetime.now().isoformat()[:-7].replace("T", " "))
         last_trade_price = self.exchange.get_last_trade_price()
 
-        #print("Time: " + now)
+        current_history = self.exchange.get_my_trade_history()
+        last_order = get_last_order(self.mutex_UUID)
+        new_history = get_new_history(current_history, last_order)
 
-        new_history = self.exchange.get_my_trade_history()
-        new_hist_len = len(new_history)
-        print('new_hist', new_history)
         new_transactions = []
         
-        if new_hist_len > hist_len:
+        if len(new_history) > 0:
             # We have new transactions
-            new_txes = new_hist_len - hist_len
-            if DEBUG: print("New transactions: " + str(new_txes))
-            new_transactions = self.rebalance_orders(new_history, new_txes)
+            if DEBUG: print("New transactions: " + str(new_history))
+            new_transactions = self.rebalance_orders(new_history)
             #self.merge_orders()
             
-            self.history = new_history
-
         # context to be used for GUI plotting
         context = {"price": (now, last_trade_price),
                    "filled_orders": new_transactions,
@@ -450,6 +441,7 @@ class Merkato(object):
                    "balances": self.exchange.get_balances(),
                    "orderbook": self.exchange.get_all_orders()
                    }
+        
         return context
 
 

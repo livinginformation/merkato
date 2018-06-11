@@ -100,14 +100,17 @@ def check_reserve_balances(total_balances, allocated_balances, coin_reserve, bas
     if remaining_balances['coin'] < coin_reserve:
         raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
 
-def get_old_history(new_history, UUID):
+def get_last_order( UUID):
     merkato = get_merkato(UUID)
     print('merkato', merkato)
-    last_order = merkato[7]
+    last_order = merkato[6]
     print('last order', last_order)
-    for index, order in enumerate(new_history):
-        print('orderId', order['orderId'])
+    return last_order
+
+def get_new_history(current_history, last_order):
+    for index, order in enumerate(current_history):
+        print('orderId', order['orderId'], 'last_order', last_order)
         is_last_order = order['orderId'] == last_order
         if is_last_order:
-            return new_history[index:]
-    return new_history
+            return current_history[:index]
+    return []

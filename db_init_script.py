@@ -31,6 +31,14 @@ def main():
     coin_reserve = 17
     base_reserve = .4
 
+    print("Would you like to start the merkato??")
+    print("1. If so, type 'Y'")
+    print("2. If not, 'N'")
+    should_start = input("Selection: ")
+    print('should_start', should_start)
+    if should_start != 'Y' and should_start != 'y':
+        return False
+
     merkato = Merkato(configuration, coin, base, spread, base_reserve, coin_reserve)
     context = merkato.update()
     visualize_orderbook(context["orderbook"])
