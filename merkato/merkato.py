@@ -426,7 +426,6 @@ class Merkato(object):
         last_order = get_last_order(self.mutex_UUID)
         new_history = get_new_history(current_history, last_order)
 
-        print('update: new_history', new_history)
         new_transactions = []
         
         if len(new_history) > 0:

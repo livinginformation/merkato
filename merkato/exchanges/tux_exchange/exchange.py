@@ -138,11 +138,13 @@ class TuxExchange(ExchangeBase):
         query_parameters = { "method": "getmyopenorders" }
 
         orders = self._create_signed_request(query_parameters)
-        
+        if isinstance(orders, list):
+            return {}
+        filtered_orders = {order_id : order for order_id, order in orders.items() if self.ticker in order["market_pair"]}
         # Return orders in standardized format (list of buys/sells)
         # Tux returns {id: {order}, id: {order}, ...}, we want
         # [{order}, {order}, ...]
-        return orders
+        return filtered_orders
 
 
     def cancel_order(self, order_id):
@@ -233,7 +235,10 @@ class TuxExchange(ExchangeBase):
         if start !=0 and end != 0:
             query_parameters["end"] = end
 
-        return self._create_signed_request(query_parameters)
+        response = self._create_signed_request(query_parameters)
+
+        filtered_history =  [trade for trade in response if self.ticker in trade["market_pair"]]
+        return filtered_history
 
 
     def get_last_trade_price(self):
