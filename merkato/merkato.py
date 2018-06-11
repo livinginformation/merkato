@@ -69,7 +69,7 @@ class Merkato(object):
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
-        factor = self.spread*profit_margin
+        factor = self.spread*profit_margin/2
         self._debug(2, "merkato.rebalance_orders")
         ordered_transactions = new_txes
         print('ordered transactions rebalanced', ordered_transactions)
