@@ -13,7 +13,7 @@ DEBUG = False
 
 
 class Merkato(object):
-    def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None):
+    def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None, profit_margin=0):
         self.DEBUG = 100
         validate_merkato_initialization(configuration, coin, base, spread)
         self.initialized = False
@@ -21,6 +21,7 @@ class Merkato(object):
         self.mutex_UUID = UUID
         self.distribution_strategy = 1
         self.spread = spread # i.e '.15
+        self.profit_margin = profit_margin
         # Create ladders from the bid and ask bidget here
         self.bid_reserved_balance = bid_reserved_balance
         self.ask_reserved_balance = ask_reserved_balance
@@ -57,7 +58,7 @@ class Merkato(object):
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
-    def rebalance_orders(self, new_txes, profit_margin=0):
+    def rebalance_orders(self, new_txes):
         # This function places a matching order for every new transaction since last run
         #
         # profit_margin is a number from 0 to 1 representing the percent of the spread to return
@@ -68,7 +69,7 @@ class Merkato(object):
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
-        factor = self.spread*profit_margin/2
+        factor = self.spread*self.profit_margin/2
         self._debug(2, "merkato.rebalance_orders")
         ordered_transactions = new_txes
         print('ordered transactions rebalanced', ordered_transactions)
