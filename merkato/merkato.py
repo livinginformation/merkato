@@ -1,5 +1,7 @@
 import time
 import json
+import csv
+import os.path
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI
@@ -162,11 +164,39 @@ class Merkato(object):
         #    order placed in decaying_bid_ladder
         pass
 
-    def log_new_transactions(self, newTransactionHistory):
-        file = open('my_tax_audit_logs.txt', 'a+')
-        for transaction in newTransactionHistory:
-            file.write(json.dumps(transaction))
-        file.close()
+    def log_new_transactions(self, newTransactionHistory, path="my_merkato_tax_audit_logs.csv"):
+        """
+        [
+            {'id': '430236', 'date': '2018-05-30 17:03:41', 'type': 'buy', 'price': '0.00000290',
+             'amount': '78275.86206896', 'total': '0.22700000', 'fee': '0.00000000', 'feepercent': '0.000',
+             'orderId': '86963799', 'market': 'BTC', 'coin': 'PEPECASH', 'market_pair': 'BTC_PEPECASH'},
+
+            {'id': '423240', 'date': '2018-04-22 06:19:19', 'type': 'sell', 'price': '0.00000500',
+             'amount': '6711.95200000', 'total': '0.03355976', 'fee': '0.00000000', 'feepercent': '0.000',
+             'orderId': '90404882', 'market': 'BTC', 'coin': 'PEPECASH', 'market_pair': 'BTC_PEPECASH'},
+            ...
+        ]
+        """
+        scrubbed_history = []
+        for dirty_tx in newTransactionHistory:
+            scrubbed_tx = dirty_tx.copy()
+            for k, v in scrubbed_tx.copy().items():
+                if k in ["price", "amount", "total", "fee", "feepercent"]:
+                    scrubbed_tx[k] = float(v)
+                elif k in ["id", "orderId"]:
+                    scrubbed_tx[k] = int(v)
+            scrubbed_history.append(scrubbed_tx)
+
+        headers_needed = not os.path.exists(path)
+
+        with open(path, 'a+') as csvfile:
+            fieldnames = ['coin', 'market', 'market_pair', 'date', 'type',
+                          "id", "orderId", "price", "amount", "total", "fee"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
+            if headers_needed:
+                writer.writeheader()
+            for tx in scrubbed_history:
+                writer.writerow(tx)
 
     def detect_low_liquidity(self):
         bid = self.exchange.get_highest_bid()
