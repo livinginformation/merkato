@@ -89,7 +89,7 @@ class Merkato(object):
                 self.exchange.buy(amount, buy_price)
 
             if tx['type'] == BUY:
-                amount = tx['amount']*(1-factor)
+                amount = float(tx['amount'])*float((1-factor))
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
                 self._debug(4, "found buy",tx, "corresponding sell", sell_price)
