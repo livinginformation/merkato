@@ -2,10 +2,10 @@ import time
 import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
-from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI
+from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI, FIRST_ORDER
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
-from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history
+from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history, get_first_order
 import math
 from math import floor
 import datetime
@@ -16,7 +16,7 @@ import csv
 
 
 class Merkato(object):
-    def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None, profit_margin=0):
+    def __init__(self, configuration, coin, base, spread, bid_reserved_balance, ask_reserved_balance, user_interface=None, profit_margin=0, first_order=''):
         self.DEBUG = 100
         validate_merkato_initialization(configuration, coin, base, spread)
         self.initialized = False
@@ -40,15 +40,17 @@ class Merkato(object):
             print('total_pair_balances', total_pair_balances)
             allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
             check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
-            insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance)
+            insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance, first_order)
             history = self.exchange.get_my_trade_history()
             if len(history) > 0:
-                update_merkato(self.mutex_UUID, LAST_ORDER, history[0]['orderId'])
+                new_last_order = history[0]['orderId']
+                update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
 
         else:
             #self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
-            current_history = self.exchange.get_my_trade_history()
+            first_order = get_first_order(self.mutex_UUID)
+            current_history = self.exchange.get_my_trade_history(first_order)
             last_order = get_last_order(self.mutex_UUID)
             new_history = get_new_history(current_history, last_order)
             self.rebalance_orders(new_history)
@@ -97,6 +99,11 @@ class Merkato(object):
 
             update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
             
+            first_order = get_first_order(self.mutex_UUID)
+            no_first_order = len(first_order) == 0
+            if no_first_order:
+                update_merkato(self.mutex_UUID, FIRST_ORDER, tx['orderId'])
+
         self.log_new_transactions(ordered_transactions)
         
         return ordered_transactions
@@ -313,7 +320,8 @@ class Merkato(object):
         now = str(datetime.datetime.now().isoformat()[:-7].replace("T", " "))
         last_trade_price = self.exchange.get_last_trade_price()
 
-        current_history = self.exchange.get_my_trade_history()
+        first_order = get_first_order(self.mutex_UUID)
+        current_history = self.exchange.get_my_trade_history(first_order)
         last_order = get_last_order(self.mutex_UUID)
         new_history = get_new_history(current_history, last_order)
 

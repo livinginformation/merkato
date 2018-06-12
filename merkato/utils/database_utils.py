@@ -10,7 +10,7 @@ def create_merkatos_table():
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS merkatos
-                    (exchange text, exchange_pair text, base text, alt text, spread float, profit_limit integer, last_order text, ask_reserved_balance float, bid_reserved_balance float, profit_margin integer)''')
+                    (exchange text, exchange_pair text, base text, alt text, spread float, profit_limit integer, last_order text, first_order text, ask_reserved_balance float, bid_reserved_balance float, profit_margin integer)''')
         c.execute('''CREATE UNIQUE INDEX id_exchange_pair ON merkatos (exchange_pair)''')
         conn.commit()
         conn.close()
@@ -29,7 +29,7 @@ def no_merkatos_table_exists():
         return number_of_mutex_tables == 0
 
 
-def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', spread='.1', bid_reserved_balance=0, ask_reserved_balance=0, profit_limit=10, last_order='', profit_margin=0):
+def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', spread='.1', bid_reserved_balance=0, ask_reserved_balance=0, first_order='', profit_limit=10, last_order='', profit_margin=0):
     try:
         conn = sqlite3.connect('merkato.db')
     except Exception as e:
@@ -37,8 +37,8 @@ def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', 
     finally:
         c = conn.cursor()
         c.execute("""REPLACE INTO merkatos 
-                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, ask_reserved_balance, bid_reserved_balance, profit_margin) VALUES (?,?,?,?,?,?,?,?,?,?)""", 
-                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, ask_reserved_balance, bid_reserved_balance, profit_margin))
+                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, first_order, ask_reserved_balance, bid_reserved_balance, profit_margin) VALUES (?,?,?,?,?,?,?,?,?,?,?)""", 
+                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, first_order, ask_reserved_balance, bid_reserved_balance, profit_margin))
         conn.commit()
         conn.close()
 
