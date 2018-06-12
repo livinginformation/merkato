@@ -5,7 +5,7 @@ import math
 import requests
 import time
 import urllib.parse
-from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
+from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker, encrypt, decrypt
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 
@@ -13,7 +13,7 @@ from merkato.constants import BUY, SELL
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
-    def __init__(self, config, coin, base):
+    def __init__(self, config, coin, base, password='password'):
         self.privatekey = config['private_api_key']
         self.publickey  = config['public_api_key']
         self.limit_only = config['limit_only']
