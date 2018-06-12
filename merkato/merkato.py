@@ -17,7 +17,7 @@ class Merkato(object):
         self.DEBUG = 100
         validate_merkato_initialization(configuration, coin, base, spread)
         self.initialized = False
-        UUID = configuration['exchange'] + "coin={}_base={}".format(coin,base)
+        UUID = configuration[EXCHANGE] + "coin={}_base={}".format(coin,base)
         self.mutex_UUID = UUID
         self.distribution_strategy = 1
         self.spread = spread # i.e '.15
