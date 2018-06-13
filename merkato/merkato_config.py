@@ -5,7 +5,7 @@ import os.path
 from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table, get_exchange as get_exchange_from_db
 from merkato.exchanges.tux_exchange.utils import validate_credentials
 from merkato.constants import EXCHANGE
-from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection
+from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection, encrypt, decrypt
 
 def load_config():
     # Loads an existing configuration file
@@ -29,7 +29,6 @@ def create_config():
     url = "https://tuxexchange.com/api"
     while True:
         exchange = get_exchange()
-
         if exchange == 'tux':
             config[EXCHANGE] = 'tux'
 
@@ -39,6 +38,9 @@ def create_config():
             while not credentials_are_valid:
                 config = update_config_with_credentials(config)
                 credentials_are_valid = validate_credentials(config, url)
+
+            encrypt_keys(config)
+
             insert_config_into_exchanges(config)
             return config
         
@@ -59,6 +61,28 @@ def create_config():
         else:
             print("Unrecognized Selection")
             continue
+
+
+def encrypt_keys(config):
+    ''' Encrypts the API keys before storing the config in the database
+    '''
+    public_key = config["public_api_key"]
+    private_key = config["private_api_key"]
+
+    password = # Prompt user for password / get password from Nasa. This should be a popup?
+
+    # encrypt(password, data)
+    # Inputs are of type:
+    # - password: bytes
+    # - data:     bytes
+
+    public_key_encrypted  = encrypt(password.encode(), public_key.encode())
+    private_key_encrypted = encrypt(password.encode(), private_key.encode())
+
+    config["public_api_key"] = public_key_encrypted
+    config["private_api_key"] = private_key_encrypted
+
+    return config
 
 
 def get_config():
