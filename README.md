@@ -16,6 +16,8 @@ On Ubtuntu
 Sudo apt-get install -y python3-setuptools
 ```
 
+All systems:
+
 For Python2
 ```
 Currently broken, if someone wants to support it, go for it.
