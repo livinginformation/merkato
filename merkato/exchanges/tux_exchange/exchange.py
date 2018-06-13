@@ -5,7 +5,7 @@ import math
 import requests
 import time
 import urllib.parse
-from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker, encrypt, decrypt
+from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 
