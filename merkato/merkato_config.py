@@ -79,8 +79,8 @@ def encrypt_keys(config):
     public_key_encrypted  = encrypt(password.encode(), public_key.encode())
     private_key_encrypted = encrypt(password.encode(), private_key.encode())
 
-    config["public_api_key"] = public_key_encrypted
-    config["private_api_key"] = private_key_encrypted
+    #config["public_api_key"] = public_key_encrypted
+    #config["private_api_key"] = private_key_encrypted
 
     return config
 
