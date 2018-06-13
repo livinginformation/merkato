@@ -119,7 +119,7 @@ def get_config():
         elif selection == '2':
             # Load existing config
             config = load_config()
-            decrypt_passwords(config)
+            # decrypt_passwords(config)
             return config
 
         elif selection == '3':
