@@ -14,7 +14,7 @@ from merkato.exchanges.test_exchange.constants import test_asks, test_bids
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 
 class TestExchange(ExchangeBase):
-    def __init__(self, config, coin, base, user_id=20, accounts=None, price = 1):
+    def __init__(self, config, coin, base, user_id=20, accounts=None, price = 1, password='password'):
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
