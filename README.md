@@ -9,6 +9,13 @@ See [requirements.txt](https://github.com/livinginformation/merkato/blob/master/
 ### Installing
 
 Install all dependencies.
+
+On Ubtuntu
+
+```
+Sudo apt-get install -y python3-setuptools
+```
+
 For Python2
 ```
 Currently broken, if someone wants to support it, go for it.
