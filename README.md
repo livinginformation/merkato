@@ -13,7 +13,7 @@ Install all dependencies.
 On Ubtuntu
 
 ```
-Sudo apt-get install -y python3-setuptools
+sudo apt-get install -y python3-setuptools
 ```
 
 All systems:
