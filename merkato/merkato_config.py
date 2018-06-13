@@ -66,10 +66,10 @@ def create_config():
 def encrypt_keys(config):
     ''' Encrypts the API keys before storing the config in the database
     '''
-    public_key = config["public_api_key"]
+    public_key  = config["public_api_key"]
     private_key = config["private_api_key"]
 
-    password = # Prompt user for password / get password from Nasa. This should be a popup?
+    ##password = # Prompt user for password / get password from Nasa. This should be a popup?
 
     # encrypt(password, data)
     # Inputs are of type:
@@ -79,8 +79,30 @@ def encrypt_keys(config):
     public_key_encrypted  = encrypt(password.encode(), public_key.encode())
     private_key_encrypted = encrypt(password.encode(), private_key.encode())
 
-    #config["public_api_key"] = public_key_encrypted
-    #config["private_api_key"] = private_key_encrypted
+    ##config["public_api_key"]  = public_key_encrypted
+    ##config["private_api_key"] = private_key_encrypted
+
+    return config
+
+
+def decrypt_keys(config):
+    ''' Decrypts the API keys before storing the config in the database
+    '''
+    public_key  = config["public_api_key"]
+    private_key = config["private_api_key"]
+
+    ##password = # Prompt user for password / get password from Nasa. This should be a popup?
+
+    # decrypt(password, data)
+    # Inputs are of type:
+    # - password: bytes
+    # - data:     bytes
+
+    public_key_decrypted  = decrypt(password.encode(), public_key.encode())
+    private_key_decrypted = decrypt(password.encode(), private_key.encode())
+
+    ##config["public_api_key"]  = public_key_decrypted
+    ##config["private_api_key"] = private_key_decrypted
 
     return config
 
@@ -97,6 +119,7 @@ def get_config():
         elif selection == '2':
             # Load existing config
             config = load_config()
+            decrypt_passwords(config)
             return config
 
         elif selection == '3':
