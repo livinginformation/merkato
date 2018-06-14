@@ -5,8 +5,10 @@ from pprint import pprint
 def create_merkatos_table():
     try:
         conn = sqlite3.connect('merkato.db')
+
     except Exception as e:
         print(str(e))
+        
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS merkatos
