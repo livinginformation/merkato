@@ -4,4 +4,3 @@ requests
 nose
 tornado
 matplotlib
-pycrypto
