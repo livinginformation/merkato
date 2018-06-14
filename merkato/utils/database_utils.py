@@ -15,6 +15,7 @@ def create_merkatos_table():
         conn.commit()
         conn.close()
 
+
 def no_merkatos_table_exists():
     try:
         conn = sqlite3.connect('merkato.db')
@@ -42,6 +43,7 @@ def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', 
         conn.commit()
         conn.close()
 
+
 def update_merkato(exchange_pair, key, value):
     try:
         conn = sqlite3.connect('merkato.db')
@@ -53,6 +55,7 @@ def update_merkato(exchange_pair, key, value):
         c.execute(query, (value, exchange_pair) )
         conn.commit()
         conn.close()
+
 
 def get_all_merkatos():
     try:
@@ -67,6 +70,7 @@ def get_all_merkatos():
         conn.close()
         return all_merkatos
 
+
 def create_exchanges_table():
     try:
         conn = sqlite3.connect('merkato.db')
@@ -79,6 +83,7 @@ def create_exchanges_table():
         c.execute('''CREATE UNIQUE INDEX id_exchange ON exchanges (exchange)''')
         conn.commit()
         conn.close()
+
 
 def insert_exchange(exchange, public_api_key='', private_api_key='', limit_only=True):
     try:
@@ -93,6 +98,7 @@ def insert_exchange(exchange, public_api_key='', private_api_key='', limit_only=
         conn.commit()
         conn.close()
 
+
 def update_exchange(exchange, key, value):
     try:
         conn = sqlite3.connect('merkato.db')
@@ -104,6 +110,7 @@ def update_exchange(exchange, key, value):
         c.execute(query, (value, exchange) )
         conn.commit()
         conn.close()
+
 
 def get_all_exchanges():
     try:
@@ -122,6 +129,7 @@ def get_all_exchanges():
         pprint(exchange_index)
         return exchange_menu, exchange_index
 
+
 def get_exchange(exchange):
     try:
         conn = sqlite3.connect('merkato.db')
@@ -135,6 +143,7 @@ def get_exchange(exchange):
         conn.commit()
         conn.close()
         return exchange
+
 
 def exchange_exists(exchange):
     try:
@@ -150,6 +159,7 @@ def exchange_exists(exchange):
         conn.close()
         return result > 0
 
+
 def merkato_exists(UUID):
     try:
         conn = sqlite3.connect('merkato.db')
@@ -162,6 +172,7 @@ def merkato_exists(UUID):
         conn.commit()
         conn.close()
         return result > 0
+
 
 def no_exchanges_table_exists():
     try:
@@ -176,6 +187,7 @@ def no_exchanges_table_exists():
         conn.close()
         return number_of_exchange_tables == 0
 
+
 def get_merkato(exchange_name_pair):
     try:
         conn = sqlite3.connect('merkato.db')
@@ -188,6 +200,7 @@ def get_merkato(exchange_name_pair):
         conn.commit()
         conn.close()
         return exchange
+
 
 def get_merkatos_by_exchange(exchange):
     try:
@@ -202,6 +215,7 @@ def get_merkatos_by_exchange(exchange):
         conn.commit()
         conn.close()
         return exchanges
+
 
 def dict_factory(cursor, row):
     d = {}
