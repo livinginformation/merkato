@@ -100,7 +100,7 @@ class Merkato(object):
             update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
             
             first_order = get_first_order(self.mutex_UUID)
-            no_first_order = len(first_order) == 0
+            no_first_order = first_order == ''
             if no_first_order:
                 update_merkato(self.mutex_UUID, FIRST_ORDER, tx['orderId'])
 

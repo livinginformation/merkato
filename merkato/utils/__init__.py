@@ -35,7 +35,7 @@ def decrypt(password, source):
     )
     key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
     cipher_suite = Fernet(key)
-    plain_text = cipher_suite.decrypt(source)
+    plain_text = cipher_suite.decrypt(source).decode()
     return plain_text
 
 

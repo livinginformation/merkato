@@ -17,6 +17,7 @@ class TuxExchange(ExchangeBase):
         self.privatekey = config['private_api_key']
         self.publickey  = config['public_api_key']
         self.limit_only = config['limit_only']
+        print('TuxExchange config', config)
         self.retries = 5
         self.coin = coin
         self.base = base
