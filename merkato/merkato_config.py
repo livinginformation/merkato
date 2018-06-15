@@ -14,27 +14,34 @@ def load_config():
     return get_exchange_from_db(exchange_name)
     # TODO: Error handling and config validation
 
+
 def insert_config_into_exchanges(config):
     limit_only = config["limit_only"]
     public_key = config["public_api_key"]
     private_key = config["private_api_key"]
     exchange = config["exchange"]
+
     if no_exchanges_table_exists():
         create_exchanges_table()
+
     insert_exchange(exchange, public_key, private_key, limit_only)
+
 
 def create_config():
     # Create new config
     config = { "limit_only": True }
     url = "https://tuxexchange.com/api"
+
     while True:
         exchange = get_exchange()
+        
         if exchange == 'tux':
             config[EXCHANGE] = 'tux'
 
             update_config_with_credentials(config)
             credentials_are_valid = validate_credentials(config, url)
             print('credentials_are_valid', credentials_are_valid)
+
             while not credentials_are_valid:
                 config = update_config_with_credentials(config)
                 credentials_are_valid = validate_credentials(config, url)
@@ -69,18 +76,18 @@ def encrypt_keys(config):
     public_key  = config["public_api_key"]
     private_key = config["private_api_key"]
 
-    ##password = # Prompt user for password / get password from Nasa. This should be a popup?
+    password = 'password' # Prompt user for password / get password from Nasa. This should be a popup?
 
     # encrypt(password, data)
     # Inputs are of type:
     # - password: bytes
     # - data:     bytes
 
-    public_key_encrypted  = encrypt(password.encode(), public_key.encode())
-    private_key_encrypted = encrypt(password.encode(), private_key.encode())
+    public_key_encrypted  = encrypt(password, public_key)
+    private_key_encrypted = encrypt(password, private_key)
 
-    ##config["public_api_key"]  = public_key_encrypted
-    ##config["private_api_key"] = private_key_encrypted
+    config["public_api_key"]  = public_key_encrypted
+    config["private_api_key"] = private_key_encrypted
 
     return config
 
@@ -91,18 +98,18 @@ def decrypt_keys(config):
     public_key  = config["public_api_key"]
     private_key = config["private_api_key"]
 
-    ##password = # Prompt user for password / get password from Nasa. This should be a popup?
+    password = 'password' # Prompt user for password / get password from Nasa. This should be a popup?
 
     # decrypt(password, data)
     # Inputs are of type:
     # - password: bytes
     # - data:     bytes
 
-    public_key_decrypted  = decrypt(password.encode(), public_key.encode())
-    private_key_decrypted = decrypt(password.encode(), private_key.encode())
+    public_key_decrypted  = decrypt(password, public_key)
+    private_key_decrypted = decrypt(password, private_key)
 
-    ##config["public_api_key"]  = public_key_decrypted
-    ##config["private_api_key"] = private_key_decrypted
+    config["public_api_key"]  = public_key_decrypted
+    config["private_api_key"] = private_key_decrypted
 
     return config
 

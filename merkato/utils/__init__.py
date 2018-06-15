@@ -4,14 +4,39 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import known_exchanges
 from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange, get_merkato
 import base64
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+salt = 'merkato'
+
+def encrypt(password, source):
+    kdf = PBKDF2HMAC(
+      algorithm=hashes.SHA256(),
+      length=32,
+      salt=salt.encode(),
+      iterations=10,
+      backend=default_backend()
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    cipher_suite = Fernet(key)
+    cipher_text = cipher_suite.encrypt(source.encode())
+    return cipher_text
 
 
-def encrypt(key, source, encode=True):
-    pass
-
-
-def decrypt(key, source, decode=True):
-    pass
+def decrypt(password, source):
+    kdf = PBKDF2HMAC(
+      algorithm=hashes.SHA256(),
+      length=32,
+      salt=salt.encode(),
+      iterations=10,
+      backend=default_backend()
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    cipher_suite = Fernet(key)
+    plain_text = cipher_suite.decrypt(source)
+    return plain_text
 
 
 def update_config_with_credentials(config):
@@ -42,6 +67,7 @@ def get_config_selection():
     print("3 -> Exit")
     return input("Selection: ")
 
+
 def create_price_data(orders, order):
     price_data             = {}
     price_data['total']    = float(orders[order]["total"])
@@ -49,6 +75,7 @@ def create_price_data(orders, order):
     price_data['id'] = orders[order]["id"]
     price_data['type']     = orders[order]["type"]
     return price_data
+
 
 def validate_merkato_initialization(configuration, coin, base, spread):
     if len(configuration) == 4:
