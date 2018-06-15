@@ -6,12 +6,15 @@ from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchan
 from merkato.exchanges.tux_exchange.utils import validate_credentials
 from merkato.constants import EXCHANGE
 from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection, encrypt, decrypt
+import getpass
 
 def load_config():
     # Loads an existing configuration file
     # Returns a dictionary
     exchange_name = input("what is the exchange name? ")
-    return get_exchange_from_db(exchange_name)
+    exchange = get_exchange_from_db(exchange_name)
+    decrypt_keys(exchange)
+    return exchange
     # TODO: Error handling and config validation
 
 
@@ -47,13 +50,14 @@ def create_config():
                 credentials_are_valid = validate_credentials(config, url)
 
             encrypt_keys(config)
-
             insert_config_into_exchanges(config)
+            decrypt_keys(config)
             return config
         
         elif exchange == 'test':
             config[EXCHANGE] = 'test'
             update_config_with_credentials(config)
+            encrypt_keys(config)
             insert_config_into_exchanges(config)
             return config
 
@@ -76,7 +80,7 @@ def encrypt_keys(config):
     public_key  = config["public_api_key"]
     private_key = config["private_api_key"]
 
-    password = 'password' # Prompt user for password / get password from Nasa. This should be a popup?
+    password = getpass.getpass() # Prompt user for password / get password from Nasa. This should be a popup?
 
     # encrypt(password, data)
     # Inputs are of type:
@@ -85,10 +89,8 @@ def encrypt_keys(config):
 
     public_key_encrypted  = encrypt(password, public_key)
     private_key_encrypted = encrypt(password, private_key)
-
     config["public_api_key"]  = public_key_encrypted
     config["private_api_key"] = private_key_encrypted
-
     return config
 
 
@@ -98,7 +100,7 @@ def decrypt_keys(config):
     public_key  = config["public_api_key"]
     private_key = config["private_api_key"]
 
-    password = 'password' # Prompt user for password / get password from Nasa. This should be a popup?
+    password = getpass.getpass() # Prompt user for password / get password from Nasa. This should be a popup?
 
     # decrypt(password, data)
     # Inputs are of type:
@@ -107,7 +109,6 @@ def decrypt_keys(config):
 
     public_key_decrypted  = decrypt(password, public_key)
     private_key_decrypted = decrypt(password, private_key)
-
     config["public_api_key"]  = public_key_decrypted
     config["private_api_key"] = private_key_decrypted
 
