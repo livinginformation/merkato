@@ -1,6 +1,7 @@
 import json
 from merkato.exchanges.test_exchange.exchange import TestExchange
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
+from merkato.exchanges.binance_exchange.exchange import BinanceExchange
 from merkato.constants import known_exchanges
 from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange, get_merkato
 import base64
@@ -53,6 +54,7 @@ def get_exchange():
     print("2. for Poloniex type 'polo'")
     print("3. for Bittrex type 'bit'")
     print("3. for TestExchange type 'test'")
+    print("4. for BinanceExchange type 'bina'")
     selection = input("Selection: ")
     if selection not in known_exchanges:
         print('selected exchange not supported, try again')
@@ -86,7 +88,8 @@ def validate_merkato_initialization(configuration, coin, base, spread):
 def get_relevant_exchange(exchange_name):
     exchange_classes = {
         'tux': TuxExchange,
-        'test': TestExchange
+        'test': TestExchange,
+        'bina': BinanceExchange
     }
     return exchange_classes[exchange_name]
 

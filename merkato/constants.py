@@ -10,7 +10,8 @@ known_exchanges = {
     'tux': 'tux',
     'polo': 'polo',
     'bit': 'bit',
-    'test': 'test'
+    'test': 'test',
+    'bina': 'bina'
 }
 implemented_exchanges = ["tux", "test"]
 LAST_ORDER = 'last_order'
