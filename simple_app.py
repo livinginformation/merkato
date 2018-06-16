@@ -181,6 +181,7 @@ if __name__ == "__main__":
         try:
             root.update_idletasks()
             root.update()
+            time.sleep(1)
         except UnicodeDecodeError:
             print("Caught Scroll Error")
 
