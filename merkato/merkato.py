@@ -5,7 +5,7 @@ from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI, FIRST_ORDER
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
-from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history, get_first_order
+from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history, get_first_order, get_time_of_last_order, get_market_results
 import math
 from math import floor
 import datetime
@@ -88,14 +88,24 @@ class Merkato(object):
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
                 self._debug(4, "found sell", tx,"corresponding buy", buy_price)
-                self.exchange.buy(amount, buy_price)
+                market = self.exchange.buy(amount, buy_price)
+                if market == True:
+                    self.exchange.market_buy(amount, buy_price)
+                    last_order_time = get_time_of_last_order(ordered_transactions)
+                    market_history = self.exchange.get_my_trade_history(last_order_time)
+                    market_data = get_market_results(market_history, amount)
 
             if tx['type'] == BUY:
                 amount = float(tx['amount'])*float((1-factor))
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
                 self._debug(4, "found buy",tx, "corresponding sell", sell_price)
-                self.exchange.sell(amount, sell_price)
+                market = self.exchange.sell(amount, sell_price)
+                if market == True:
+                    self.exchange.market_sell(amount, sell_price)
+                    last_order_time = get_time_of_last_order(ordered_transactions)
+                    market_history = self.exchange.get_my_trade_history(last_order_time)
+                    market_data = get_market_results(market_history, amount)
 
             update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
             
