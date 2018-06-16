@@ -14,6 +14,8 @@ from matplotlib.lines import Line2D
 
 import datetime
 import argparse
+import platform
+import getpass
 
 import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
@@ -55,18 +57,68 @@ expected bot data format from merkato
 }
 """
 
+
+def _scrollwheel(event):
+    ''' TODO Function Description
+    '''
+    print("caught scroll", event.widget)
+    return 'break'
+
+def t(dt):
+    # return matplotlib.dates.date2num(datetime.datetime.now() - datetime.timedelta(seconds=dt))
+    return datetime.datetime.now() - datetime.timedelta(seconds=dt)
+
+
+def fake_start():
+    ''' TODO Function Description
+    '''
+    return {"price_x": [t(i) for i in range(110, 0, -10)],
+            "price_y": [250, 250, 240, 240, 250, 255, 250, 240, 240, 250, 250],
+            "bought_x": [t(70), t(20)],
+            "bought_y": [244, 244],
+            "sold_x": [t(45), t(5)],
+            "sold_y": [253, 253],
+            "x_lowest_sell_order": [t(i) for i in range(100, 0, -10)],
+            "y_lowest_sell_order": [253, 253, 253, 253, 253, 253, 253, 253, 253, 253, ],
+            "x_highest_buy_order": [t(i) for i in range(100, 0, -10)],
+            "y_highest_buy_order": [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
+            }
+
+
+if platform.system().lower() == "darwin":
+    def mainloop():
+        while True:
+            try:
+                root.update_idletasks()
+                root.update()
+                time.sleep(1)
+            except UnicodeDecodeError:
+                print("Caught Scroll Error")
+
+else:
+    def mainloop():
+        while True:
+            try:
+                root.update_idletasks()
+                root.update()
+            except UnicodeDecodeError:
+                print("Caught Scroll Error")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--blockOnError', action='store_true', help="DEBUGGING ONLY: blocks all bots on error")
+    parser.add_argument('-p', '--password', default="", help="password for decrypting db")
+    parser.add_argument('-d', '--delay', type=int, default=10000, help="delay in milliseconds between bot updates. Default 10000.")
+
     args = parser.parse_args()
+    if not args.password:
+        password = getpass.getpass("\n\ndatabase password:")
+    else:
+        password = args.password
 
     root = tk.Tk()
 
-    def _scrollwheel(event):
-        ''' TODO Function Description
-        '''
-        print("caught scroll", event.widget)
-        return 'break'
+
 
     root.title("merkato (pre-release)")
     mystyle = ttk.Style()
@@ -113,23 +165,7 @@ if __name__ == "__main__":
     )
     root.option_add("*TCombobox*Listbox*selectBackground", "#D15101")
 
-    def t(dt):
-        #return matplotlib.dates.date2num(datetime.datetime.now() - datetime.timedelta(seconds=dt))
-        return datetime.datetime.now() - datetime.timedelta(seconds=dt)
-    def fake_start():
-        ''' TODO Function Description
-        '''
-        return {"price_x" : [t(i) for i in range(110,0,-10)],
-                "price_y" : [250, 250, 240, 240, 250, 255, 250, 240, 240, 250, 250],
-                "bought_x" : [t(70), t(20) ],
-                "bought_y" : [244, 244],
-                "sold_x" : [t(45), t(5)],
-                "sold_y" : [253, 253],
-                "x_lowest_sell_order" : [t(i) for i in range(100,0,-10)],
-                "y_lowest_sell_order" : [253, 253, 253, 253, 253, 253, 253, 253, 253, 253, ],
-                "x_highest_buy_order" : [t(i) for i in range(100,0,-10)],
-                "y_highest_buy_order" : [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
-                }
+
 
     # ------------------------------
     if db.no_merkatos_table_exists():
@@ -143,7 +179,7 @@ if __name__ == "__main__":
     complete_merkato_configs = generate_complete_merkato_configs(merkatos)
 
     # ------------------------------
-    app = App(master=root, block_on_error=args.blockOnError, side=tk.RIGHT)
+    app = App(master=root, block_on_error=args.blockOnError, password=password, delay = args.delay, side=tk.RIGHT)
 
     for persisted in complete_merkato_configs:
         pprint(persisted)
@@ -175,12 +211,7 @@ if __name__ == "__main__":
             selectcolor="lightblue"
         )
     root.after(1000, app.update_frames)
-    root.after(100,app.finish_new_button())
+    root.after(100, app.finish_new_button())
 
-    while True:
-        try:
-            root.update_idletasks()
-            root.update()
-        except UnicodeDecodeError:
-            print("Caught Scroll Error")
+    mainloop()
 
