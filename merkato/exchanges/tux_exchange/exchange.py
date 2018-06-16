@@ -76,6 +76,40 @@ class TuxExchange(ExchangeBase):
             except Exception as e:  # TODO - too broad exception handling
                 raise ValueError(e)
 
+    def market_buy(self, amount, bid):
+        attempt = 0
+        bid_amount = amount / bid
+        while attempt < self.retries:
+            try:
+                success = self._buy(bid_amount, bid)
+                if success:
+                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "tux"))
+                    return success
+
+                else:
+                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
+                    attempt += 1
+                    time.sleep(1)
+
+            except Exception as e:  # TODO - too broad exception handling
+                raise ValueError(e)
+
+    def market_sell(self, amount, ask):
+        attempt = 0
+        try:
+            success = self._sell(amount, ask)
+
+            if success:
+                self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
+                return success
+
+            else:
+                self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
+                attempt += 1
+                time.sleep(1)
+
+        except Exception as e:  # TODO - too broad exception handling
+            raise ValueError(e)
 
     def _buy(self, amount, bid):
         ''' Places a buy for a number of an asset at the indicated price (0.00000503 for example)

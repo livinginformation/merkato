@@ -48,7 +48,8 @@ class TestExchange(ExchangeBase):
             # If ask price is lower than the highest bid, return.
             if self.get_highest_bid() > ask:
                 self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, ask, "test"))
-                return False # Maybe needs failed or something
+                # get highest price
+                return True # Maybe needs failed or something
         try:
             return self._sell(amount, ask)
         except Exception as e:  # TODO - too broad exception handling
@@ -67,7 +68,7 @@ class TestExchange(ExchangeBase):
             if self.get_lowest_ask() < bid:
                 
                 self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "test"))
-                return False # Maybe needs failed or something
+                return True # Maybe needs failed or something
         try:
             return self._buy(amount, bid)
         except Exception as e:  # TODO - too broad exception handling
