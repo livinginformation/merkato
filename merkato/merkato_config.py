@@ -4,6 +4,7 @@ import json
 import os.path
 from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table, get_exchange as get_exchange_from_db
 from merkato.exchanges.tux_exchange.utils import validate_credentials
+from merkato.exchanges.binance_exchange.utils import validate_keys
 from merkato.constants import EXCHANGE
 from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection, encrypt, decrypt
 import getpass
@@ -37,16 +38,15 @@ def create_config():
 
     while True:
         exchange = get_exchange()
-        
-        if exchange == 'tux':
-            config[EXCHANGE] = 'tux'
+        config[EXCHANGE] = exchange
 
+        if exchange == 'tux':
             update_config_with_credentials(config)
             credentials_are_valid = validate_credentials(config, url)
             print('credentials_are_valid', credentials_are_valid)
 
             while not credentials_are_valid:
-                config = update_config_with_credentials(config)
+                update_config_with_credentials(config)
                 credentials_are_valid = validate_credentials(config, url)
 
             encrypt_keys(config)
@@ -68,6 +68,20 @@ def create_config():
         elif exchange == 'bit':
             print("Currently Unsupported")
             continue
+        
+        elif exchange == 'bina':
+            update_config_with_credentials(config)
+            credentials_are_valid = validate_keys(config, url)
+            print('credentials_are_valid', credentials_are_valid)
+
+            while not credentials_are_valid:
+                update_config_with_credentials(config)
+                credentials_are_valid = validate_keys(config, url)
+
+            encrypt_keys(config)
+            insert_config_into_exchanges(config)
+            decrypt_keys(config)
+            return config
 
         else:
             print("Unrecognized Selection")
