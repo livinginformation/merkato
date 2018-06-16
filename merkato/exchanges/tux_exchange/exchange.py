@@ -13,10 +13,11 @@ from merkato.constants import BUY, SELL
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
-    def __init__(self, config, coin, base):
+    def __init__(self, config, coin, base, password='password'):
         self.privatekey = config['private_api_key']
         self.publickey  = config['public_api_key']
         self.limit_only = config['limit_only']
+        print('TuxExchange config', config)
         self.retries = 5
         self.coin = coin
         self.base = base

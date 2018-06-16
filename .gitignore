@@ -4,3 +4,5 @@ __pycache__
 *.pyc
 **/*.pyc
 my_tax_audit_logs.txt
+my_merkato_tax_audit_logs.csv
+.DS_Store

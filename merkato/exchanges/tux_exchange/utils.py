@@ -4,6 +4,7 @@ import requests
 import time
 import hashlib
 
+
 def getQueryParameters(type, ticker, amount, price):
     formatted_amount = "{:.8f}".format(float(amount))
     formatted_price = "{:.8f}".format(float(price))

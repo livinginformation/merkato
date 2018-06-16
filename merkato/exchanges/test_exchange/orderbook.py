@@ -16,6 +16,7 @@ class Orderbook:
         order = self.create_order(userID, amount, price, BUY)
         self.bids.append(order)
         self.bids = sorted(self.bids, key=lambda bid: bid["price"], reverse=True)
+        return order['orderid']
         #if is_market_order:
         #    return self.resolve_market_order()
     
@@ -26,6 +27,7 @@ class Orderbook:
         self.asks.append(order)
         # sort asks
         self.asks = sorted(self.asks, key=lambda ask: ask["price"])
+        return order['orderid']
 
         
     def resolve_market_order(self, type, price):

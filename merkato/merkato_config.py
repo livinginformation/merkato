@@ -5,46 +5,59 @@ import os.path
 from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table, get_exchange as get_exchange_from_db
 from merkato.exchanges.tux_exchange.utils import validate_credentials
 from merkato.constants import EXCHANGE
-from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection
+from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection, encrypt, decrypt
+import getpass
 
 def load_config():
     # Loads an existing configuration file
     # Returns a dictionary
     exchange_name = input("what is the exchange name? ")
-    return get_exchange_from_db(exchange_name)
+    exchange = get_exchange_from_db(exchange_name)
+    decrypt_keys(exchange)
+    return exchange
     # TODO: Error handling and config validation
+
 
 def insert_config_into_exchanges(config):
     limit_only = config["limit_only"]
     public_key = config["public_api_key"]
     private_key = config["private_api_key"]
     exchange = config["exchange"]
+
     if no_exchanges_table_exists():
         create_exchanges_table()
+
     insert_exchange(exchange, public_key, private_key, limit_only)
+
 
 def create_config():
     # Create new config
     config = { "limit_only": True }
     url = "https://tuxexchange.com/api"
+
     while True:
         exchange = get_exchange()
-
+        
         if exchange == 'tux':
             config[EXCHANGE] = 'tux'
 
             update_config_with_credentials(config)
             credentials_are_valid = validate_credentials(config, url)
             print('credentials_are_valid', credentials_are_valid)
+
             while not credentials_are_valid:
                 config = update_config_with_credentials(config)
                 credentials_are_valid = validate_credentials(config, url)
+
+            encrypt_keys(config)
             insert_config_into_exchanges(config)
+            decrypt_keys(config)
             return config
         
         elif exchange == 'test':
             config[EXCHANGE] = 'test'
             update_config_with_credentials(config)
+            encrypt_keys(config)
             insert_config_into_exchanges(config)
             return config
 
@@ -61,6 +74,47 @@ def create_config():
             continue
 
 
+def encrypt_keys(config):
+    ''' Encrypts the API keys before storing the config in the database
+    '''
+    public_key  = config["public_api_key"]
+    private_key = config["private_api_key"]
+
+    password = getpass.getpass() # Prompt user for password / get password from Nasa. This should be a popup?
+
+    # encrypt(password, data)
+    # Inputs are of type:
+    # - password: bytes
+    # - data:     bytes
+
+    public_key_encrypted  = encrypt(password, public_key)
+    private_key_encrypted = encrypt(password, private_key)
+    config["public_api_key"]  = public_key_encrypted
+    config["private_api_key"] = private_key_encrypted
+    return config
+
+
+def decrypt_keys(config):
+    ''' Decrypts the API keys before storing the config in the database
+    '''
+    public_key  = config["public_api_key"]
+    private_key = config["private_api_key"]
+
+    password = getpass.getpass() # Prompt user for password / get password from Nasa. This should be a popup?
+
+    # decrypt(password, data)
+    # Inputs are of type:
+    # - password: bytes
+    # - data:     bytes
+
+    public_key_decrypted  = decrypt(password, public_key)
+    private_key_decrypted = decrypt(password, private_key)
+    config["public_api_key"]  = public_key_decrypted
+    config["private_api_key"] = private_key_decrypted
+
+    return config
+
+
 def get_config():
     while True:
 
@@ -73,6 +127,7 @@ def get_config():
         elif selection == '2':
             # Load existing config
             config = load_config()
+            # decrypt_passwords(config)
             return config
 
         elif selection == '3':

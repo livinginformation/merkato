@@ -14,12 +14,13 @@ from merkato.exchanges.test_exchange.constants import test_asks, test_bids
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 
 class TestExchange(ExchangeBase):
-    def __init__(self, config, coin, base, user_id=20, accounts=None, price = 1):
+    def __init__(self, config, coin, base, user_id=20, accounts=None, price = 1, password='password'):
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
         self.orderbook = Orderbook(test_bids, test_asks)
         self.user_id = user_id
+        self.USER_ID = user_id
         self.user_accounts = accounts if accounts else {}
         self.order_history = []
         self.price = price
@@ -37,7 +38,7 @@ class TestExchange(ExchangeBase):
 
 
     def _sell(self, amount, ask,):
-        self.orderbook.addAsk(self.user_id, amount, ask)
+        return self.orderbook.addAsk(self.user_id, amount, ask)
 
 
 
@@ -46,17 +47,17 @@ class TestExchange(ExchangeBase):
             # Get current highest bid on the orderbook
             # If ask price is lower than the highest bid, return.
             if self.get_highest_bid() > ask:
-                self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, ask, "tux"))
+                self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, ask, "test"))
                 return False # Maybe needs failed or something
         try:
-            self._sell(amount, ask)
+            return self._sell(amount, ask)
         except Exception as e:  # TODO - too broad exception handling
             self.debug(0, "sell", "ERROR", e)
             raise Exception(e)
 
                 
     def _buy(self, amount, bid):
-        self.orderbook.addBid(self.user_id, amount, bid)
+        return self.orderbook.addBid(self.user_id, amount, bid)
 
 
     def buy(self, amount, bid):
@@ -65,10 +66,10 @@ class TestExchange(ExchangeBase):
             # If bid price is higher than the lowest ask, return.
             if self.get_lowest_ask() < bid:
                 
-                self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
+                self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "test"))
                 return False # Maybe needs failed or something
         try:
-            self._buy(amount, bid)
+            return self._buy(amount, bid)
         except Exception as e:  # TODO - too broad exception handling
             self.debug(0, "buy", "ERROR", e)
             raise Exception(e)
@@ -125,11 +126,11 @@ class TestExchange(ExchangeBase):
             my_open_orders[order_id] = order
         return my_open_orders
 
-    def get_my_trade_history(self):
+    def get_my_trade_history(self, orderid=0):
         try:
             if not self.order_history:
                 return []
-            filtered_history = list(filter(lambda order: order[USER_ID] == self.user_id, self.order_history))
+            filtered_history = list(filter(lambda order: order[USER_ID] == self.USER_ID and int(order['orderid']) >= int(orderid), self.order_history))
         except:
             self.debug(3, "get_my_trade_history", self.order_history, self.user_id)
             raise

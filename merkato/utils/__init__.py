@@ -3,6 +3,41 @@ from merkato.exchanges.test_exchange.exchange import TestExchange
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.constants import known_exchanges
 from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange, get_merkato
+import base64
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+salt = 'merkato'
+
+def encrypt(password, source):
+    kdf = PBKDF2HMAC(
+      algorithm=hashes.SHA256(),
+      length=32,
+      salt=salt.encode(),
+      iterations=10,
+      backend=default_backend()
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    cipher_suite = Fernet(key)
+    cipher_text = cipher_suite.encrypt(source.encode())
+    return cipher_text
+
+
+def decrypt(password, source):
+    kdf = PBKDF2HMAC(
+      algorithm=hashes.SHA256(),
+      length=32,
+      salt=salt.encode(),
+      iterations=10,
+      backend=default_backend()
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    cipher_suite = Fernet(key)
+    plain_text = cipher_suite.decrypt(source).decode()
+    return plain_text
+
 
 def update_config_with_credentials(config):
     print("API Credentials needed")
@@ -32,6 +67,7 @@ def get_config_selection():
     print("3 -> Exit")
     return input("Selection: ")
 
+
 def create_price_data(orders, order):
     price_data             = {}
     price_data['total']    = float(orders[order]["total"])
@@ -39,6 +75,7 @@ def create_price_data(orders, order):
     price_data['id'] = orders[order]["id"]
     price_data['type']     = orders[order]["type"]
     return price_data
+
 
 def validate_merkato_initialization(configuration, coin, base, spread):
     if len(configuration) == 4:
@@ -52,6 +89,7 @@ def get_relevant_exchange(exchange_name):
         'test': TestExchange
     }
     return exchange_classes[exchange_name]
+
 
 def generate_complete_merkato_configs(merkato_tuples):
     merkato_complete_configs = []
@@ -74,6 +112,7 @@ def generate_complete_merkato_configs(merkato_tuples):
 
     return merkato_complete_configs
 
+
 def get_allocated_pair_balances(exchange, base, coin):
     allocated_pair_balances = {
         'base': 0,
@@ -89,6 +128,7 @@ def get_allocated_pair_balances(exchange, base, coin):
             allocated_pair_balances['coin'] += merkato['ask_reserved_balance']
     return allocated_pair_balances
 
+
 def check_reserve_balances(total_balances, allocated_balances, coin_reserve, base_reserve):
     remaining_balances = {
         'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'],
@@ -100,12 +140,20 @@ def check_reserve_balances(total_balances, allocated_balances, coin_reserve, bas
     if remaining_balances['coin'] < coin_reserve:
         raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
 
+
 def get_last_order( UUID):
     merkato = get_merkato(UUID)
-    print('merkato', merkato)
     last_order = merkato[6]
     print('last order', last_order)
     return last_order
+
+
+def get_first_order( UUID):
+    merkato = get_merkato(UUID)
+    first_order = merkato[7]
+    print('first order', first_order)
+    return first_order
+
 
 def get_new_history(current_history, last_order):
     for index, order in enumerate(current_history):
