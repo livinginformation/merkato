@@ -175,7 +175,8 @@ if __name__ == "__main__":
     if db.no_exchanges_table_exists():
         db.create_exchanges_table()
 
-    db.insert_exchange("test", public_api_key='abc', private_api_key='123', limit_only=True)
+    test = konfig.encrypt_keys(dict(exchange="test", public_api_key='abc', private_api_key='123', limit_only=True), password)
+    db.insert_exchange(**test)
     merkatos = db.get_all_merkatos()
     complete_merkato_configs = generate_complete_merkato_configs(merkatos)
 
@@ -184,7 +185,7 @@ if __name__ == "__main__":
 
     for persisted in complete_merkato_configs:
         pprint(persisted)
-        bot = Bot(root, app(), app, persist=konfig.decrypt_keys(config=persisted, password=password))
+        bot = Bot(root, app(), app, persist=konfig.decrypt_merkato(config=persisted, password=password))
         app.add_screen(bot,
                        "null",
                        textvariable=bot.title_var,

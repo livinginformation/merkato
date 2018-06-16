@@ -20,9 +20,9 @@ def encrypt(password, source):
       iterations=10,
       backend=default_backend()
     )
-    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    key = base64.urlsafe_b64encode(kdf.derive(password))
     cipher_suite = Fernet(key)
-    cipher_text = cipher_suite.encrypt(source.encode())
+    cipher_text = cipher_suite.encrypt(source)
     return cipher_text
 
 
@@ -34,9 +34,9 @@ def decrypt(password, source):
       iterations=10,
       backend=default_backend()
     )
-    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    key = base64.urlsafe_b64encode(kdf.derive(password))
     cipher_suite = Fernet(key)
-    plain_text = cipher_suite.decrypt(source).decode()
+    plain_text = cipher_suite.decrypt(source)
     return plain_text
 
 
