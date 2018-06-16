@@ -74,13 +74,14 @@ def create_config():
             continue
 
 
-def encrypt_keys(config):
+def encrypt_keys(config, password):
     ''' Encrypts the API keys before storing the config in the database
     '''
     public_key  = config["public_api_key"]
     private_key = config["private_api_key"]
 
-    password = getpass.getpass() # Prompt user for password / get password from Nasa. This should be a popup?
+    if password is None:
+        password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
 
     # encrypt(password, data)
     # Inputs are of type:
@@ -94,13 +95,14 @@ def encrypt_keys(config):
     return config
 
 
-def decrypt_keys(config):
+def decrypt_keys(config, password=None):
     ''' Decrypts the API keys before storing the config in the database
     '''
     public_key  = config["public_api_key"]
     private_key = config["private_api_key"]
 
-    password = getpass.getpass() # Prompt user for password / get password from Nasa. This should be a popup?
+    if password is None:
+        password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
 
     # decrypt(password, data)
     # Inputs are of type:

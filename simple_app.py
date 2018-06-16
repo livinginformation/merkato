@@ -2,6 +2,7 @@ import merkato.utils.database_utils as db
 from merkato.utils import generate_complete_merkato_configs
 #from exchange import Exchange
 from merkato.merkato import Merkato
+import merkato.merkato_config as konfig
 from pprint import pprint
 import matplotlib
 matplotlib.use("TkAgg")
@@ -183,7 +184,7 @@ if __name__ == "__main__":
 
     for persisted in complete_merkato_configs:
         pprint(persisted)
-        bot = Bot(root, app(), app, persist=persisted)
+        bot = Bot(root, app(), app, persist=konfig.decrypt_keys(config=persisted, password=password))
         app.add_screen(bot,
                        "null",
                        textvariable=bot.title_var,
