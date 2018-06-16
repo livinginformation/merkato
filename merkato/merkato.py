@@ -89,9 +89,10 @@ class Merkato(object):
                 buy_price = float(price) * ( 1  - self.spread)
                 self._debug(4, "found sell", tx,"corresponding buy", buy_price)
                 market = self.exchange.buy(amount, buy_price)
+                
                 if market == True:
-                    self.exchange.market_buy(amount, buy_price)
                     last_order_time = get_time_of_last_order(ordered_transactions)
+                    self.exchange.market_buy(amount, buy_price)
                     market_history = self.exchange.get_my_trade_history(last_order_time)
                     market_data = get_market_results(market_history, amount)
 
@@ -101,9 +102,10 @@ class Merkato(object):
                 sell_price = float(price) * ( 1  + self.spread)
                 self._debug(4, "found buy",tx, "corresponding sell", sell_price)
                 market = self.exchange.sell(amount, sell_price)
+                
                 if market == True:
-                    self.exchange.market_sell(amount, sell_price)
                     last_order_time = get_time_of_last_order(ordered_transactions)
+                    self.exchange.market_sell(amount, sell_price)
                     market_history = self.exchange.get_my_trade_history(last_order_time)
                     market_data = get_market_results(market_history, amount)
 
