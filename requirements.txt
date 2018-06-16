@@ -5,3 +5,4 @@ nose
 tornado
 matplotlib
 cryptography
+python-binance
