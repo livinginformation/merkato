@@ -1,5 +1,6 @@
 from merkato.merkato import Merkato
 from merkato.utils import database_utils
+import merkato.merkato_config as konfig
 from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table
 from merkato.utils import generate_complete_merkato_configs
 
@@ -140,18 +141,12 @@ class Bot(ttk.Frame):
                 self.title_var.set(str(self.name) + "   err")
 
     def start(self):
-        for widget in [self.exchange_name,self.coin, self.base, self.ask_budget, self.bid_budget]:
-            print("{}:\t\t{}".format(widget.handle,widget.get()[0]))
+        for widget in [self.exchange_name, self.coin, self.base, self.ask_budget, self.bid_budget]:
+            print("{}:\t\t{}".format(widget.handle, widget.get()[0]))
 
-        #config = {}
         self.merk_args = {}
 
-        #config['privatekey'] = self.private_key.get()[0]
-        #config['publickey']  = self.public_key.get()[0]
-        #config['limit_only'] = True
-
-        self.merk_args["configuration"] = self.exchange_index[ self.exchange_name.get()[0]]
-        #self.merk_args["exchange"] = self.exchange_name.get()[0]
+        self.merk_args["configuration"] = konfig.decrypt_keys(self.exchange_index[self.exchange_name.get()[0]],self.owner.password)
         self.merk_args["coin"] = self.coin.get()[0]
         self.merk_args["base"] = self.base.get()[0]
         self.merk_args["ask_reserved_balance"] = float(self.ask_budget.get()[0])

@@ -253,8 +253,8 @@ class Graph(tk.Frame):
             mean_price = "N/A"
             
         except Exception as e:
-            MessageBox.showerror("calc_stats error", str(e))
-            return
+            #MessageBox.showerror("calc_stats error", str(e))
+            raise
         
         else:
             price_actual = float(self.y_price[-1])
@@ -374,7 +374,7 @@ class Graph(tk.Frame):
         '''
         # TODO: do something with date
         if isinstance(date,datetime.date):
-            print("already a datetime object")
+            #print("already a datetime object")
             return date
         date_object = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
         return date_object

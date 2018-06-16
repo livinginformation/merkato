@@ -12,13 +12,15 @@ class App:
     # adapted from notebook.py Copyright 2003, Iuri Wickert (iwickert yahoo.com)
     # initialization. receives the master widget
     # reference and the notebook orientation
-    def __init__(self, master, block_on_error=False, side=tk.LEFT):
+    def __init__(self, master, block_on_error=False, password="", delay=10000, side=tk.LEFT):
 
         self.active_fr = None
         self.count = 0
         self.choice = tk.IntVar(0)
         self.master = master  # Bot
         self.block_on_error = block_on_error
+        self.password = password
+        self.delay = delay
 
         # allows the TOP and BOTTOM
         # radiobuttons' positioning.
@@ -146,5 +148,4 @@ class App:
                 if self.block_on_error:
                     MessageBox.showerror("Bot Error!", str(e2) + "\n" + repr(safe_show))
 
-
-        self.master.after(10000, self.update_frames)
+        self.master.after(self.delay, self.update_frames)
