@@ -88,7 +88,7 @@ def create_config():
             continue
 
 
-def encrypt_keys(config, password):
+def encrypt_keys(config, password=None):
     ''' Encrypts the API keys before storing the config in the database
     '''
     public_key  = config["public_api_key"]
