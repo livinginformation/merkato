@@ -20,6 +20,7 @@ class TestExchange(ExchangeBase):
         self.ticker = translate_ticker(coin=coin, base=base)
         self.orderbook = Orderbook(test_bids, test_asks)
         self.user_id = user_id
+        self.USER_ID = user_id
         self.user_accounts = accounts if accounts else {}
         self.order_history = []
         self.price = price
@@ -129,7 +130,7 @@ class TestExchange(ExchangeBase):
         try:
             if not self.order_history:
                 return []
-            filtered_history = list(filter(lambda order: order[USER_ID] == self.USER_ID and order['orderid'] >= orderid, self.order_history))
+            filtered_history = list(filter(lambda order: order[USER_ID] == self.USER_ID and int(order['orderid']) >= int(orderid), self.order_history))
         except:
             self.debug(3, "get_my_trade_history", self.order_history, self.user_id)
             raise
