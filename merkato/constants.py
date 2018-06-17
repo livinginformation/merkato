@@ -21,5 +21,5 @@ ASK_RESERVE = 'ask_reserved_balance'
 BID_RESERVE = 'bid_reserved_balance'
 
 EXCHANGE = 'exchange'
-ONE_SATOSHI = 0.00000000001
+ONE_SATOSHI = 0.00000001
 ONE_BITCOIN = 1
