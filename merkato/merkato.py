@@ -137,7 +137,7 @@ class Merkato(object):
                     # The buy gave us some alt. The sell is executed with that alt.
                     # The market sell will get us X btc in return. All of that btc
                     # should be placed at the original order's matching price.
-                    amount_executed = market_data['amount_executed']
+                    amount_executed = market_data['total_gotten']
                     last_orderid    = market_data['last_orderid']
 
                     self.exchange.buy(total_gotten, price) # Should never market order
