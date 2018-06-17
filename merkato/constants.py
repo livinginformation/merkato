@@ -15,7 +15,7 @@ known_exchanges = {
 }
 implemented_exchanges = ["tux", "test"]
 LAST_ORDER = 'last_order'
-FIRST_ORDER = 'fist_order'
+FIRST_ORDER = 'first_order'
 
 ASK_RESERVE = 'ask_reserved_balance'
 BID_RESERVE = 'bid_reserved_balance'
