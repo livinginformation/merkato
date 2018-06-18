@@ -140,7 +140,7 @@ class Merkato(object):
                     amount_executed = market_data['total_gotten']
                     last_orderid    = market_data['last_orderid']
 
-                    self.exchange.buy(total_gotten, price) # Should never market order
+                    self.exchange.buy(amount_executed, price) # Should never market order
 
                     # A market buy occurred, so we need to update the db with the latest tx
                     update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
