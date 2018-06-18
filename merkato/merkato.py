@@ -93,8 +93,26 @@ class Merkato(object):
                 if market == True:
                     last_order_time = get_time_of_last_order(ordered_transactions)
                     self.exchange.market_buy(amount, buy_price)
-                    market_history = self.exchange.get_my_trade_history(last_order_time)
-                    market_data = get_market_results(market_history, amount)
+                    market_history = self.exchange.get_my_trade_history(start=last_order_time)
+                    market_data = get_market_results(market_history)
+
+                    # We have a sell executed. We want to place a matching buy order.
+                    # If the whole order is executed, no edge case.
+                    # If the order has a remainder, the remainder will be on the books at
+                    # the appropriate price. So no problem. 
+                    # If the remainder is too small to have a matching order, it could 
+                    # disappear, but this is such a minor edge case we can ignore it.
+                    # 
+                    # The sell gave us some BTC. The buy is executed with that BTC.
+                    # The market buy will get us X xmr in return. All of that xmr
+                    # should be placed at the original order's matching price.
+                    amount_executed = market_data['amount_executed']
+                    last_orderid    = market_data['last_orderid']
+
+                    self.exchange.sell(amount_executed, price) # Should never market order
+
+                    # A market buy occurred, so we need to update the db with the latest tx
+                    update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
             if tx['type'] == BUY:
                 amount = float(tx['amount'])*float((1-factor))
@@ -107,9 +125,28 @@ class Merkato(object):
                     last_order_time = get_time_of_last_order(ordered_transactions)
                     self.exchange.market_sell(amount, sell_price)
                     market_history = self.exchange.get_my_trade_history(last_order_time)
-                    market_data = get_market_results(market_history, amount)
+                    market_data = get_market_results(market_history)
 
-            update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+                    # We have a buy executed. We want to place a matching sell order.
+                    # If the whole order is executed, no edge case.
+                    # If the order has a remainder, the remainder will be on the books at
+                    # the appropriate price. So no problem. 
+                    # If the remainder is too small to have a matching order, it could 
+                    # disappear, but this is such a minor edge case we can ignore it.
+                    # 
+                    # The buy gave us some alt. The sell is executed with that alt.
+                    # The market sell will get us X btc in return. All of that btc
+                    # should be placed at the original order's matching price.
+                    amount_executed = market_data['total_gotten']
+                    last_orderid    = market_data['last_orderid']
+
+                    self.exchange.buy(total_gotten, price) # Should never market order
+
+                    # A market buy occurred, so we need to update the db with the latest tx
+                    update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
+
+            if not market: 
+                update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
             
             first_order = get_first_order(self.mutex_UUID)
             no_first_order = first_order == ''

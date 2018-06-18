@@ -174,13 +174,15 @@ def get_time_of_last_order(ordered_transactions):
     epoch = int(time.mktime(time.strptime(date_time, pattern)))
     return epoch
 
-def get_market_results(history, amount):
+def get_market_results(history): 
     results = {
-        'amount_executed': 0,
-        'placed': amount,
-        'total_gotten': 0
+        'amount_executed': 0, # This is in the quote asset
+        'total_gotten': 0 # This is in the base asset
+
     }
     for order in history:
         results['amount_executed'] += float(order['amount'])
         results['total_gotten'] += float(order['total'])
+
+    results['last_orderid'] = history[-1]['orderId']
     return results
