@@ -160,18 +160,22 @@ def get_first_order( UUID):
 
 
 def get_new_history(current_history, last_order):
+    print('last order last order', last_order)
+    print('current history cur', current_history)
     for index, order in enumerate(current_history):
         print('orderId', order['orderId'], 'last_order', last_order)
         is_last_order = order['orderId'] == last_order
         if is_last_order:
-            return current_history[:index]
+            new_history = current_history[:index]
+            new_history.reverse() # need to reverse due to the newest order at start of the list, we want oldest
+            return new_history
     return []
 
 def get_time_of_last_order(ordered_transactions):
     index_of_last_tx = len(ordered_transactions) -1
     last_tx_data = ordered_transactions[index_of_last_tx]['date']
-    pattern = '%d-%m-%Y %H:%M:%S'
-    epoch = int(time.mktime(time.strptime(date_time, pattern)))
+    pattern = '%Y-%m-%d %H:%M:%S'
+    epoch = int(time.mktime(time.strptime(last_tx_data, pattern)))
     return epoch
 
 def get_market_results(history): 
