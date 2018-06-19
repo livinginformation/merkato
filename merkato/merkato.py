@@ -56,6 +56,17 @@ class Merkato(object):
             self.rebalance_orders(new_history)
         self.initialized = True  # to avoid being updated before orders placed
 
+
+    def kill():
+        ''' TODO: Function comment
+        '''
+        # Cancel all orders
+        self.cancelrange(ONE_SATOSHI, ONE_BITCOIN) # Technically not all, but should be good enough
+
+        # Remove reserve references in DB
+        pass
+
+
     def _debug(self, level, header, *args):
         if level <= self.DEBUG:
             print("-" * 10)
@@ -63,6 +74,7 @@ class Merkato(object):
             for arg in args:
                 print("\t\t" + repr(arg))
             print("-" * 10)
+
 
     def rebalance_orders(self, new_txes):
         # This function places a matching order for every new transaction since last run
@@ -157,6 +169,7 @@ class Merkato(object):
         
         return ordered_transactions
 
+
     def decaying_bid_ladder(self, total_amount, step, start_price):
         # Places an bid ladder from the start_price to 1/2 the start_price.
         # The first order in the ladder is half the amount (in the base currency) of the last
@@ -211,6 +224,7 @@ class Merkato(object):
 
         # 4. Store the remainder of total_to_distribute, as well as the final
         #    order placed in decaying_bid_ladder
+        # TODO
         pass
 
 
@@ -268,12 +282,13 @@ class Merkato(object):
 
         # 4. Store the remainder of total_to_distribute, as well as the final
         #    order placed in decaying_ask_ladder
+        # TODO
         pass
 
 
     def distribute_initial_orders(self, total_base, total_alt):
-        # waiting on vizualization for bids before running it as is
-        
+        ''' TODO: Function comment
+        '''
         current_price = (float(self.exchange.get_highest_bid()) + float(self.exchange.get_lowest_ask()))/2
         if self.user_interface:
             current_price = self.user_interface.confirm_price(current_price)
@@ -361,8 +376,10 @@ class Merkato(object):
         return 0
 
 
-
     def update(self):
+        ''' TODO: Function comment
+        '''
+
         # Get current state of trade history before placing orders
         print("Update entered")
         
@@ -397,25 +414,37 @@ class Merkato(object):
         # replace old settings with new settings
         pass
 
+
     def add_reserve(self):
+        ''' TODO: Function comment
+        '''
         pass
-    
+
+
     def remove_reserve(self, amount, type_of_reserve):
+        ''' TODO: Function comment
+        '''
         current_reserve_amount = self.ask_reserved_balance if type_of_reserve == ASK_RESERVE else self.bid_reserved_balance
         invalid_reserve_reduction = amount > current_reserve_amount
+        
         if invalid_reserve_reduction:
             return False
         
         if type_of_reserve == ASK_RESERVE:
             new_amount = self.ask_reserved_balance - amount
-            self.ask_reserved_balance = new_amount            
+            self.ask_reserved_balance = new_amount           
+
         else:
             new_amount = self.bid_reserved_balance - amount
             self.bid_reserved_balance = new_amount
+
         update_merkato(self.mutex_UUID, type_of_reserve, new_amount)
         return True
-        
+
+
     def cancelrange(self, start, end):
+        ''' TODO: Function comment
+        '''
         open_orders = self.exchange.get_my_open_orders()
         for order in open_orders:
             price = open_orders[order][PRICE]
@@ -425,15 +454,22 @@ class Merkato(object):
                 if DEBUG: print("price: " + str(price))
                 time.sleep(.3)
 
+
     def avoid_blocking(self):
+        ''' TODO: Function comment
+        '''
         if self.user_interface:
+
             try:
                 self.user_interface.app.update_idletasks()
                 self.user_interface.app.update()
+
             except UnicodeDecodeError:
                 print("Caught Scroll Error")
+
             except:
                 pass
+
 
     def log_new_transactions(self, newTransactionHistory, path="my_merkato_tax_audit_logs.csv"):
         """
