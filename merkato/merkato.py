@@ -119,9 +119,12 @@ class Merkato(object):
         quote_filled_sum = 0
 
         for tx in ordered_transactions:
+            tx_id = tx['orderId'] # executed transaction
+            filled_amount = tx['amount']
+            orderid = tx['id'] # The id of the limit order on the books
 
             # Do a check for whether this particular tx refers to a filled order
-            partial_fill = is_partial_fill(tx['id']) # todo unimplemented
+            partial_fill = is_partial_fill(orderid) # todo unimplemented
 
             if tx['type'] == SELL:
                 # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
@@ -132,40 +135,40 @@ class Merkato(object):
                     # However, that amount is 'reserved' (will be placed on the books once the 
                     # rest of the order is filled), and therefore is unavailable when creating new
                     # Merkatos. Add this amount to a field 'base_partials_balance'.
-                    self.base_partials_balance += tx['amount']
+                    self.base_partials_balance += filled_amount
                     # todo: modify partials balance in db as well
 
                     # Update the last orderId (actually the id of the transaction)
-                    update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
 
                     # 3. Skip everything else
                     continue
 
-                if tx['id'] in filled_orders:
+                if orderid in filled_orders:
                     # Matching order has already been placed
 
-                    self.base_partials_balance += tx['amount']
+                    self.base_partials_balance += filled_amount
                     # todo: modify partials balance in db as well
 
                     # Update the last orderId (actually the id of the transaction)
-                    update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
 
                     continue
 
                 # We need to place a matching order
                 # We want to get the total amount of that order
 
-                total_amount = get_total_amount(tx['id']) # todo unimplemented
+                total_amount = get_total_amount(orderid) # todo unimplemented
 
                 # This next part cancels out if the entire order is filled at once.
                 # If the order is a partial fill (and the rest of the fill happens
                 # within the for loop), it will sum up to zero when adding the other
                 # executed orders (and considering the secondary reserves)
-                self.base_partials_balance += tx['amount']
+                self.base_partials_balance += filled_amount
                 self.base_partials_balance -= total_amount
                 # todo: modify partials balance in db as well
 
-                amount = float(tx['amount']) * float(tx[PRICE])*(1-factor)
+                amount = float(filled_amount) * float(tx[PRICE])*(1-factor)
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
                 self._debug(4, "found sell", tx,"corresponding buy", buy_price)
@@ -203,31 +206,31 @@ class Merkato(object):
                     pass
 
                     # 2. update the last order
-                    update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
 
                     # 3. Skip everything else
                     continue
 
-                if tx['id'] in filled_orders:
+                if orderid in filled_orders:
                     # Matching order has already been placed
-                    base_filled_sum += tx['amount']
+                    base_filled_sum += filled_amount
                     continue
 
-                filled_orders.append(tx['id'])
+                filled_orders.append(orderid)
                 # We need to place a matching order
                 # We want to get the total amount of that order
 
-                total_amount = get_total_amount(tx['id']) # todo unimplemented
+                total_amount = get_total_amount(orderid) # todo unimplemented
 
                 # This next part cancels out if the entire order is filled at once.
                 # If the order is a partial fill (and the rest of the fill happens
                 # within the for loop), it will sum up to zero when adding the other
                 # executed orders (and considering the secondary reserves)
-                self.quote_partials_balance += tx['amount']
+                self.quote_partials_balance += filled_amount
                 self.quote_partials_balance -= total_amount
                 # todo: modify partials balance in db as well
 
-                amount = float(tx['amount'])*float((1-factor))
+                amount = float(filled_amount)*float((1-factor))
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
                 self._debug(4, "found buy", tx, "corresponding sell", sell_price)
@@ -259,15 +262,15 @@ class Merkato(object):
                     update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
             if not market: 
-                update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+                update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
 
             # A buy or a sell have executed with this id. Don't re-execute more.
-            filled_orders.append(tx['id'])
+            filled_orders.append(orderid)
             
             first_order = get_first_order(self.mutex_UUID)
             no_first_order = first_order == ''
             if no_first_order:
-                update_merkato(self.mutex_UUID, FIRST_ORDER, tx['orderId'])
+                update_merkato(self.mutex_UUID, FIRST_ORDER, tx_id)
 
         # todo: Subtract base_filled_sum and quote_filled_sum from their respective secondary reserves
 
