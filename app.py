@@ -53,13 +53,15 @@ class App:
 
     def make_new(self):
         new_bot = Bot(self.master, self.screen_fr, self)
-        self.add_screen(new_bot,
+        b =self.add_screen(new_bot,
                    "null",
                    textvariable=new_bot.title_var,
                    bg="gray75",
                    fg="black",
                    selectcolor="lightblue"
                    )
+        b.invoke()
+
     # add a new frame (screen) to the (bottom/left of the) notebook
     def add_screen(self, fr, title, **kwargs):
 

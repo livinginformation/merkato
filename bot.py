@@ -91,6 +91,7 @@ class Bot(ttk.Frame):
         self.ask_budget = MyWidget(self.app, self.exchange_frame, handle="coin reserve", startVal=0.0, choices="entry")
         self.bid_budget = MyWidget(self.app, self.exchange_frame, handle="base reserve", startVal=0.0, choices="entry")
         self.spread = MyWidget(self.app, self.exchange_frame, handle="spread [%]", startVal=5.0, choices="entry")
+        self.margin = MyWidget(self.app, self.exchange_frame, handle="profit margin [%]",startVal="0", choices=[str(i) for i in range(101)])
         self.execute = ttk.Button(self.exchange_frame, text = "Launch", cursor = "shuttle", command= self.start)
 
         self.exchange_name.grid(row=0, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
@@ -101,7 +102,8 @@ class Bot(ttk.Frame):
         self.ask_budget.grid(row=5, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.bid_budget.grid(row=6, column=0,sticky=tk.NE, padx=(10,5), pady=(5,5))
         self.spread.grid(row=7, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
-        self.execute.grid(row=8, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
+        self.margin.grid(row=8, column=0, sticky=tk.NE, padx=(10, 5), pady=(5, 5))
+        self.execute.grid(row=9, column=0, sticky=tk.NE, padx=(10,5), pady=(15,5))
         # --------------------
         self.util_frame = ttk.Frame(self, style="app.TFrame")
         self.kill_button = ttk.Button(self.util_frame, text="Kill", cursor="shuttle", command=self.kill)
@@ -146,12 +148,13 @@ class Bot(ttk.Frame):
 
         self.merk_args = {}
 
-        self.merk_args["configuration"] = konfig.decrypt_keys(self.exchange_index[self.exchange_name.get()[0]],self.owner.password)
+        self.merk_args["configuration"] = konfig.decrypt_keys(self.exchange_index[self.exchange_name.get()[0]], self.owner.password)
         self.merk_args["coin"] = self.coin.get()[0]
         self.merk_args["base"] = self.base.get()[0]
         self.merk_args["ask_reserved_balance"] = float(self.ask_budget.get()[0])
         self.merk_args["bid_reserved_balance"] = float(self.bid_budget.get()[0])
         self.merk_args["spread"] = float(self.spread.get()[0]) / 100.0
+        self.merk_args["profit_margin"] = float(self.margin.get()[0]) / 100.0
         self.merk_args["user_interface"] = self
 
         self.coin_title = self.merk_args["coin"]
@@ -176,7 +179,10 @@ class Bot(ttk.Frame):
 
     def kill(self):
         # TODO: tell self.bot to cancel all orders and delete merkato from DB
-        self._root().after(10, self.owner.kill_screen, self)
+        if self.bot:
+            self.bot.kill()    #  merkato.kill()
+            self.bot = None # garbage collect mMerkato object, basically
+        self._root().after(10, self.owner.kill_screen, self)  # remove from gui
 
     def confirm_price(self, price):
         self.confirmation = popupWindow(self.app, "Confirm starting price: %s" % price, price)

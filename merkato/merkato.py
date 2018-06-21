@@ -427,6 +427,14 @@ class Merkato(object):
                 if DEBUG: print("price: " + str(price))
                 time.sleep(.3)
 
+    def kill(self):
+        """
+        simple_app will run this if user hits "kill" button
+        put whatever you want in here.
+        :return:
+        """
+        pass
+
     def avoid_blocking(self):
         if self.user_interface:
             try:
