@@ -135,7 +135,7 @@ class Merkato(object):
                     # rest of the order is filled), and therefore is unavailable when creating new
                     # Merkatos. Add this amount to a field 'base_partials_balance'.
                     self.base_partials_balance += filled_amount
-                    # todo: modify partials balance in db as well
+                    update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
                     # Update the last orderId (actually the id of the transaction)
                     update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
@@ -147,7 +147,7 @@ class Merkato(object):
                     # Matching order has already been placed
 
                     self.base_partials_balance += filled_amount
-                    # todo: modify partials balance in db as well
+                    update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
                     # Update the last orderId (actually the id of the transaction)
                     update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
@@ -165,7 +165,7 @@ class Merkato(object):
                 # executed orders (and considering the secondary reserves)
                 self.base_partials_balance += filled_amount
                 self.base_partials_balance -= total_amount
-                # todo: modify partials balance in db as well
+                update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
                 amount = float(filled_amount) * float(tx[PRICE])*(1-factor)
                 price = tx[PRICE]
@@ -203,8 +203,13 @@ class Merkato(object):
             if tx['type'] == BUY:
 
                 if partial_fill:
-                    # 1. todo: increase the secondary reserve by the amount gained from the order
-                    pass
+                    # This was a buy, so we gained more of the quote asset. 
+                    # This was a partial fill, so the user's balance is increased by that amount. 
+                    # However, that amount is 'reserved' (will be placed on the books once the 
+                    # rest of the order is filled), and therefore is unavailable when creating new
+                    # Merkatos. Add this amount to a field 'quote_partials_balance'.
+                    self.quote_partials_balance += filled_amount # may need a multiply by price
+                    update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
 
                     # 2. update the last order
                     update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
@@ -214,10 +219,15 @@ class Merkato(object):
 
                 if orderid in filled_orders:
                     # Matching order has already been placed
-                    base_filled_sum += filled_amount
+                    self.quote_partials_balance += filled_amount
+                    update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
+
+                    # Update the last orderId (actually the id of the transaction)
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+
                     continue
 
-                filled_orders.append(orderid)
+
                 # We need to place a matching order
                 # We want to get the total amount of that order
 
@@ -229,7 +239,7 @@ class Merkato(object):
                 # executed orders (and considering the secondary reserves)
                 self.quote_partials_balance += filled_amount
                 self.quote_partials_balance -= total_amount
-                # todo: modify partials balance in db as well
+                update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
 
                 amount = float(filled_amount)*float((1-factor))
                 price = tx[PRICE]
@@ -259,6 +269,7 @@ class Merkato(object):
                     amount_executed = float(market_data['total_gotten'])
                     last_orderid    = market_data['last_orderid']
                     print('market data', market_data)
+
                     self.exchange.buy(amount_executed, float(price)) # Should never market order
 
                     # A market buy occurred, so we need to update the db with the latest tx
