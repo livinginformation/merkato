@@ -1,0 +1,3 @@
+- Two newlines between function definitions
+- One newline between logical code blocks
+- Bid (or base) comes before ask (or quote/coin) in function parameters

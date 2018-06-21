@@ -136,16 +136,19 @@ def get_allocated_pair_balances(exchange, base, coin):
     return allocated_pair_balances
 
 
-def check_reserve_balances(total_balances, allocated_balances, coin_reserve, base_reserve, base_partials_balance=0, coin_partials_balance=0):
+def check_reserve_balances(total_balances, allocated_balances, coin_reserve, base_reserve):
     remaining_balances = {
-        'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'] - base_partials_balance,
-        'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin'] - coin_partials_balance
+        'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'],
+        'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin']
     }
-    print('remaning', remaining_balances, 'base_reserve', base_reserve)
+    # print('remaning', remaining_balances, 'base_reserve', base_reserve)
     if remaining_balances['base'] < base_reserve:
-        raise ValueError('Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
+        return False
+        # raise ValueError('Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
     if remaining_balances['coin'] < coin_reserve:
-        raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
+        return False
+        #raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
+    return True
 
 
 def get_last_order( UUID):
