@@ -27,7 +27,7 @@ class Merkato(object):
         self.profit_margin = profit_margin
 
         # Exchanges have a maximum number of orders every user can place. Due
-        # to this, every Merkato has a balance of coins that are not currently
+        # to this, every Merkato has a reserve of coins that are not currently
         # allocated. As the price approaches unallocated regions, the reserves
         # are deployed.
         self.bid_reserved_balance = bid_reserved_balance
@@ -56,10 +56,6 @@ class Merkato(object):
 
             allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
             funds_available = check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
-
-            if not funds_available:
-                # Don't create the Merkato. Maybe should raise?
-                return
 
             insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance, first_order)
             history = self.exchange.get_my_trade_history()

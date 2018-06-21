@@ -74,11 +74,20 @@ def update_merkato(exchange_pair, key, value):
         conn.close()
 
 
-def kill_merkato(exchange_pair):
-    ''' Remove all references to the merkato in the database.
+def kill_merkato(UUID):
+    ''' TODO: Function Comment
     '''
-    # TODO
-    pass
+    try:
+        conn = sqlite3.connect('merkato.db')
+
+    except Exception as e:
+        print(str(e))
+
+    finally:
+        c = conn.cursor()
+        c.execute('''DELETE FROM merkatos WHERE exchange_pair = ?''', (UUID,))
+        conn.commit()
+        conn.close()
 
 
 def get_all_merkatos():
