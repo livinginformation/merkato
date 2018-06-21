@@ -6,7 +6,7 @@ from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchan
 from merkato.exchanges.tux_exchange.utils import validate_credentials
 from merkato.exchanges.binance_exchange.utils import validate_keys
 from merkato.constants import EXCHANGE
-from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection, encrypt, decrypt
+from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection, encrypt, decrypt, ensure_bytes
 import getpass
 
 def load_config():
@@ -96,12 +96,8 @@ def encrypt_keys(config, password=None):
 
     if password is None:
         password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
-    if isinstance(password, str):
-        password = password.encode('utf-8')
-    if isinstance(public_key, str):
-        public_key = public_key.encode('utf-8')
-    if isinstance(private_key, str):
-        private_key = private_key.encode('utf-8')
+
+    password, public_key, private_key = ensure_bytes(password, public_key, private_key)
 
     # encrypt(password, data)
     # Inputs are of type:
@@ -123,12 +119,8 @@ def decrypt_keys(config, password=None):
 
     if password is None:
         password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
-    if isinstance(password, str):
-        password = password.encode('utf-8')
-    if isinstance(public_key, str):
-        public_key = public_key.encode('utf-8')
-    if isinstance(private_key, str):
-        private_key = private_key.encode('utf-8')
+
+    password, public_key, private_key = ensure_bytes(password, public_key, private_key)
 
     # decrypt(password, data)
     # Inputs are of type:
@@ -142,33 +134,11 @@ def decrypt_keys(config, password=None):
 
     return config
 
-def decrypt_merkato(config, password=None):
+def decrypt_merkato(merkato, password=None):
     ''' Decrypts the API keys inside a merkato dict before storing the config in the database
     '''
-    public_key  = config["configuration"]["public_api_key"]
-    private_key = config["configuration"]["private_api_key"]
-
-    if password is None:
-        password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
-
-    if isinstance(password, str):
-        password = password.encode('utf-8')
-    if isinstance(public_key, str):
-        public_key = public_key.encode('utf-8')
-    if isinstance(private_key, str):
-        private_key = private_key.encode('utf-8')
-
-    # decrypt(password, data)
-    # Inputs are of type:
-    # - password: bytes
-    # - data:     bytes
-
-    public_key_decrypted  = decrypt(password, public_key)
-    private_key_decrypted = decrypt(password, private_key)
-    config["configuration"]["public_api_key"]  = public_key_decrypted.decode('utf-8')
-    config["configuration"]["private_api_key"] = private_key_decrypted.decode('utf-8')
-
-    return config
+    decrypt_keys(merkato["configuration"], password)
+    return merkato
 
 
 def get_config():
