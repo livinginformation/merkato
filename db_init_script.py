@@ -27,7 +27,7 @@ def main():
 
     base = "BTC"
     coin = "XMR"
-    spread = .02
+    spread = .1
     coin_reserve = 17
     base_reserve = .4
 

@@ -6,6 +6,7 @@ import requests
 import time
 import urllib.parse
 from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
+from merkato.constants import MARKET
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 
@@ -59,7 +60,7 @@ class TuxExchange(ExchangeBase):
 
                 if float(self.get_highest_bid()) > ask:
                     self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "tux"))
-                    return False # Maybe needs failed or something
+                    return MARKET # Maybe needs failed or something
 
             try:
                 success = self._sell(amount, ask)
@@ -76,6 +77,40 @@ class TuxExchange(ExchangeBase):
             except Exception as e:  # TODO - too broad exception handling
                 raise ValueError(e)
 
+    def market_buy(self, amount, bid):
+        attempt = 0
+        bid_amount = amount / bid
+        while attempt < self.retries:
+            try:
+                success = self._buy(bid_amount, bid)
+                if success:
+                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "tux"))
+                    return success
+
+                else:
+                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
+                    attempt += 1
+                    time.sleep(1)
+
+            except Exception as e:  # TODO - too broad exception handling
+                raise ValueError(e)
+
+    def market_sell(self, amount, ask):
+        attempt = 0
+        try:
+            success = self._sell(amount, ask)
+
+            if success:
+                self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
+                return success
+
+            else:
+                self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
+                attempt += 1
+                time.sleep(1)
+
+        except Exception as e:  # TODO - too broad exception handling
+            raise ValueError(e)
 
     def _buy(self, amount, bid):
         ''' Places a buy for a number of an asset at the indicated price (0.00000503 for example)
@@ -101,7 +136,7 @@ class TuxExchange(ExchangeBase):
                 if float(self.get_lowest_ask()) < bid:
 
                     self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
-                    return False # Maybe needs failed or something
+                    return MARKET # Maybe needs failed or something
 
             try:
                 success = self._buy(bid_amount, bid)
@@ -231,14 +266,16 @@ class TuxExchange(ExchangeBase):
         query_parameters = { "method": "getmytradehistory" }
 
         if start != 0:
-            query_parameters["start"] = start
+            query_parameters["start"] = str(start)
             
         if start !=0 and end != 0:
-            query_parameters["end"] = end
+            query_parameters["end"] = str(end)
 
+        print('query_parameters', query_parameters)
         response = self._create_signed_request(query_parameters)
 
         filtered_history =  [trade for trade in response if self.ticker in trade["market_pair"]]
+        print('filtered history', filtered_history)
         return filtered_history
 
 

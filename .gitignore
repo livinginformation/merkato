@@ -6,3 +6,4 @@ __pycache__
 my_tax_audit_logs.txt
 my_merkato_tax_audit_logs.csv
 .DS_Store
+trade_history_script.py

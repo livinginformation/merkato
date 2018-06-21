@@ -5,6 +5,7 @@ from merkato.exchanges.binance_exchange.exchange import BinanceExchange
 from merkato.constants import known_exchanges
 from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange, get_merkato
 import base64
+import time
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -159,9 +160,33 @@ def get_first_order( UUID):
 
 
 def get_new_history(current_history, last_order):
+    print('last order last order', last_order)
+    print('current history cur', current_history)
     for index, order in enumerate(current_history):
         print('orderId', order['orderId'], 'last_order', last_order)
         is_last_order = order['orderId'] == last_order
         if is_last_order:
-            return current_history[:index]
+            new_history = current_history[:index]
+            new_history.reverse() # need to reverse due to the newest order at start of the list, we want oldest
+            return new_history
     return []
+
+def get_time_of_last_order(ordered_transactions):
+    index_of_last_tx = len(ordered_transactions) -1
+    last_tx_data = ordered_transactions[index_of_last_tx]['date']
+    pattern = '%Y-%m-%d %H:%M:%S'
+    epoch = int(time.mktime(time.strptime(last_tx_data, pattern)))
+    return epoch
+
+def get_market_results(history): 
+    results = {
+        'amount_executed': 0, # This is in the quote asset
+        'total_gotten': 0 # This is in the base asset
+
+    }
+    for order in history:
+        results['amount_executed'] += float(order['amount'])
+        results['total_gotten'] += float(order['total'])
+
+    results['last_orderid'] = history[-1]['orderId']
+    return results
