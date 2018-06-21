@@ -35,13 +35,16 @@ class Merkato(object):
 
         if not merkato_does_exist:
             print('new merkato')
-            self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
+
             total_pair_balances = self.exchange.get_balances()
             print('total_pair_balances', total_pair_balances)
+
             allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
             check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
+            self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
             insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance, first_order)
             history = self.exchange.get_my_trade_history()
+
             if len(history) > 0:
                 new_last_order = history[0]['orderId']
                 update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
@@ -87,15 +90,53 @@ class Merkato(object):
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
+
         factor = self.spread*self.profit_margin/2
         self._debug(2, "merkato.rebalance_orders")
         ordered_transactions = new_txes
         print('ordered transactions rebalanced', ordered_transactions)
+
+        filled_orders = []
+        base_filled_sum = 0
+        quote_filled_sum = 0
+
         for tx in ordered_transactions:
+
+
+            # Do a check for whether this particular tx refers to a filled order
+            total_fill = False
 
             if tx['type'] == SELL:
                 # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
-                
+
+                if not total_fill:
+                    # 1. todo: increase the secondary reserve by the amount gained from the order
+                    pass
+
+                    # 2. update the last order
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+
+                    # 3. Skip everything else
+                    continue
+
+                if tx['id'] in filled_orders:
+                    # Matching order has already been placed
+                    base_filled_sum += tx['amount']
+                    continue
+
+
+                # We need to place a matching order
+                # We want to get the total amount of that order
+
+                total_amount = get_total_amount(tx['id']) # todo unimplemented
+
+                # This next part cancels out if the entire order is filled at once.
+                # If the order is a partial fill (and the rest of the fill happens
+                # within the for loop), it will sum up to zero when adding the other
+                # executed orders (and considering the secondary reserves)
+                base_filled_sum += tx['amount']
+                base_filled_sum -= total_amount
+
                 amount = float(tx['amount']) * float(tx[PRICE])*(1-factor)
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
@@ -127,10 +168,39 @@ class Merkato(object):
                     update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
             if tx['type'] == BUY:
+
+                if not total_fill:
+                    # 1. todo: increase the secondary reserve by the amount gained from the order
+                    pass
+
+                    # 2. update the last order
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+
+                    # 3. Skip everything else
+                    continue
+
+                if tx['id'] in filled_orders:
+                    # Matching order has already been placed
+                    base_filled_sum += tx['amount']
+                    continue
+
+                filled_orders.append(tx['id'])
+                # We need to place a matching order
+                # We want to get the total amount of that order
+
+                total_amount = get_total_amount(tx['id']) # todo unimplemented
+
+                # This next part cancels out if the entire order is filled at once.
+                # If the order is a partial fill (and the rest of the fill happens
+                # within the for loop), it will sum up to zero when adding the other
+                # executed orders (and considering the secondary reserves)
+                quote_filled_sum += tx['amount']
+                quote_filled_sum -= total_amount
+
                 amount = float(tx['amount'])*float((1-factor))
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
-                self._debug(4, "found buy",tx, "corresponding sell", sell_price)
+                self._debug(4, "found buy", tx, "corresponding sell", sell_price)
                 market = self.exchange.sell(amount, sell_price)
                 
                 if market == True:
@@ -159,12 +229,17 @@ class Merkato(object):
 
             if not market: 
                 update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+
+            # A buy or a sell have executed with this id. Don't re-execute more.
+            filled_orders.append(tx['id'])
             
             first_order = get_first_order(self.mutex_UUID)
             no_first_order = first_order == ''
             if no_first_order:
                 update_merkato(self.mutex_UUID, FIRST_ORDER, tx['orderId'])
 
+        # todo: Subtract base_filled_sum and quote_filled_sum from their respective secondary reserves
+         
         self.log_new_transactions(ordered_transactions)
         
         return ordered_transactions

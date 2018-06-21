@@ -14,7 +14,7 @@ def create_merkatos_table():
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS merkatos
-                    (exchange text, exchange_pair text, base text, alt text, spread float, profit_limit integer, last_order text, first_order text, ask_reserved_balance float, bid_reserved_balance float, profit_margin integer)''')
+                    (exchange text, exchange_pair text, base text, alt text, spread float, profit_limit integer, last_order text, first_order text, ask_reserved_balance float, bid_reserved_balance float, profit_margin integer, base_partials_balance integer, quote_partials_balance integer)''')
         c.execute('''CREATE UNIQUE INDEX id_exchange_pair ON merkatos (exchange_pair)''')
         conn.commit()
         conn.close()
@@ -291,6 +291,14 @@ def get_merkatos_by_exchange(exchange):
         conn.close()
 
         return exchanges
+
+
+def remove_base_partial(UUID, todo)
+pass
+
+
+def remove_quote_partial(UUID, todo)
+pass
 
 
 def dict_factory(cursor, row):

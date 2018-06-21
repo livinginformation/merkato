@@ -127,16 +127,19 @@ def get_allocated_pair_balances(exchange, base, coin):
     for merkato in merkatos:
         if merkato['base'] == base:
             allocated_pair_balances['base'] += merkato['bid_reserved_balance']
+            allocated_pair_balances['base'] += merkato['base_partials_balance']
 
         if merkato['alt'] == coin:
             allocated_pair_balances['coin'] += merkato['ask_reserved_balance']
+            allocated_pair_balances['coin'] += merkato['quote_partials_balance']
+
     return allocated_pair_balances
 
 
-def check_reserve_balances(total_balances, allocated_balances, coin_reserve, base_reserve):
+def check_reserve_balances(total_balances, allocated_balances, coin_reserve, base_reserve, base_partials_balance=0, coin_partials_balance=0):
     remaining_balances = {
-        'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'],
-        'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin']
+        'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'] - base_partials_balance,
+        'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin'] - coin_partials_balance
     }
     print('remaning', remaining_balances, 'base_reserve', base_reserve)
     if remaining_balances['base'] < base_reserve:
