@@ -121,7 +121,7 @@ def create_exchanges_table():
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS exchanges
-                    (exchange text, public_api_key text, private_api_key text, limit_only text	)''')
+                    (exchange text, public_api_key text, private_api_key text, limit_only text  )''')
         c.execute('''CREATE UNIQUE INDEX id_exchange ON exchanges (exchange)''')
         conn.commit()
         conn.close()

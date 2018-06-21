@@ -184,7 +184,8 @@ if __name__ == "__main__":
 
     for persisted in complete_merkato_configs:
         pprint(persisted)
-        bot = Bot(root, app(), app, persist=konfig.decrypt_keys(config=persisted, password=password))
+        konfig.decrypt_keys(config=persisted['configuration'], password=password)
+        bot = Bot(root, app(), app, persist=persisted)
         app.add_screen(bot,
                        "null",
                        textvariable=bot.title_var,

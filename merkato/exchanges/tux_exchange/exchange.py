@@ -6,6 +6,7 @@ import requests
 import time
 import urllib.parse
 from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
+from merkato.constants import MARKET
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 
@@ -59,7 +60,7 @@ class TuxExchange(ExchangeBase):
 
                 if float(self.get_highest_bid()) > ask:
                     self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "tux"))
-                    return False # Maybe needs failed or something
+                    return MARKET # Maybe needs failed or something
 
             try:
                 success = self._sell(amount, ask)
@@ -135,7 +136,7 @@ class TuxExchange(ExchangeBase):
                 if float(self.get_lowest_ask()) < bid:
 
                     self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
-                    return False # Maybe needs failed or something
+                    return MARKET # Maybe needs failed or something
 
             try:
                 success = self._buy(bid_amount, bid)
@@ -265,14 +266,16 @@ class TuxExchange(ExchangeBase):
         query_parameters = { "method": "getmytradehistory" }
 
         if start != 0:
-            query_parameters["start"] = start
+            query_parameters["start"] = str(start)
             
         if start !=0 and end != 0:
-            query_parameters["end"] = end
+            query_parameters["end"] = str(end)
 
+        print('query_parameters', query_parameters)
         response = self._create_signed_request(query_parameters)
 
         filtered_history =  [trade for trade in response if self.ticker in trade["market_pair"]]
+        print('filtered history', filtered_history)
         return filtered_history
 
 

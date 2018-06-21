@@ -2,7 +2,7 @@ import time
 import json
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
-from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI, FIRST_ORDER
+from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, ONE_SATOSHI, FIRST_ORDER, MARKET
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history, get_first_order, get_time_of_last_order, get_market_results
@@ -174,8 +174,9 @@ class Merkato(object):
                 market = self.exchange.buy(amount, buy_price)
                 # A lock is probably needed somewhere near here in case of unexpected shutdowns
                 
-                if market == True:
+                if market == MARKET:
                     last_order_time = get_time_of_last_order(ordered_transactions)
+
                     self.exchange.market_buy(amount, buy_price)
                     market_history = self.exchange.get_my_trade_history(start=last_order_time)
                     market_data = get_market_results(market_history)
@@ -190,8 +191,9 @@ class Merkato(object):
                     # The sell gave us some BTC. The buy is executed with that BTC.
                     # The market buy will get us X xmr in return. All of that xmr
                     # should be placed at the original order's matching price.
-                    amount_executed = market_data['amount_executed']
+                    amount_executed = float(market_data['amount_executed'])
                     last_orderid    = market_data['last_orderid']
+                    print('market data', market_data)
 
                     self.exchange.sell(amount_executed, price) # Should never market order
 
@@ -234,12 +236,14 @@ class Merkato(object):
                 sell_price = float(price) * ( 1  + self.spread)
                 self._debug(4, "found buy", tx, "corresponding sell", sell_price)
                 market = self.exchange.sell(amount, sell_price)
+
                 # A lock is probably needed somewhere near here in case of unexpected shutdowns
                 
-                if market == True:
+                if market == MARKET:
                     last_order_time = get_time_of_last_order(ordered_transactions)
+
                     self.exchange.market_sell(amount, sell_price)
-                    market_history = self.exchange.get_my_trade_history(last_order_time)
+                    market_history = self.exchange.get_my_trade_history(start=last_order_time)
                     market_data = get_market_results(market_history)
 
                     # We have a buy executed. We want to place a matching sell order.
@@ -252,15 +256,15 @@ class Merkato(object):
                     # The buy gave us some alt. The sell is executed with that alt.
                     # The market sell will get us X btc in return. All of that btc
                     # should be placed at the original order's matching price.
-                    amount_executed = market_data['total_gotten']
+                    amount_executed = float(market_data['total_gotten'])
                     last_orderid    = market_data['last_orderid']
-
-                    self.exchange.buy(total_gotten, price) # Should never market order
+                    print('market data', market_data)
+                    self.exchange.buy(amount_executed, float(price)) # Should never market order
 
                     # A market buy occurred, so we need to update the db with the latest tx
                     update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
-            if not market: 
+            if market != MARKET: 
                 update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
 
             # A buy or a sell have executed with this id. Don't re-execute more.
