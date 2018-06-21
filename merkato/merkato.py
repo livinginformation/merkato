@@ -127,7 +127,6 @@ class Merkato(object):
             partial_fill = is_partial_fill(orderid) # todo unimplemented
 
             if tx['type'] == SELL:
-                # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
 
                 if partial_fill:
                     # This was a sell, so we gained more of the base asset. 
@@ -331,11 +330,6 @@ class Merkato(object):
         self.decaying_bid_ladder(total_to_distribute/4, step, price/2)
         self.decaying_bid_ladder(total_to_distribute/8, step, price/4)
 
-        # 4. Store the remainder of total_to_distribute, as well as the final
-        #    order placed in decaying_bid_ladder
-        # TODO
-        pass
-
 
     def decaying_ask_ladder(self, total_amount, step, start_price):
         # Places an ask ladder from the start_price to 2x the start_price.
@@ -372,7 +366,6 @@ class Merkato(object):
             current_order += 1
             self.avoid_blocking()
 
-        #print(amount)
         self._debug(100, 'allocated amount', prior_reserve - self.ask_reserved_balance)
 
 
@@ -388,11 +381,6 @@ class Merkato(object):
         #    start_price, and halving the total_amount
         self.decaying_ask_ladder(total_to_distribute/4, step, price * 2)
         self.decaying_ask_ladder(total_to_distribute/8, step, price * 4)
-
-        # 4. Store the remainder of total_to_distribute, as well as the final
-        #    order placed in decaying_ask_ladder
-        # TODO
-        pass
 
 
     def distribute_initial_orders(self, total_base, total_alt):
@@ -418,7 +406,6 @@ class Merkato(object):
         # TODO: Make orders/orderbook variables less semantically similar
 
         orders = self.exchange.get_my_open_orders()
-        #print(orders)
 
         # Create a dictionary to store our desired orderbook
         orderbook = dict()
