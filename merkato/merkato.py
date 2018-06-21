@@ -325,10 +325,9 @@ class Merkato(object):
         #    and half the total_to_distribute
         self.decaying_bid_ladder(total_to_distribute/2, step, price)
 
-        # 3. Call decaying_bid_ladder twice more, each time halving the
+        # 3. Call decaying_bid_ladder again halving the
         #    start_price, and halving the total_amount
         self.decaying_bid_ladder(total_to_distribute/4, step, price/2)
-        self.decaying_bid_ladder(total_to_distribute/8, step, price/4)
 
 
     def decaying_ask_ladder(self, total_amount, step, start_price):
@@ -377,10 +376,9 @@ class Merkato(object):
         #    and half the total_to_distribute
         self.decaying_ask_ladder(total_to_distribute/2, step, price)
 
-        # 3. Call decaying_ask_ladder twice more, each time doubling the
+        # 3. Call decaying_ask_ladder once more, doubling the
         #    start_price, and halving the total_amount
         self.decaying_ask_ladder(total_to_distribute/4, step, price * 2)
-        self.decaying_ask_ladder(total_to_distribute/8, step, price * 4)
 
 
     def distribute_initial_orders(self, total_base, total_alt):
