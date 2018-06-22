@@ -168,7 +168,7 @@ class TuxExchange(ExchangeBase):
         return response_json
 
 
-    def get_my_open_orders(self):
+    def get_my_open_orders(self, context_formatted):
         ''' Returns all open orders for the authenticated user '''
 
         query_parameters = { "method": "getmyopenorders" }

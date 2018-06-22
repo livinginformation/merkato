@@ -178,8 +178,8 @@ class Graph(tk.Frame):
     def draw_depth(self, bps=.35):
         if self.orderbook:
             bidasks = self.orderbook.copy()
-            best_bid = max([float(price) for price, amount in bidasks["bids"]])
-            best_ask = min([float(price) for price, amount in bidasks["asks"]])
+            best_bid = max([float(price) for price, amount, *rest in bidasks["bids"]])
+            best_ask = min([float(price) for price, amount, *rest in bidasks["asks"]])
             worst_bid = best_bid * (1 - bps)
             worst_ask = best_ask * (1 + bps)
             filtered_bids = sorted(
@@ -188,7 +188,6 @@ class Graph(tk.Frame):
             filtered_asks = sorted(
                 [(float(ask[0]), float(ask[1])) for ask in bidasks["asks"] if float(ask[0]) <= worst_ask],
                 key=lambda x: +x[0])
-
             bsizeacc = 0
             bhys = []  # bid - horizontal - ys
             bhxmins = []  # bid - horizontal - xmins
@@ -446,9 +445,9 @@ class Graph(tk.Frame):
                                                                                          'initamount': '70484.58149780',
                                                                                          'market_pair': 'BTC_PEPECASH'}
                                                                                          '''
+
             sell_amounts = [float(order["price"]) for order in data["open_orders"] if order["type"] == "sell"]
             buy_amounts = [float(order["price"]) for order in data["open_orders"] if order["type"] == "buy"]
-
 
             if sell_amounts:
                 lowest_sell = min(sell_amounts)
