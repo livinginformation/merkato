@@ -124,7 +124,7 @@ class Merkato(object):
             orderid = tx['id'] # The id of the limit order on the books
 
             # Do a check for whether this particular tx refers to a filled order
-            partial_fill = is_partial_fill(orderid) # todo unimplemented
+            partial_fill = self.exchange.is_partial_fill(orderid) # todo unimplemented
 
             if tx['type'] == SELL:
 
