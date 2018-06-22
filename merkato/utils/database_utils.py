@@ -316,24 +316,6 @@ def get_merkatos_by_exchange(exchange):
         return exchanges
 
 
-def remove_base_partial(UUID, amount)
-pass
-
-
-def remove_quote_partial(UUID, amount)
-pass
-
-
-# I realize this could be done with negative values. For readability's sake,
-# i'm implementing it so you never need to pass in a negative number.
-def add_base_partial(UUID, amount)
-pass
-
-
-def add_quote_partial(UUID, amount)
-pass
-
-
 def dict_factory(cursor, row):
     ''' TODO: Function Comment
     '''
