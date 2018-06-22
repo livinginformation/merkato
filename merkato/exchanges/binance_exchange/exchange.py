@@ -175,11 +175,10 @@ class BinanceExchange(ExchangeBase):
         orders = self.client.get_order_book(symbol=self.ticker)
 
         self._debug(10, "get_all_orders", orders)
-
         return orders
 
 
-    def get_my_open_orders(self):
+    def get_my_open_orders(self, context_formatted=False):
         ''' Returns all open orders for the authenticated user '''
                 
         orders = self.client.get_open_orders(symbol=self.ticker)
@@ -189,6 +188,11 @@ class BinanceExchange(ExchangeBase):
             id = order['orderId']
             new_dict[id] = order
             new_dict[id]['id'] = id
+            if context_formatted:
+                if order['side'] == 'BUY':
+                    new_dict[id]['type'] = 'buy'
+                else:
+                    new_dict[id]['type'] = 'sell'
         return new_dict
 
 
