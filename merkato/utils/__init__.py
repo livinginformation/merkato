@@ -141,7 +141,7 @@ def check_reserve_balances(total_balances, allocated_balances, coin_reserve, bas
         'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'],
         'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin']
     }
-    # print('remaning', remaining_balances, 'base_reserve', base_reserve)
+
     if remaining_balances['base'] < base_reserve:
         return False
         # raise ValueError('Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
@@ -166,12 +166,12 @@ def get_first_order( UUID):
 
 
 def get_new_history(current_history, last_order):
-    print('last order last order', last_order)
-    print('current history cur', current_history)
+    if last_order == '':
+        return current_history
     for index, order in enumerate(current_history):
-        print('orderId', order['orderId'], 'last_order', last_order)
         is_last_order = order['orderId'] == last_order
         if is_last_order:
+            print('found last order', is_last_order)
             new_history = current_history[:index]
             new_history.reverse() # need to reverse due to the newest order at start of the list, we want oldest
             return new_history

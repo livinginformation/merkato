@@ -2,6 +2,20 @@ import sqlite3
 
 from pprint import pprint
 
+def drop_merkatos_table():
+    try:
+        conn = sqlite3.connect('merkato.db')
+
+    except Exception as e:
+        print(str(e))
+        
+    finally:
+        c = conn.cursor()
+        c.execute('''DROP TABLE merkatos''')
+        conn.commit()
+        conn.close()
+
+
 def create_merkatos_table():
     ''' TODO: Function Comment
     '''

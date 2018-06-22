@@ -322,7 +322,7 @@ class Merkato(object):
         self._debug(100, 'allocated amount', prior_reserve - self.bid_reserved_balance)
 
 
-    def distribute_bids(self, price, total_to_distribute, step=1.02):
+    def distribute_bids(self, price, total_to_distribute, step=1.04):
         # Allocates your market making balance on the bid side, in a way that
         # will never be completely exhausted (run out).
         # total_to_distribute is in the base currency (usually BTC)
@@ -374,7 +374,7 @@ class Merkato(object):
         self._debug(100, 'allocated amount', prior_reserve - self.ask_reserved_balance)
 
 
-    def distribute_asks(self, price, total_to_distribute, step=1.02):
+    def distribute_asks(self, price, total_to_distribute, step=1.04):
         # Allocates your market making balance on the ask side, in a way that
         # will never be completely exhausted (run out).
 
@@ -496,6 +496,7 @@ class Merkato(object):
         if len(new_history) > 0:
             # We have new transactions
             self._debug(100, "New transactions: " + str(new_history))
+
             new_transactions = self.rebalance_orders(new_history)
             #self.merge_orders()
             

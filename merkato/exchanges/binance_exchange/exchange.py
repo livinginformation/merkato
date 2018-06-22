@@ -9,8 +9,8 @@ from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 from binance.client import Client
 from binance.enums import *
-precision = 5
-
+XMR_AMOUNT_PRECISION = 3
+XMR_PRICE_PRECISION = 6
 
 class BinanceExchange(ExchangeBase):
     url = "https://api.binance.com"
@@ -37,22 +37,23 @@ class BinanceExchange(ExchangeBase):
             print("-" * 10)
 
 
-    def _sell(self, amount, ask,):
+    def _sell(self, amount, ask):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
             :param ask: float
             :param ticker: string
         '''
-        amt_str = "{:0.0{}f}".format(amount, precision)
+        amt_str = "{:0.0{}f}".format(amount, XMR_AMOUNT_PRECISION)
+        ask_str = "{:0.0{}f}".format(ask, XMR_PRICE_PRECISION)
         order = self.client.create_order(
             symbol=self.ticker,
             side=SIDE_SELL,
             type=ORDER_TYPE_LIMIT,
             timeInForce=TIME_IN_FORCE_GTC,
             quantity=amt_str,
-            price=ask)
+            price=ask_str)
 
-        return order['success']
+        return order
 
 
     def sell(self, amount, ask):
@@ -63,18 +64,18 @@ class BinanceExchange(ExchangeBase):
                 # If ask price is lower than the highest bid, return.
 
                 if float(self.get_highest_bid()) > ask:
-                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "tux"))
+                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "binance"))
                     return False # Maybe needs failed or something
 
             try:
                 success = self._sell(amount, ask)
 
                 if success:
-                    self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
+                    self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "binance"))
                     return success
 
                 else:
-                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
+                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "binance", attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -88,14 +89,18 @@ class BinanceExchange(ExchangeBase):
             :param bid: float
             :param ticker: string
         '''
-        amt_str = "{:0.0{}f}".format(amount, precision)
+        amt_str = "{:0.0{}f}".format(amount, XMR_AMOUNT_PRECISION)
+        bid_str = "{:0.0{}f}".format(bid, XMR_PRICE_PRECISION)
+        print('amt', amt_str)
+        print('bid', bid_str)
+        info = self.client.get_symbol_info(symbol=self.ticker)
         order = self.client.create_order(
             symbol=self.ticker,
             side=SIDE_BUY,
             type=ORDER_TYPE_LIMIT,
             timeInForce=TIME_IN_FORCE_GTC,
             quantity=amt_str,
-            price=bid)
+            price=bid_str)
         return order
 
 
@@ -109,23 +114,57 @@ class BinanceExchange(ExchangeBase):
 
                 if float(self.get_lowest_ask()) < bid:
 
-                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
+                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "binance"))
                     return False # Maybe needs failed or something
 
             try:
                 success = self._buy(bid_amount, bid)
                 if success:
-                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "tux"))
+                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "binance"))
                     return success
 
                 else:
-                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
+                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "binance", attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
             except Exception as e:  # TODO - too broad exception handling
                 raise ValueError(e)
 
+    def market_buy(self, amount, bid):
+        attempt = 0
+        bid_amount = amount / bid
+        while attempt < self.retries:
+            try:
+                success = self._buy(bid_amount, bid)
+                if success:
+                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "binance"))
+                    return success
+
+                else:
+                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "binance", attempt, self.retries))
+                    attempt += 1
+                    time.sleep(1)
+
+            except Exception as e:  # TODO - too broad exception handling
+                raise ValueError(e)
+
+    def market_sell(self, amount, ask):
+        attempt = 0
+        try:
+            success = self._sell(amount, ask)
+
+            if success:
+                self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "binance"))
+                return success
+
+            else:
+                self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "binance", attempt, self.retries))
+                attempt += 1
+                time.sleep(1)
+
+        except Exception as e:  # TODO - too broad exception handling
+            raise ValueError(e)
 
     def get_all_orders(self):
         ''' Returns all open orders for the ticker XYZ (not BTC_XYZ)
@@ -133,8 +172,7 @@ class BinanceExchange(ExchangeBase):
         '''
         # TODO: Accept BTC_XYZ by stripping BTC_ if it exists
 
-        orders = client.get_order_book(symbol=self.ticker)
-        print('get_all_orders', get_all_orders)
+        orders = self.client.get_order_book(symbol=self.ticker)
 
         self._debug(10, "get_all_orders", orders)
 
@@ -145,12 +183,13 @@ class BinanceExchange(ExchangeBase):
         ''' Returns all open orders for the authenticated user '''
                 
         orders = self.client.get_open_orders(symbol=self.ticker)
-        print('open orders', orders)
-        # filtered_orders = {order_id : order for order_id, order in orders.items() if self.ticker in order["market_pair"]}
-        # Return orders in standardized format (list of buys/sells)
-        # Tux returns {id: {order}, id: {order}, ...}, we want
-        # [{order}, {order}, ...]
-        return orders
+        # orders is an array of dicts we need to transform it to an dict of dicts to conform to binance
+        new_dict = {}
+        for order in orders:
+            id = order['orderId']
+            new_dict[id] = order
+            new_dict[id]['id'] = id
+        return new_dict
 
 
     def cancel_order(self, order_id):
@@ -177,16 +216,15 @@ class BinanceExchange(ExchangeBase):
             :param coin: string (of the format BTC_XYZ)
         '''
 
-        params = { "method": "getticker" }
-        response = requests.get(self.url, params=params)
+        ticker = self.client.get_ticker(symbol=coin)
 
-        if not coin:
-            return json.loads(response.text)
+        # if not coin:
+        #     return json.loads(response.text)
+        print('tickers', ticker)
+        # response_json = json.loads(response.text)
+        self._debug(10, "get_ticker", ticker)
 
-        response_json = json.loads(response.text)
-        self._debug(10, "get_ticker", response_json[coin])
-
-        return response_json[coin]
+        return ticker
 
 
     def get_24h_volume(self, coin=None):
@@ -234,28 +272,43 @@ class BinanceExchange(ExchangeBase):
         '''
         self._debug(10, "get_my_trade_history","---> Getting trade history...")
 
-        trades = self.client.get_my_trades(symbol=self.ticker)
-
+        trades = self.client.get_my_trades(symbol=self.ticker, fromId=start)
+        for trade in trades:
+            if trade['isBuyer'] == True:
+                trade['type'] = 'buy'
+            else:
+                trade['type'] = 'sell'
+            trade['amount'] = trade['qty']
         return trades
 
 
     def get_last_trade_price(self):
         ''' TODO Function Definition
         '''
-        return self.get_ticker(self.ticker)["last"]
+        return self.get_ticker(self.ticker)["lastPrice"]
 
 
     def get_lowest_ask(self):
         ''' TODO Function Definition
         '''
-        return self.get_ticker(self.ticker)["lowestAsk"]
+        return self.get_ticker(self.ticker)["askPrice"]
 
 
     def get_highest_bid(self):
         ''' TODO Function Definition
         '''
-        return self.get_ticker(self.ticker)["highestBid"]
+        return self.get_ticker(self.ticker)["bidPrice"]
+    
+    
+    def is_partial_fill(self, order_id): 
+        order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
+        amount_placed = float(order_info['origQty'])
+        amount_executed = float(order_info['executedQty'])
+        return amount_placed > amount_executed and amount_executed > 0
 
+    def get_total_amount(self, order_id):
+        order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
+        return float(order_info['origQty'])
 
     def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
         ''' Signs provided query parameters with API keys

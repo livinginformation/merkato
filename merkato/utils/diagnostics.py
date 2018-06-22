@@ -9,8 +9,8 @@ example_tux_orderbook = {"asks":[["0.00000049","776.22230000"],["0.00000050","16
 def draw_depth(bidasks, bps=999):
     # bps is how far from market price you want to view,
     # to view 25% in both directions, set bps=.25
-    best_bid = max([float(price) for price, amount in bidasks["bids"]])
-    best_ask = min([float(price) for price, amount in bidasks["asks"]])
+    best_bid = max([float(price) for price, amount, *rest in bidasks["bids"]])
+    best_ask = min([float(price) for price, amount, *rest in bidasks["asks"]])
     worst_bid = best_bid * (1 - bps)
     worst_ask = best_ask * (1 + bps)
     filtered_bids = sorted([(float(bid[0]),float(bid[1])) for bid in bidasks["bids"] if float(bid[0]) >= worst_bid], key=lambda x:-x[0])
