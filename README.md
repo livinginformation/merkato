@@ -38,7 +38,7 @@ python3 simple_app.py
 
 from top level directory:
 
-(probably broken)
+(not working at the moment)
 ```
 ./run_tests.sh
 ```
