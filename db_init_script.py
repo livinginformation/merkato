@@ -1,7 +1,7 @@
 from merkato.merkato_config import load_config, get_config, create_config
 from merkato.merkato import Merkato
 from merkato.parser import parse
-from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table
+from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table, drop_merkatos_table
 from merkato.utils import generate_complete_merkato_configs
 import sqlite3
 import time
@@ -11,8 +11,14 @@ from merkato.utils.diagnostics import visualize_orderbook
 def main():
     print("Merkato Alpha v0.1.1\n")
 
+
     if no_merkatos_table_exists():
         create_merkatos_table()
+    else:
+        should_drop_merkatos = input('Do you want to drop merkatos? y/n: ')
+        if should_drop_merkatos == 'y':
+            drop_merkatos_table()
+            create_merkatos_table()
 
     if no_exchanges_table_exists():
         create_exchanges_table()
@@ -27,7 +33,7 @@ def main():
 
     base = "BTC"
     coin = "XMR"
-    spread = .1
+    spread = .02
     coin_reserve = 17
     base_reserve = .4
 
@@ -41,6 +47,7 @@ def main():
 
     merkato = Merkato(configuration, coin, base, spread, base_reserve, coin_reserve)
     context = merkato.update()
+    print('context', context)
     visualize_orderbook(context["orderbook"])
     while True:
         context = merkato.update()
