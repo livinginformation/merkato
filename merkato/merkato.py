@@ -115,8 +115,6 @@ class Merkato(object):
         self._debug(100, 'ordered transactions rebalanced', ordered_transactions)
 
         filled_orders = []
-        base_filled_sum = 0
-        quote_filled_sum = 0
 
         for tx in ordered_transactions:
             tx_id = tx['orderId'] # executed transaction
@@ -124,7 +122,7 @@ class Merkato(object):
             orderid = tx['id'] # The id of the limit order on the books
 
             # Do a check for whether this particular tx refers to a filled order
-            partial_fill = self.exchange.is_partial_fill(orderid) # todo unimplemented
+            partial_fill = self.exchange.is_partial_fill(orderid) # todo implement for tux (binance done)
 
             if tx['type'] == SELL:
 
@@ -181,16 +179,11 @@ class Merkato(object):
                     market_history = self.exchange.get_my_trade_history(start=last_order_time)
                     market_data = get_market_results(market_history)
 
-                    # We have a sell executed. We want to place a matching buy order.
-                    # If the whole order is executed, no edge case.
-                    # If the order has a remainder, the remainder will be on the books at
-                    # the appropriate price. So no problem. 
-                    # If the remainder is too small to have a matching order, it could 
-                    # disappear, but this is such a minor edge case we can ignore it.
-                    # 
                     # The sell gave us some BTC. The buy is executed with that BTC.
                     # The market buy will get us X xmr in return. All of that xmr
                     # should be placed at the original order's matching price.
+                    #
+                    # We need to do something here about the partials if it doesnt fully fill
                     amount_executed = float(market_data['amount_executed'])
                     last_orderid    = market_data['last_orderid']
                     print('market data', market_data)
@@ -231,7 +224,7 @@ class Merkato(object):
                 # We need to place a matching order
                 # We want to get the total amount of that order
 
-                total_amount = get_total_amount(orderid) # todo unimplemented
+                total_amount = get_total_amount(orderid) # todo implement for tux (binance done)
 
                 # This next part cancels out if the entire order is filled at once.
                 # If the order is a partial fill (and the rest of the fill happens
@@ -285,8 +278,6 @@ class Merkato(object):
             no_first_order = first_order == ''
             if no_first_order:
                 update_merkato(self.mutex_UUID, FIRST_ORDER, tx_id)
-
-        # todo: Subtract base_filled_sum and quote_filled_sum from their respective secondary reserves
 
         self.log_new_transactions(ordered_transactions)
         
