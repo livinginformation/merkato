@@ -25,23 +25,41 @@ class Merkato(object):
         self.distribution_strategy = 1
         self.spread = spread # i.e '.15
         self.profit_margin = profit_margin
-        # Create ladders from the bid and ask bidget here
+
+        # Exchanges have a maximum number of orders every user can place. Due
+        # to this, every Merkato has a reserve of coins that are not currently
+        # allocated. As the price approaches unallocated regions, the reserves
+        # are deployed.
         self.bid_reserved_balance = bid_reserved_balance
         self.ask_reserved_balance = ask_reserved_balance
+
+        # The current sum of all partially filled orders
+        self.base_partials_balance = 0
+        self.quote_partials_balance = 0
+
         self.user_interface = user_interface
+
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
-        merkato_does_exist = merkato_exists(UUID)
+
+        merkato_does_exist = merkato_exists(self.mutex_UUID)
 
         if not merkato_does_exist:
-            print('new merkato')
+            self._debug(1, "Creating new Merkato")
+
+            # Remove all active orders
             self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
+
             total_pair_balances = self.exchange.get_balances()
-            print('total_pair_balances', total_pair_balances)
+
+            self._debug(100, 'total_pair_balances: ', total_pair_balances)
+
             allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
-            check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
-            insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance, first_order)
+            funds_available = check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
+
+            insert_merkato(configuration[EXCHANGE], self.mutex_UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance, first_order)
             history = self.exchange.get_my_trade_history()
+
             if len(history) > 0:
                 new_last_order = history[0]['orderId']
                 update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
@@ -54,15 +72,30 @@ class Merkato(object):
             last_order = get_last_order(self.mutex_UUID)
             new_history = get_new_history(current_history, last_order)
             self.rebalance_orders(new_history)
+
         self.initialized = True  # to avoid being updated before orders placed
 
+
+    def kill():
+        ''' TODO: Function comment
+        '''
+        # Cancel all orders
+        self.cancelrange(ONE_SATOSHI, ONE_BITCOIN) # Technically not all, but should be good enough
+
+        # Remove references to merkato in db
+        kill_merkato(self.mutex_UUID)
+
+
     def _debug(self, level, header, *args):
+        ''' TODO: Function comment
+        '''
         if level <= self.DEBUG:
             print("-" * 10)
             print("{}---> {}:".format(level, header))
             for arg in args:
                 print("\t\t" + repr(arg))
             print("-" * 10)
+
 
     def rebalance_orders(self, new_txes):
         # This function places a matching order for every new transaction since last run
@@ -75,37 +108,82 @@ class Merkato(object):
 
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
+
         factor = self.spread*self.profit_margin/2
         self._debug(2, "merkato.rebalance_orders")
         ordered_transactions = new_txes
-        print('ordered transactions rebalanced', ordered_transactions)
+        self._debug(100, 'ordered transactions rebalanced', ordered_transactions)
+
+        filled_orders = []
+
         for tx in ordered_transactions:
-            print('length of ordered_transactions length length', len(ordered_transactions))
+            tx_id = tx['orderId'] # executed transaction
+            filled_amount = tx['amount']
+            orderid = tx['id'] # The id of the limit order on the books
+
+            # Do a check for whether this particular tx refers to a filled order
+            partial_fill = self.exchange.is_partial_fill(orderid) # todo implement for tux (binance done)
+
             if tx['type'] == SELL:
-                # print('amount', type(tx['amount']), type(tx[PRICE])) # todo use debug
-                
-                amount = float(tx['amount']) * float(tx[PRICE])*(1-factor)
-                price = float(tx[PRICE])
-                buy_price = price * ( 1  - self.spread)
+
+                if partial_fill:
+                    # This was a sell, so we gained more of the base asset. 
+                    # This was a partial fill, so the user's balance is increased by that amount. 
+                    # However, that amount is 'reserved' (will be placed on the books once the 
+                    # rest of the order is filled), and therefore is unavailable when creating new
+                    # Merkatos. Add this amount to a field 'base_partials_balance'.
+                    self.base_partials_balance += filled_amount
+                    update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
+
+                    # Update the last orderId (actually the id of the transaction)
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+
+                    # 3. Skip everything else
+                    continue
+
+                if orderid in filled_orders:
+                    # Matching order has already been placed
+
+                    self.base_partials_balance += filled_amount
+                    update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
+
+                    # Update the last orderId (actually the id of the transaction)
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+
+                    continue
+
+                # We need to place a matching order
+                # We want to get the total amount of that order
+
+                total_amount = get_total_amount(orderid) # todo unimplemented
+
+                # This next part cancels out if the entire order is filled at once.
+                # If the order is a partial fill (and the rest of the fill happens
+                # within the for loop), it will sum up to zero when adding the other
+                # executed orders (and considering the secondary reserves)
+                self.base_partials_balance += filled_amount
+                self.base_partials_balance -= total_amount
+                update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
+
+                amount = float(filled_amount) * float(tx[PRICE])*(1-factor)
+                price = tx[PRICE]
+                buy_price = float(price) * ( 1  - self.spread)
                 self._debug(4, "found sell", tx,"corresponding buy", buy_price)
                 market = self.exchange.buy(amount, buy_price)
+                # A lock is probably needed somewhere near here in case of unexpected shutdowns
+                
                 if market == MARKET:
-                    print('market sell', market)
-                    last_order_time = str(int(time.time()))
+                    last_order_time = get_time_of_last_order(ordered_transactions)
+
                     self.exchange.market_buy(amount, buy_price)
                     market_history = self.exchange.get_my_trade_history(start=last_order_time)
                     market_data = get_market_results(market_history)
 
-                    # We have a sell executed. We want to place a matching buy order.
-                    # If the whole order is executed, no edge case.
-                    # If the order has a remainder, the remainder will be on the books at
-                    # the appropriate price. So no problem. 
-                    # If the remainder is too small to have a matching order, it could 
-                    # disappear, but this is such a minor edge case we can ignore it.
-                    # 
                     # The sell gave us some BTC. The buy is executed with that BTC.
                     # The market buy will get us X xmr in return. All of that xmr
                     # should be placed at the original order's matching price.
+                    #
+                    # We need to do something here about the partials if it doesnt fully fill
                     amount_executed = float(market_data['amount_executed'])
                     last_orderid    = market_data['last_orderid']
                     print('market data', market_data)
@@ -116,14 +194,57 @@ class Merkato(object):
                     update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
             if tx['type'] == BUY:
-                amount = float(tx['amount'])*float((1-factor))
+
+                if partial_fill:
+                    # This was a buy, so we gained more of the quote asset. 
+                    # This was a partial fill, so the user's balance is increased by that amount. 
+                    # However, that amount is 'reserved' (will be placed on the books once the 
+                    # rest of the order is filled), and therefore is unavailable when creating new
+                    # Merkatos. Add this amount to a field 'quote_partials_balance'.
+                    self.quote_partials_balance += filled_amount # may need a multiply by price
+                    update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
+
+                    # 2. update the last order
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+
+                    # 3. Skip everything else
+                    continue
+
+                if orderid in filled_orders:
+                    # Matching order has already been placed
+                    self.quote_partials_balance += filled_amount
+                    update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
+
+                    # Update the last orderId (actually the id of the transaction)
+                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+
+                    continue
+
+
+                # We need to place a matching order
+                # We want to get the total amount of that order
+
+                total_amount = get_total_amount(orderid) # todo implement for tux (binance done)
+
+                # This next part cancels out if the entire order is filled at once.
+                # If the order is a partial fill (and the rest of the fill happens
+                # within the for loop), it will sum up to zero when adding the other
+                # executed orders (and considering the secondary reserves)
+                self.quote_partials_balance += filled_amount
+                self.quote_partials_balance -= total_amount
+                update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
+
+                amount = float(filled_amount)*float((1-factor))
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
-                self._debug(4, "found buy",tx, "corresponding sell", sell_price)
+                self._debug(4, "found buy", tx, "corresponding sell", sell_price)
                 market = self.exchange.sell(amount, sell_price)
+
+                # A lock is probably needed somewhere near here in case of unexpected shutdowns
+                
                 if market == MARKET:
-                    print('market buy', market)
-                    last_order_time = str(int(time.time()))
+                    last_order_time = get_time_of_last_order(ordered_transactions)
+
                     self.exchange.market_sell(amount, sell_price)
                     market_history = self.exchange.get_my_trade_history(start=last_order_time)
                     market_data = get_market_results(market_history)
@@ -141,23 +262,27 @@ class Merkato(object):
                     amount_executed = float(market_data['total_gotten'])
                     last_orderid    = market_data['last_orderid']
                     print('market data', market_data)
+
                     self.exchange.buy(amount_executed, float(price)) # Should never market order
 
                     # A market buy occurred, so we need to update the db with the latest tx
                     update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
             if market != MARKET: 
-                print('market != MARKET market != MARKET')
-                update_merkato(self.mutex_UUID, LAST_ORDER, tx['orderId'])
+                update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+
+            # A buy or a sell have executed with this id. Don't re-execute more.
+            filled_orders.append(orderid)
             
             first_order = get_first_order(self.mutex_UUID)
             no_first_order = first_order == ''
             if no_first_order:
-                update_merkato(self.mutex_UUID, FIRST_ORDER, tx['orderId'])
+                update_merkato(self.mutex_UUID, FIRST_ORDER, tx_id)
 
         self.log_new_transactions(ordered_transactions)
         
         return ordered_transactions
+
 
     def decaying_bid_ladder(self, total_amount, step, start_price):
         # Places an bid ladder from the start_price to 1/2 the start_price.
@@ -187,14 +312,14 @@ class Merkato(object):
             
             # TODO Create lock
             response = self.exchange.buy(current_bid_amount, current_bid_price)
-            print('bid response', response)
+            self._debug(100, 'bid response', response)
             self.remove_reserve(current_bid_amount, BID_RESERVE) 
             # TODO Release lock
             
             current_order += 1
             self.avoid_blocking()
 
-        print('allocated amount', prior_reserve - self.bid_reserved_balance)
+        self._debug(100, 'allocated amount', prior_reserve - self.bid_reserved_balance)
 
 
     def distribute_bids(self, price, total_to_distribute, step=1.04):
@@ -206,14 +331,9 @@ class Merkato(object):
         #    and half the total_to_distribute
         self.decaying_bid_ladder(total_to_distribute/2, step, price)
 
-        # 3. Call decaying_bid_ladder twice more, each time halving the
+        # 3. Call decaying_bid_ladder again halving the
         #    start_price, and halving the total_amount
         self.decaying_bid_ladder(total_to_distribute/4, step, price/2)
-        self.decaying_bid_ladder(total_to_distribute/8, step, price/4)
-
-        # 4. Store the remainder of total_to_distribute, as well as the final
-        #    order placed in decaying_bid_ladder
-        pass
 
 
     def decaying_ask_ladder(self, total_amount, step, start_price):
@@ -244,15 +364,14 @@ class Merkato(object):
 
             # TODO Create lock
             response = self.exchange.sell(current_ask_amount, current_ask_price)
-            print('ask response', response)
+            self._debug(100, 'ask response', response)
             self.remove_reserve(current_ask_amount, ASK_RESERVE) 
             # TODO Release lock
 
             current_order += 1
             self.avoid_blocking()
 
-        #print(amount)
-        print('allocated amount', prior_reserve - self.ask_reserved_balance)
+        self._debug(100, 'allocated amount', prior_reserve - self.ask_reserved_balance)
 
 
     def distribute_asks(self, price, total_to_distribute, step=1.04):
@@ -263,19 +382,14 @@ class Merkato(object):
         #    and half the total_to_distribute
         self.decaying_ask_ladder(total_to_distribute/2, step, price)
 
-        # 3. Call decaying_ask_ladder twice more, each time doubling the
+        # 3. Call decaying_ask_ladder once more, doubling the
         #    start_price, and halving the total_amount
         self.decaying_ask_ladder(total_to_distribute/4, step, price * 2)
-        self.decaying_ask_ladder(total_to_distribute/8, step, price * 4)
-
-        # 4. Store the remainder of total_to_distribute, as well as the final
-        #    order placed in decaying_ask_ladder
-        pass
 
 
     def distribute_initial_orders(self, total_base, total_alt):
-        # waiting on vizualization for bids before running it as is
-        
+        ''' TODO: Function comment
+        '''
         current_price = (float(self.exchange.get_highest_bid()) + float(self.exchange.get_lowest_ask()))/2
         if self.user_interface:
             current_price = self.user_interface.confirm_price(current_price)
@@ -296,13 +410,12 @@ class Merkato(object):
         # TODO: Make orders/orderbook variables less semantically similar
 
         orders = self.exchange.get_my_open_orders()
-        #print(orders)
 
         # Create a dictionary to store our desired orderbook
         orderbook = dict()
 
         for order in orders:
-            print( 'order', order)
+            self._debug(100, 'order', order)
 
             price    = orders[order][PRICE]
             coin     = orders[order]["coin"]
@@ -310,7 +423,7 @@ class Merkato(object):
             total    = float(orders[order]["total"])  # Total in BTC
             order_id = orders[order]['id']
 
-            if DEBUG: print(orders[order])
+            self._debug(100, orders[order])
 
             if coin != self.exchange.ticker:
                 continue
@@ -320,11 +433,11 @@ class Merkato(object):
                 price_data = create_price_data(orders, order)
 
                 orderbook[price] = price_data
-                if DEBUG: print("Found new bid at", price)
+                self._debug(100, "Found new bid at", price)
 
             else:
 
-                print("Collision at", price)
+                self._debug(100, "Collision at", price)
 
                 existing_order        = orderbook[price]
                 existing_order_id     = existing_order['id']
@@ -342,31 +455,33 @@ class Merkato(object):
 
                 # Place a new order on the books with the sum
                 if existing_order_type == "buy":
-                    print("Placing buy for", existing_order['total'], "{} of".format(self.exchange.base), self.exchange.ticker, "at a price of", price)
+                    self._debug(100, "Placing buy for", existing_order['total'], "{} of".format(self.exchange.base), self.exchange.ticker, "at a price of", price)
                     new_id = self.exchange.buy(float(existing_order['total'])/float(price), float(price), self.exchange.ticker)
 
                 else: # existing_order_type is sell
-                    print("Placing sell for", existing_order['amount'], self.exchange.ticker, "at a price of", price)
+                    self._debug(100, "Placing sell for", existing_order['amount'], self.exchange.ticker, "at a price of", price)
                     new_id = self.exchange.sell(float(existing_order['amount']), float(price), self.exchange.ticker)
 
                 if new_id == 0:
-                    print("Something went wrong.")
+                    self._debug(100, "Something went wrong.")
                     return 1
                 else: update_merkato(self.mutex_UUID, LAST_ORDER, new_id)
 
-                if DEBUG: print("consolidation successful")
+                self._debug(100, "consolidation successful")
                 existing_order['id'] = new_id
 
-                if DEBUG: print(existing_order)
+                self._debug(100, existing_order)
 
-        print("Consolidation Successful")
+        self._debug(100, "Consolidation Successful")
         return 0
 
 
-
     def update(self):
+        ''' TODO: Function comment
+        '''
+
         # Get current state of trade history before placing orders
-        print("Update entered")
+        self._debug(1, "Update entered")
         
         now = str(datetime.datetime.now().isoformat()[:-7].replace("T", " "))
         last_trade_price = self.exchange.get_last_trade_price()
@@ -380,8 +495,8 @@ class Merkato(object):
         
         if len(new_history) > 0:
             # We have new transactions
-            print('we have new history')
-            if DEBUG: print("New transactions: " + str(new_history))
+            self._debug(100, "New transactions: " + str(new_history))
+
             new_transactions = self.rebalance_orders(new_history)
             #self.merge_orders()
             
@@ -400,43 +515,62 @@ class Merkato(object):
         # replace old settings with new settings
         pass
 
+
     def add_reserve(self):
+        ''' TODO: Function comment
+        '''
         pass
-    
+
+
     def remove_reserve(self, amount, type_of_reserve):
+        ''' TODO: Function comment
+        '''
         current_reserve_amount = self.ask_reserved_balance if type_of_reserve == ASK_RESERVE else self.bid_reserved_balance
         invalid_reserve_reduction = amount > current_reserve_amount
+        
         if invalid_reserve_reduction:
             return False
         
         if type_of_reserve == ASK_RESERVE:
             new_amount = self.ask_reserved_balance - amount
-            self.ask_reserved_balance = new_amount            
+            self.ask_reserved_balance = new_amount           
+
         else:
             new_amount = self.bid_reserved_balance - amount
             self.bid_reserved_balance = new_amount
+
         update_merkato(self.mutex_UUID, type_of_reserve, new_amount)
         return True
-        
+
+
     def cancelrange(self, start, end):
+        ''' TODO: Function comment
+        '''
         open_orders = self.exchange.get_my_open_orders()
         for order in open_orders:
             price = open_orders[order][PRICE]
             order_id = open_orders[order][ID]
             if float(price) >= float(start) and float(price) <= float(end):
                 self.exchange.cancel_order(order_id)
-                if DEBUG: print("price: " + str(price))
+                self._debug(100, "price: " + str(price))
                 time.sleep(.3)
 
+
     def avoid_blocking(self):
+        ''' TODO: Function comment
+        '''
         if self.user_interface:
+
             try:
                 self.user_interface.app.update_idletasks()
                 self.user_interface.app.update()
+
             except UnicodeDecodeError:
-                print("Caught Scroll Error")
+                self._debug(100, "Caught Scroll Error")
+
             except:
                 pass
+
 
     def log_new_transactions(self, newTransactionHistory, path="my_merkato_tax_audit_logs.csv"):
         """

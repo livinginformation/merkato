@@ -127,9 +127,12 @@ def get_allocated_pair_balances(exchange, base, coin):
     for merkato in merkatos:
         if merkato['base'] == base:
             allocated_pair_balances['base'] += merkato['bid_reserved_balance']
+            allocated_pair_balances['base'] += merkato['base_partials_balance']
 
         if merkato['alt'] == coin:
             allocated_pair_balances['coin'] += merkato['ask_reserved_balance']
+            allocated_pair_balances['coin'] += merkato['quote_partials_balance']
+
     return allocated_pair_balances
 
 
@@ -138,10 +141,14 @@ def check_reserve_balances(total_balances, allocated_balances, coin_reserve, bas
         'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'],
         'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin']
     }
+
     if remaining_balances['base'] < base_reserve:
-        raise ValueError('Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
+        return False
+        # raise ValueError('Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
     if remaining_balances['coin'] < coin_reserve:
-        raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
+        return False
+        #raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
+    return True
 
 
 def get_last_order( UUID):
