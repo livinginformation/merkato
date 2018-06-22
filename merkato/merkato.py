@@ -471,3 +471,30 @@ class Merkato(object):
                 writer.writeheader()
             for tx in scrubbed_history:
                 writer.writerow(tx)
+
+    def log_new_cointrackr_transactions(self, newTransactionHistory, path="my_merkato_tax_audit_logs.csv"):
+        scrubbed_history = []
+        for dirty_tx in newTransactionHistory:
+            scrubbed_tx = []
+            scrubbed_tx.append(dirty_tx['date'])
+            if dirty_tx['type'] == 'buy':
+                scrubbed_tx.append(dirty_tx['amount'])
+                scrubbed_tx.append(dirty_tx['coin'])
+                scrubbed_tx.append(dirty_tx['total'])
+                scrubbed_tx.append(dirty_tx['market'])
+            else:
+                scrubbed_tx.append(dirty_tx['total'])
+                scrubbed_tx.append(dirty_tx['market'])
+                scrubbed_tx.append(dirty_tx['amount'])
+                scrubbed_tx.append(dirty_tx['coin'])
+            scrubbed_history.append(scrubbed_tx)
+
+        headers_needed = not os.path.exists(path)
+
+        with open(path, 'a+') as csvfile:
+            fieldnames = ['Date', 'Recieved Quantity', "Currency", "Sent Quantity", "Currency"]
+            writer = csv.writer(csvfile, extrasaction='ignore')
+            if headers_needed:
+                writer.writerow(fieldnames)
+            for tx in scrubbed_history:
+                writer.writerow(tx)
