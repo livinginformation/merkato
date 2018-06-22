@@ -1,4 +1,4 @@
-# Merkato
+# Merkato Beta v0.1.0
 
 Merkato is a Python cryptocurrency Market Making and Arbitrage bot
 
@@ -9,12 +9,6 @@ See [requirements.txt](https://github.com/livinginformation/merkato/blob/master/
 ### Installing
 
 Install all dependencies.
-
-On Ubtuntu
-
-```
-sudo apt-get install -y python3-setuptools
-```
 
 All systems:
 
@@ -28,21 +22,30 @@ For Python3
 ```
 ## Getting Started
 
-Run the following from the top level directory: *Currently non-functional.*
+Run the following from the top level directory:
 ```
-python3 bot.py
+python3 db_init_script.py
+```
+
+Set up your credentials for the exchange
+
+Once set up, run:
+```
+python3 simple_app.py
 ```
 
 ## Running the tests
 
 from top level directory:
+
+(not working at the moment)
 ```
 ./run_tests.sh
 ```
 
 ## Built With
 
-Python 3, sqlite
+Python 3, sqlite, tkinter
 
 ## Contributing
 
