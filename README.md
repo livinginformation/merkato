@@ -37,6 +37,8 @@ python3 simple_app.py
 ## Running the tests
 
 from top level directory:
+
+(probably broken)
 ```
 ./run_tests.sh
 ```
