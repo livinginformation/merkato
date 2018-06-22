@@ -1,4 +1,4 @@
-# Merkato
+# Merkato Beta v0.1.0
 
 Merkato is a Python cryptocurrency Market Making and Arbitrage bot
 
