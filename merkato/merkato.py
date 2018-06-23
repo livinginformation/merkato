@@ -76,7 +76,7 @@ class Merkato(object):
         self.initialized = True  # to avoid being updated before orders placed
 
 
-    def kill():
+    def kill(self):
         ''' TODO: Function comment
         '''
         # Cancel all orders
@@ -503,7 +503,7 @@ class Merkato(object):
         # context to be used for GUI plotting
         context = {"price": (now, last_trade_price),
                    "filled_orders": new_transactions,
-                   "open_orders": self.exchange.get_my_open_orders(),
+                   "open_orders": self.exchange.get_my_open_orders(context_formatted=True),
                    "balances": self.exchange.get_balances(),
                    "orderbook": self.exchange.get_all_orders()
                    }

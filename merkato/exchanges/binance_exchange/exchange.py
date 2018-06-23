@@ -175,11 +175,10 @@ class BinanceExchange(ExchangeBase):
         orders = self.client.get_order_book(symbol=self.ticker)
 
         self._debug(10, "get_all_orders", orders)
-
         return orders
 
 
-    def get_my_open_orders(self):
+    def get_my_open_orders(self, context_formatted=False):
         ''' Returns all open orders for the authenticated user '''
                 
         orders = self.client.get_open_orders(symbol=self.ticker)
@@ -189,6 +188,11 @@ class BinanceExchange(ExchangeBase):
             id = order['orderId']
             new_dict[id] = order
             new_dict[id]['id'] = id
+            if context_formatted:
+                if order['side'] == 'BUY':
+                    new_dict[id]['type'] = 'buy'
+                else:
+                    new_dict[id]['type'] = 'sell'
         return new_dict
 
 
@@ -206,7 +210,7 @@ class BinanceExchange(ExchangeBase):
             return False
 
         return self.client.cancel_order(
-            symbol=self.ticker    ,
+            symbol=self.ticker,
             orderId=order_id)
 
 
@@ -271,8 +275,13 @@ class BinanceExchange(ExchangeBase):
         ''' TODO Function Definition
         '''
         self._debug(10, "get_my_trade_history","---> Getting trade history...")
+        start_is_provided = start != 0 and start != ''
+        print('start', start)
+        if start_is_provided:
+            trades = self.client.get_my_trades(symbol=self.ticker, fromId=start)
+        else:
+            trades = self.client.get_my_trades(symbol=self.ticker)
 
-        trades = self.client.get_my_trades(symbol=self.ticker, fromId=start)
         for trade in trades:
             if trade['isBuyer'] == True:
                 trade['type'] = 'buy'

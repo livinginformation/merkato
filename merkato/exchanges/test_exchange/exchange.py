@@ -132,6 +132,8 @@ class TestExchange(ExchangeBase):
             if not self.order_history:
                 return []
             filtered_history = list(filter(lambda order: order[USER_ID] == self.USER_ID and int(order['orderid']) >= int(orderid), self.order_history))
+        except ValueError:
+            filtered_history = []
         except:
             self.debug(3, "get_my_trade_history", self.order_history, self.user_id)
             raise
