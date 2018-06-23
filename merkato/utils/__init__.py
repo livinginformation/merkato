@@ -21,9 +21,9 @@ def encrypt(password, source):
       iterations=10,
       backend=default_backend()
     )
-    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    key = base64.urlsafe_b64encode(kdf.derive(password))
     cipher_suite = Fernet(key)
-    cipher_text = cipher_suite.encrypt(source.encode())
+    cipher_text = cipher_suite.encrypt(source)
     return cipher_text
 
 
@@ -35,9 +35,9 @@ def decrypt(password, source):
       iterations=10,
       backend=default_backend()
     )
-    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    key = base64.urlsafe_b64encode(kdf.derive(password))
     cipher_suite = Fernet(key)
-    plain_text = cipher_suite.decrypt(source).decode()
+    plain_text = cipher_suite.decrypt(source)
     return plain_text
 
 
@@ -189,3 +189,12 @@ def get_market_results(history):
 
     results['last_orderid'] = history[-1]['orderId']
     return results
+
+def ensure_bytes(password, public_key, private_key):
+    if isinstance(password, str):
+        password = password.encode('utf-8')
+    if isinstance(public_key, str):
+        public_key = public_key.encode('utf-8')
+    if isinstance(private_key, str):
+        private_key = private_key.encode('utf-8')
+    return (password, public_key, private_key)
