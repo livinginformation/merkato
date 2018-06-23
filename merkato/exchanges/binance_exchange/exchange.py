@@ -278,9 +278,9 @@ class BinanceExchange(ExchangeBase):
         start_is_provided = start != 0 and start != ''
         print('start', start)
         if start_is_provided:
-            trades = self.client.get_my_trades(symbol=self.ticker, fromId=start)
+            trades = self.client.get_my_trades(symbol=self.ticker, fromId=start, recvWindow=10000000)
         else:
-            trades = self.client.get_my_trades(symbol=self.ticker)
+            trades = self.client.get_my_trades(symbol=self.ticker, recvWindow=10000000)
 
         for trade in trades:
             if trade['isBuyer'] == True:
