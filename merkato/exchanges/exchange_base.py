@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class ExchangeBase(ABC):
 	"""
 	Abstract base class for exchange interfaces. 
@@ -9,15 +10,15 @@ class ExchangeBase(ABC):
 	url = NotImplemented
 
 	@abstractmethod
-	def buy(self, amount, ask, ticker):
+	def buy(self, amount, ask):
 		pass
 
 	@abstractmethod
-	def sell(self, amount, bid, ticker):
+	def sell(self, amount, bid):
 		pass
 
 	@abstractmethod
-	def get_all_orders(self, ticket):
+	def get_all_orders(self):
 		pass
 
 	@abstractmethod

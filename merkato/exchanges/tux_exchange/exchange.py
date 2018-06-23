@@ -14,7 +14,7 @@ from merkato.constants import BUY, SELL
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
-    def __init__(self, config, coin, base, password='password'):
+    def __init__(self, config, coin, base):
         self.privatekey = config['private_api_key']
         self.publickey  = config['public_api_key']
         self.limit_only = config['limit_only']
@@ -37,7 +37,7 @@ class TuxExchange(ExchangeBase):
             print("-" * 10)
 
 
-    def _sell(self, amount, ask,):
+    def _sell(self, amount, ask):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
             :param ask: float
