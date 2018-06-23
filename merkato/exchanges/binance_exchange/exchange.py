@@ -1,16 +1,12 @@
-import hashlib
-import hmac
 import json
-import math
 import requests
 import time
-import urllib.parse
 from merkato.exchanges.exchange_base import ExchangeBase
-from merkato.constants import BUY, SELL
 from binance.client import Client
 from binance.enums import *
 XMR_AMOUNT_PRECISION = 3
 XMR_PRICE_PRECISION = 6
+
 
 class BinanceExchange(ExchangeBase):
     url = "https://api.binance.com"
@@ -18,7 +14,6 @@ class BinanceExchange(ExchangeBase):
     def __init__(self, config, coin, base, password='password'):
         self.client = Client(config['public_api_key'], config['private_api_key'])
         self.limit_only = config['limit_only']
-        print('TuxExchange config', config)
         self.retries = 5
         self.coin = coin
         self.base = base
@@ -318,21 +313,3 @@ class BinanceExchange(ExchangeBase):
     def get_total_amount(self, order_id):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
         return float(order_info['origQty'])
-
-    def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
-        ''' Signs provided query parameters with API keys
-            :param query_parameters: dictionary
-            :param nonce: int
-            :param timeout: int
-        '''
-
-        # return response needing signature, nonce created if not supplied
-        if not nonce:
-            nonce = int(time.time() * 1000)
-        query_parameters.update({"nonce": nonce})
-        post = urllib.parse.urlencode(query_parameters)
-        signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-        head = {'Key': self.publickey, 'Sign': signature}
-
-        response = requests.post(self.url, data=query_parameters, headers=head, timeout=timeout).json()
-        return response
