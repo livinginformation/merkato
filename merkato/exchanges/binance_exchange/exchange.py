@@ -210,7 +210,7 @@ class BinanceExchange(ExchangeBase):
             return False
 
         return self.client.cancel_order(
-            symbol=self.ticker    ,
+            symbol=self.ticker,
             orderId=order_id)
 
 
@@ -275,8 +275,13 @@ class BinanceExchange(ExchangeBase):
         ''' TODO Function Definition
         '''
         self._debug(10, "get_my_trade_history","---> Getting trade history...")
+        start_is_provided = start != 0 and start != ''
+        print('start', start)
+        if start_is_provided:
+            trades = self.client.get_my_trades(symbol=self.ticker, fromId=start)
+        else:
+            trades = self.client.get_my_trades(symbol=self.ticker)
 
-        trades = self.client.get_my_trades(symbol=self.ticker, fromId=start)
         for trade in trades:
             if trade['isBuyer'] == True:
                 trade['type'] = 'buy'
