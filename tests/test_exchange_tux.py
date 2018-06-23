@@ -1,16 +1,17 @@
 import unittest
-from mock import mock, patch, call
+from mock import patch
 from freezegun import freeze_time
 
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 
+
 class TuxExchangeTestCase(unittest.TestCase):
 	def setUp(self):
 		config = {"private_api_key": "abc123", "public_api_key": "456def", "limit_only": False}
-		self.exchange = TuxExchange(config)
+		self.exchange = TuxExchange(config, 'XMR', 'BTC')
 
 	@freeze_time('2001-01-01T12:00:00.0000')
-	@patch('merkato.exchanges.tux_exchange.requests.post')
+	@patch('merkato.exchanges.tux_exchange.exchange.requests.post')
 	def test_create_signed_request(self, post_mock):
 		query_params = {"foo": "bar"}
 
@@ -29,58 +30,18 @@ class TuxExchangeTestCase(unittest.TestCase):
 			timeout=15
 		)
 
-	@patch('merkato.exchanges.tux_exchange.TuxExchange._create_signed_request')
+	@patch('merkato.exchanges.tux_exchange.exchange.TuxExchange._create_signed_request')
 	def test_buy(self, signed_request_mock):
-		response = self.exchange.buy(1, 0.001, 'XMR')
+		self.exchange.buy(1, 0.001)
 
 		signed_request_mock.assert_called_once_with({
 			'method': 'buy', 
 			'market': 'BTC', 
 			'coin': 'XMR', 
-			'amount': '1.00000000', 
+			'amount': '1000.00000000',
 			'price': '0.00100000'
 		})
-		#     @patch('merkato.exchanges.exchange.time.sleep')
-	def test_buy__retries_n_times_on_failure(self, _):
-		self.exchange.buy.return_value = False
 
-		response = self.exchange.buy(1, 0.001, 'XMR')
-
-		self.assertEqual(len(self.exchange.buy.mock_calls), self.exchange.retries)
-		self.assertFalse(response)
-
-	def test_buy__doesnt_retry_on_exception(self):
-		self.exchange.buy.side_effect = ValueError
-
-		response = self.exchange.buy(1, 0.001, 'XMR')
-
-		self.exchange.buy.assert_called_once_with(1, 0.001, 'XMR')
-		self.assertFalse(response)
-
-    	def test_sell__doesnt_retry_on_exception(self):
-		self.exchange.sell.side_effect = ValueError
-
-		response = self.exchange.sell(1, 0.001, 'XMR')
-
-		self.exchange.sell.assert_called_once_with(1, 0.001, 'XMR')
-		self.assertFalse(response)
-	
-    	def test_sell(self):
-		self.exchange.sell.return_value = True
-
-		response = self.exchange.sell(1, 0.001, 'XMR')
-
-		self.exchange.sell.assert_called_once_with(1, 0.001, 'XMR')
-		self.assertTrue(response)
-
-	@patch('merkato.exchanges.exchange.time.sleep')
-	def test_sell__retries_n_times_on_failure(self, _):
-		self.exchange.sell.return_value = False
-
-		response = self.exchange.sell(1, 0.001, 'XMR')
-
-		self.assertEqual(len(self.exchange.sell.mock_calls), self.exchange.retries)
-		self.assertFalse(response)
 
 if __name__ == "__main__":
 	unittest.main()
