@@ -241,7 +241,7 @@ class TuxExchange(ExchangeBase):
 
 
     def get_balances(self):
-        ''' TODO Function Definition
+        ''' Returns all balances on the exchange (not on the books)
         '''
 
         # also keys go unused, also coin...
