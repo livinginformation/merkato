@@ -56,6 +56,17 @@ class Merkato(object):
             self.rebalance_orders(new_history)
         self.initialized = True  # to avoid being updated before orders placed
 
+
+    def kill(self):
+        ''' TODO: Function comment
+        '''
+        # Cancel all orders
+        self.cancelrange(ONE_SATOSHI, ONE_BITCOIN) # Technically not all, but should be good enough
+
+        # Remove references to merkato in db
+        kill_merkato(self.mutex_UUID)
+
+
     def _debug(self, level, header, *args):
         if level <= self.DEBUG:
             print("-" * 10)
@@ -428,13 +439,6 @@ class Merkato(object):
                 if DEBUG: print("price: " + str(price))
                 time.sleep(.3)
 
-    def kill(self):
-        """
-        simple_app will run this if user hits "kill" button
-        put whatever you want in here.
-        :return:
-        """
-        pass
 
     def avoid_blocking(self):
         if self.user_interface:
