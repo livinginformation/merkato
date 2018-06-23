@@ -265,17 +265,14 @@ class TuxExchange(ExchangeBase):
 
         query_parameters = { "method": "getmytradehistory" }
 
-        if start != 0:
-            query_parameters["start"] = str(start)
+        # if start != 0:
+        #     query_parameters["start"] = str(start)
             
-        if start !=0 and end != 0:
-            query_parameters["end"] = str(end)
+        # if start !=0 and end != 0:
+        #     query_parameters["end"] = str(end)
 
-        print('query_parameters', query_parameters)
         response = self._create_signed_request(query_parameters)
-
         filtered_history =  [trade for trade in response if self.ticker in trade["market_pair"]]
-        print('filtered history', filtered_history)
         return filtered_history
 
 
