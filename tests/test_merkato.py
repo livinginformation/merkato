@@ -1,12 +1,25 @@
 import unittest
-from mock import Mock, patch, call
+from mock import patch
 
 from merkato.merkato import Merkato
+from merkato.exchanges.test_exchange.exchange import TestExchange
+
 
 class MerkatoTestCase(unittest.TestCase):
-	def setUp(self):
+	@patch('merkato.merkato.merkato_exists', return_value=True)
+	@patch('merkato.merkato.get_first_order', return_value=None)
+	@patch('merkato.merkato.get_last_order', return_value=None)
+	@patch('merkato.merkato.get_relevant_exchange', return_value=TestExchange)
+	def setUp(self, *_):
 		config = {"exchange": "tux", "private_api_key": "abc123", "public_api_key": "def456", "limit_only": False}
-		self.merkato = Merkato(config, ticker='XMR', spread='15')
+		self.merkato = Merkato(config, coin='XMR', base='BTC', spread='.1',
+							   bid_reserved_balance='1', ask_reserved_balance='1')
+
+	def test_rebalance_orders__no_new_txes(self):
+		result = self.merkato.rebalance_orders([])
+
+	def test_rebalance_orders(self):
+		pass
 
 	def test_create_bid_ladder(self):
 		pass
