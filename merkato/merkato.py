@@ -9,12 +9,13 @@ from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID
     ONE_SATOSHI, FIRST_ORDER, MARKET
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists, kill_merkato
 from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, \
-                           get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history, \
-                           get_first_order, get_time_of_last_order, get_market_results
+    get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history, \
+    get_first_order, get_time_of_last_order, get_market_results, log_all_methods
 
 import logging
 log = logging.getLogger(__name__)
 
+@log_all_methods
 class Merkato(object):
     def __init__(self, configuration, coin, base, spread,
                  bid_reserved_balance, ask_reserved_balance,
@@ -81,7 +82,6 @@ class Merkato(object):
         # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
         factor = self.spread*self.profit_margin/2
-        log.debug("merkato.rebalance_orders")
         ordered_transactions = new_txes
         log.info('ordered transactions rebalanced: {}'.format(ordered_transactions))
         for tx in ordered_transactions:

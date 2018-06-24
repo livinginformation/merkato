@@ -1,4 +1,4 @@
-import json
+import logging
 from merkato.exchanges.test_exchange.exchange import TestExchange
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.exchanges.binance_exchange.exchange import BinanceExchange
@@ -198,3 +198,22 @@ def ensure_bytes(password, public_key, private_key):
     if isinstance(private_key, str):
         private_key = private_key.encode('utf-8')
     return (password, public_key, private_key)
+
+
+def log_on_call(f):
+    def wrapped(self, *args, **kwargs):
+        log = logging.getLogger()
+        log.debug("Entering {}".format(f.__name__))
+        return f(self, *args, **kwargs)
+    return wrapped
+
+
+def log_all_methods(cls):
+    for name in cls.__dict__:
+        attr = getattr(cls, name)
+        if callable(attr):
+            setattr(cls, name, log_on_call(attr))
+    return cls
+
+
+
