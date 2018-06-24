@@ -1,5 +1,7 @@
-import binance
 from binance.client import Client
+
+import logging
+log = logging.getLogger(__name__)
 
 
 def validate_keys(config, url):
@@ -11,7 +13,7 @@ def validate_keys(config, url):
     try:
         response = client.get_open_orders(symbol='ETHBTC')
     except Exception as e:
-        print(e)
+        log.error(e)
         return False
 
     return True
