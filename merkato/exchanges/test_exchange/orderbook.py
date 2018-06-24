@@ -1,7 +1,8 @@
 import datetime
 
-from merkato.exchanges.test_exchange.constants import BID, ASK
 from merkato.constants import BUY, SELL
+from merkato.exchanges.test_exchange.constants import BID, ASK
+
 
 class Orderbook:
     def __init__(self, bids=None, asks=None):
@@ -12,14 +13,14 @@ class Orderbook:
         self.current_order_id = 1
 
     def addBid(self, userID, amount, price):
-        #is_market_order = price > self.asks[0].price
+        # is_market_order = price > self.asks[0].price
         order = self.create_order(userID, amount, price, BUY)
         self.bids.append(order)
         self.bids = sorted(self.bids, key=lambda bid: bid["price"], reverse=True)
         return order['orderid']
-        #if is_market_order:
+        # if is_market_order:
         #    return self.resolve_market_order()
-    
+
     def addAsk(self, userID, amount, price):
         # create ask
         order = self.create_order(userID, amount, price, SELL)
@@ -29,7 +30,6 @@ class Orderbook:
         self.asks = sorted(self.asks, key=lambda ask: ask["price"])
         return order['orderid']
 
-        
     def resolve_market_order(self, type, price):
         resolved_orders = []
         highest_bid = self.bids[0]
@@ -51,9 +51,9 @@ class Orderbook:
         is_bid_market_order = price < self.bids[0]["price"]
         is_ask_market_order = price > self.asks[0]["price"]
 
-        if(is_ask_market_order):
+        if (is_ask_market_order):
             return self.resolve_market_order(ASK, price)
-        elif(is_bid_market_order):
+        elif (is_bid_market_order):
             return self.resolve_market_order(BID, price)
 
     def add_resolved_order(self, order, resolved_orders):
@@ -65,29 +65,29 @@ class Orderbook:
         # new_order['amount'] = amount
 
         # new_order['total'] = float(order['price']) * float(amount)
-    
+
         # self.current_order_id += 1
         order['date'] = datetime.datetime.now().isoformat(sep=" ")[:-7]
         resolved_orders.append(order)
-    
+
     def create_order(self, user_id, amount, price, order_type):
-        new_order =  {
-            'fee': '0.00000000', 
+        new_order = {
+            'fee': '0.00000000',
             'feepercent': '0.000',
             "user_id": user_id,
-            "price":price,
+            "price": price,
             'coin': self.bid_ticker,
             'market_pair': self.ask_ticker + '_' + self.bid_ticker,
-            'id': self.current_order_id, 
-            'orderid': self.current_order_id, 
+            'id': self.current_order_id,
+            'orderid': self.current_order_id,
             'market': 'BTC',
             'type': order_type
-        }   
+        }
 
         new_order['amount'] = amount
 
         new_order['total'] = float(price) * float(amount)
-       
+
         self.current_order_id += 1
 
         return new_order

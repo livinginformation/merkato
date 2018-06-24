@@ -1,15 +1,17 @@
+import time
+
 import hashlib
 import hmac
 import json
+import logging
 import requests
-import time
 import urllib.parse
-from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
+
+from merkato.constants import BUY, SELL
 from merkato.constants import MARKET
 from merkato.exchanges.exchange_base import ExchangeBase
-from merkato.constants import BUY, SELL
+from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -18,7 +20,7 @@ class TuxExchange(ExchangeBase):
 
     def __init__(self, config, coin, base):
         self.privatekey = config['private_api_key']
-        self.publickey  = config['public_api_key']
+        self.publickey = config['public_api_key']
         self.limit_only = config['limit_only']
         log.info('TuxExchange config', config)
         self.retries = 5
@@ -26,7 +28,6 @@ class TuxExchange(ExchangeBase):
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
         self.name = 'tux'
-
 
     def _sell(self, amount, ask):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
@@ -40,7 +41,6 @@ class TuxExchange(ExchangeBase):
         log.info(response)
         return response['success']
 
-
     def sell(self, amount, ask):
         attempt = 0
         while attempt < self.retries:
@@ -49,8 +49,10 @@ class TuxExchange(ExchangeBase):
                 # If ask price is lower than the highest bid, return.
 
                 if float(self.get_highest_bid()) > ask:
-                    log.info("SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "tux"))
-                    return MARKET # Maybe needs failed or something
+                    log.info(
+                        "SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, ask,
+                                                                                            "tux"))
+                    return MARKET  # Maybe needs failed or something
 
             try:
                 success = self._sell(amount, ask)
@@ -60,7 +62,8 @@ class TuxExchange(ExchangeBase):
                     return success
 
                 else:
-                    log.info("SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
+                    log.info("SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux",
+                                                                                       attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -78,7 +81,8 @@ class TuxExchange(ExchangeBase):
                     return success
 
                 else:
-                    log.info("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
+                    log.info("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux",
+                                                                                      attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -95,7 +99,9 @@ class TuxExchange(ExchangeBase):
                 return success
 
             else:
-                log.info("SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
+                log.info(
+                    "SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt,
+                                                                              self.retries))
                 attempt += 1
                 time.sleep(1)
 
@@ -114,7 +120,6 @@ class TuxExchange(ExchangeBase):
         log.info(response)
         return response['success']
 
-
     def buy(self, amount, bid):
         attempt = 0
         bid_amount = amount / bid
@@ -124,9 +129,10 @@ class TuxExchange(ExchangeBase):
                 # If bid price is higher than the lowest ask, return.
 
                 if float(self.get_lowest_ask()) < bid:
-
-                    log.info("BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
-                    return MARKET # Maybe needs failed or something
+                    log.info(
+                        "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid,
+                                                                                           "tux"))
+                    return MARKET  # Maybe needs failed or something
 
             try:
                 success = self._buy(bid_amount, bid)
@@ -135,13 +141,13 @@ class TuxExchange(ExchangeBase):
                     return success
 
                 else:
-                    log.info("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
+                    log.info("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux",
+                                                                                      attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
             except Exception as e:  # TODO - too broad exception handling
                 raise ValueError(e)
-
 
     def get_all_orders(self):
         ''' Returns all open orders for the ticker XYZ (not BTC_XYZ)
@@ -157,21 +163,19 @@ class TuxExchange(ExchangeBase):
 
         return response_json
 
-
     def get_my_open_orders(self, context_formatted=False):
         ''' Returns all open orders for the authenticated user '''
 
-        query_parameters = { "method": "getmyopenorders" }
+        query_parameters = {"method": "getmyopenorders"}
 
         orders = self._create_signed_request(query_parameters)
         if isinstance(orders, list):
             return {}
-        filtered_orders = {order_id : order for order_id, order in orders.items() if self.ticker in order["market_pair"]}
+        filtered_orders = {order_id: order for order_id, order in orders.items() if self.ticker in order["market_pair"]}
         # Return orders in standardized format (list of buys/sells)
         # Tux returns {id: {order}, id: {order}, ...}, we want
         # [{order}, {order}, ...]
         return filtered_orders
-
 
     def cancel_order(self, order_id):
         ''' Cancels the order with the specified order ID
@@ -192,14 +196,13 @@ class TuxExchange(ExchangeBase):
         }
         return self._create_signed_request(query_parameters)
 
-
     def get_ticker(self, coin=None):
         ''' Returns the current ticker data for the given coin. If no coin is given,
             it will return the ticker data for all coins.
             :param coin: string (of the format BTC_XYZ)
         '''
 
-        params = { "method": "getticker" }
+        params = {"method": "getticker"}
         response = requests.get(self.url, params=params)
 
         if not coin:
@@ -209,7 +212,6 @@ class TuxExchange(ExchangeBase):
         log.info(response_json[coin])
 
         return response_json[coin]
-
 
     def get_24h_volume(self, coin=None):
         ''' Returns the 24 hour volume for the given coin.
@@ -217,7 +219,7 @@ class TuxExchange(ExchangeBase):
             :param coin string (of the form BTC_XYZ where XYZ is the alt ticker)
         '''
 
-        params = { "method": "get24hvolume" }
+        params = {"method": "get24hvolume"}
         response = requests.get(self.url, params=params)
 
         if not coin:
@@ -228,60 +230,54 @@ class TuxExchange(ExchangeBase):
 
         return response_json[coin]
 
-
     def get_balances(self):
         ''' TODO Function Definition
         '''
 
         # also keys go unused, also coin...
-        tuxParams = {"method" : "getmybalances"}
+        tuxParams = {"method": "getmybalances"}
 
         response = self._create_signed_request(tuxParams)
         log.info(response)
-        pair_balances = {"base" : {"amount": response[self.base],
-                                   "name" : self.base},
+        pair_balances = {"base": {"amount": response[self.base],
+                                  "name": self.base},
                          "coin": {"amount": response[self.coin],
                                   "name": self.coin},
-                        }
+                         }
 
         return pair_balances
-
 
     def get_my_trade_history(self, start=0, end=0):
         ''' TODO Function Definition
         '''
         log.info("Getting trade history...")
 
-        query_parameters = { "method": "getmytradehistory" }
+        query_parameters = {"method": "getmytradehistory"}
 
         # if start != 0:
         #     query_parameters["start"] = str(start)
-            
+
         # if start !=0 and end != 0:
         #     query_parameters["end"] = str(end)
 
         response = self._create_signed_request(query_parameters)
-        filtered_history =  [trade for trade in response if self.ticker in trade["market_pair"]]
+        filtered_history = [trade for trade in response if self.ticker in trade["market_pair"]]
         return filtered_history
-
 
     def get_last_trade_price(self):
         ''' TODO Function Definition
         '''
         return self.get_ticker(self.ticker)["last"]
 
-
     def get_lowest_ask(self):
         ''' TODO Function Definition
         '''
         return self.get_ticker(self.ticker)["lowestAsk"]
 
-
     def get_highest_bid(self):
         ''' TODO Function Definition
         '''
         return self.get_ticker(self.ticker)["highestBid"]
-
 
     def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
         ''' Signs provided query parameters with API keys

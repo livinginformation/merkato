@@ -1,13 +1,15 @@
 # Merkato Configuration
 
-import json
-import os.path
-from merkato.utils.database_utils import get_exchange,insert_exchange, no_exchanges_table_exists, create_exchanges_table, get_exchange as get_exchange_from_db
-from merkato.exchanges.tux_exchange.utils import validate_credentials
-from merkato.exchanges.binance_exchange.utils import validate_keys
-from merkato.constants import EXCHANGE
-from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection, encrypt, decrypt, ensure_bytes
 import getpass
+
+from merkato.constants import EXCHANGE
+from merkato.exchanges.binance_exchange.utils import validate_keys
+from merkato.exchanges.tux_exchange.utils import validate_credentials
+from merkato.utils import update_config_with_credentials, get_exchange, get_config_selection, encrypt, decrypt, \
+    ensure_bytes
+from merkato.utils.database_utils import get_exchange, insert_exchange, no_exchanges_table_exists, \
+    create_exchanges_table, get_exchange as get_exchange_from_db
+
 
 def load_config():
     # Loads an existing configuration file
@@ -33,7 +35,7 @@ def insert_config_into_exchanges(config):
 
 def create_config():
     # Create new config
-    config = { "limit_only": True }
+    config = {"limit_only": True}
     url = "https://tuxexchange.com/api"
 
     while True:
@@ -53,7 +55,7 @@ def create_config():
             insert_config_into_exchanges(config)
             decrypt_keys(config)
             return config
-        
+
         elif exchange == 'test':
             config[EXCHANGE] = 'test'
             update_config_with_credentials(config)
@@ -68,7 +70,7 @@ def create_config():
         elif exchange == 'bit':
             print("Currently Unsupported")
             continue
-        
+
         elif exchange == 'bina':
             update_config_with_credentials(config)
             credentials_are_valid = validate_keys(config, url)
@@ -91,11 +93,12 @@ def create_config():
 def encrypt_keys(config, password=None):
     ''' Encrypts the API keys before storing the config in the database
     '''
-    public_key  = config["public_api_key"]
+    public_key = config["public_api_key"]
     private_key = config["private_api_key"]
 
     if password is None:
-        password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
+        password = getpass.getpass(
+            "\n\ndatabase password:")  # Prompt user for password / get password from Nasa. This should be a popup?
 
     password, public_key, private_key = ensure_bytes(password, public_key, private_key)
 
@@ -104,9 +107,9 @@ def encrypt_keys(config, password=None):
     # - password: bytes
     # - data:     bytes
 
-    public_key_encrypted  = encrypt(password, public_key)
+    public_key_encrypted = encrypt(password, public_key)
     private_key_encrypted = encrypt(password, private_key)
-    config["public_api_key"]  = public_key_encrypted
+    config["public_api_key"] = public_key_encrypted
     config["private_api_key"] = private_key_encrypted
     return config
 
@@ -114,11 +117,12 @@ def encrypt_keys(config, password=None):
 def decrypt_keys(config, password=None):
     ''' Decrypts the API keys before storing the config in the database
     '''
-    public_key  = config["public_api_key"]
+    public_key = config["public_api_key"]
     private_key = config["private_api_key"]
 
     if password is None:
-        password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
+        password = getpass.getpass(
+            "\n\ndatabase password:")  # Prompt user for password / get password from Nasa. This should be a popup?
 
     password, public_key, private_key = ensure_bytes(password, public_key, private_key)
 
@@ -127,12 +131,13 @@ def decrypt_keys(config, password=None):
     # - password: bytes
     # - data:     bytes
 
-    public_key_decrypted  = decrypt(password, public_key)
+    public_key_decrypted = decrypt(password, public_key)
     private_key_decrypted = decrypt(password, private_key)
-    config["public_api_key"]  = public_key_decrypted.decode('utf-8')
+    config["public_api_key"] = public_key_decrypted.decode('utf-8')
     config["private_api_key"] = private_key_decrypted.decode('utf-8')
 
     return config
+
 
 def decrypt_merkato(merkato, password=None):
     ''' Decrypts the API keys inside a merkato dict before storing the config in the database
@@ -145,7 +150,7 @@ def get_config():
     while True:
 
         selection = get_config_selection()
-        if selection =='1':
+        if selection == '1':
             # Create new config
             config = create_config()
             return config

@@ -1,20 +1,14 @@
-import hashlib
-import hmac
-import json
-import math
-import requests
-import time
 import random
-import urllib.parse
-from merkato.exchanges.test_exchange.utils import apply_resolved_orders
+
+from merkato.constants import PRICE, USER_ID, AMOUNT
 from merkato.exchanges.exchange_base import ExchangeBase
-from merkato.constants import BUY, SELL, PRICE, USER_ID, AMOUNT
-from merkato.exchanges.test_exchange.orderbook import Orderbook
 from merkato.exchanges.test_exchange.constants import test_asks, test_bids
+from merkato.exchanges.test_exchange.orderbook import Orderbook
 from merkato.exchanges.tux_exchange.utils import translate_ticker
 
+
 class TestExchange(ExchangeBase):
-    def __init__(self, config, coin, base, user_id=20, accounts=None, price = 1, password='password'):
+    def __init__(self, config, coin, base, user_id=20, accounts=None, price=1, password='password'):
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
@@ -27,48 +21,46 @@ class TestExchange(ExchangeBase):
         self.retries = 3
         self.limit_only = True
         self.DEBUG = 3
-        
+
     def debug(self, level, header, *args):
         if level <= self.DEBUG:
-            print("-"*10)
+            print("-" * 10)
             print("{}---> {}:".format(level, header))
             for arg in args:
                 print("\t\t" + repr(arg))
             print("-" * 10)
 
-
-    def _sell(self, amount, ask,):
+    def _sell(self, amount, ask, ):
         return self.orderbook.addAsk(self.user_id, amount, ask)
-
-
 
     def sell(self, amount, ask):
         if self.limit_only:
             # Get current highest bid on the orderbook
             # If ask price is lower than the highest bid, return.
             if self.get_highest_bid() > ask:
-                self.debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, ask, "test"))
+                self.debug(1, "sell",
+                           "SELL {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, ask,
+                                                                                               "test"))
                 # get highest price
-                return True # Maybe needs failed or something
+                return True  # Maybe needs failed or something
         try:
             return self._sell(amount, ask)
         except Exception as e:  # TODO - too broad exception handling
             self.debug(0, "sell", "ERROR", e)
             raise Exception(e)
 
-                
     def _buy(self, amount, bid):
         return self.orderbook.addBid(self.user_id, amount, bid)
-
 
     def buy(self, amount, bid):
         if self.limit_only:
             # Get current lowest ask on the orderbook
             # If bid price is higher than the lowest ask, return.
             if self.get_lowest_ask() < bid:
-                
-                self.debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "test"))
-                return True # Maybe needs failed or something
+                self.debug(1, "buy",
+                           "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid,
+                                                                                              "test"))
+                return True  # Maybe needs failed or something
         try:
             return self._buy(amount, bid)
         except Exception as e:  # TODO - too broad exception handling
@@ -76,20 +68,17 @@ class TestExchange(ExchangeBase):
             raise Exception(e)
             return False
 
-
     def get_order_history(self, user_id):
         return self.order_history
 
-
-    def generate_fake_data(self, delta_range=[-3,3]):
+    def generate_fake_data(self, delta_range=[-3, 3]):
         positive_or_negative = [-.2, .2]
-        self.debug(3,"test exchange.py gen fake data", self.price)
+        self.debug(3, "test exchange.py gen fake data", self.price)
         self.price = abs(self.price * (1 + random.randint(*delta_range) / 100))  # percent walk of price, never < 0
         self.debug(3, "test exchange.py gen fake data: new price", self.price)
-        new_orders = self.orderbook.generate_fake_orders(self.price)        
+        new_orders = self.orderbook.generate_fake_orders(self.price)
         if new_orders:
             self.order_history.extend(new_orders)
-
 
     def get_all_orders(self):
         ''' Returns all open orders for the current pair
@@ -100,7 +89,6 @@ class TestExchange(ExchangeBase):
             "asks": final_asks,
             "bids": final_bids
         }
-
 
     def get_my_open_orders(self):
         ''' Returns all open orders for the authenticated user '''
@@ -131,14 +119,15 @@ class TestExchange(ExchangeBase):
         try:
             if not self.order_history:
                 return []
-            filtered_history = list(filter(lambda order: order[USER_ID] == self.USER_ID and int(order['orderid']) >= int(orderid), self.order_history))
+            filtered_history = list(
+                filter(lambda order: order[USER_ID] == self.USER_ID and int(order['orderid']) >= int(orderid),
+                       self.order_history))
         except ValueError:
             filtered_history = []
         except:
             self.debug(3, "get_my_trade_history", self.order_history, self.user_id)
             raise
-        return filtered_history 
-
+        return filtered_history
 
     def cancel_order(self, order_id):
         ''' Cancels the order with the specified order ID
@@ -147,13 +136,11 @@ class TestExchange(ExchangeBase):
         # Broken, TODO
         return ""
 
-
     def get_ticker(self):
         ''' Returns the current ticker data for the target coin.
         '''
         # Broken, TODO
         return ""
-
 
     def get_24h_volume(self):
         ''' Returns the 24 hour volume for the target coin.
@@ -161,28 +148,24 @@ class TestExchange(ExchangeBase):
         # Broken, TODO
         return ""
 
-
     def get_balances(self):
-        pair_balances = {"base" : {"amount": {"balance":10000000000},
-                                   "name" : self.base},
-                         "coin": {"amount": {"balance":10000000000},
+        pair_balances = {"base": {"amount": {"balance": 10000000000},
+                                  "name": self.base},
+                         "coin": {"amount": {"balance": 10000000000},
                                   "name": self.coin},
-                        }
+                         }
 
         return pair_balances
-
 
     def get_last_trade_price(self):
         self.generate_fake_data()
         return self.price
-
 
     def get_lowest_ask(self):
         asks_exist = len(self.orderbook.asks) > 0
         if not asks_exist:
             return test_asks[0][PRICE]
         return self.orderbook.asks[0][PRICE]
-
 
     def get_highest_bid(self):
         bids_exist = len(self.orderbook.bids) > 0

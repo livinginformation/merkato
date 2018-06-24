@@ -1,25 +1,28 @@
-import logging
-from merkato.exchanges.test_exchange.exchange import TestExchange
-from merkato.exchanges.tux_exchange.exchange import TuxExchange
-from merkato.exchanges.binance_exchange.exchange import BinanceExchange
-from merkato.constants import known_exchanges
-from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange, get_merkato
-import base64
 import time
+
+import base64
+import logging
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from merkato.constants import known_exchanges
+from merkato.exchanges.binance_exchange.exchange import BinanceExchange
+from merkato.exchanges.test_exchange.exchange import TestExchange
+from merkato.exchanges.tux_exchange.exchange import TuxExchange
+from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange, get_merkato
+
 salt = 'merkato'
+
 
 def encrypt(password, source):
     kdf = PBKDF2HMAC(
-      algorithm=hashes.SHA256(),
-      length=32,
-      salt=salt.encode(),
-      iterations=10,
-      backend=default_backend()
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt.encode(),
+        iterations=10,
+        backend=default_backend()
     )
     key = base64.urlsafe_b64encode(kdf.derive(password))
     cipher_suite = Fernet(key)
@@ -29,11 +32,11 @@ def encrypt(password, source):
 
 def decrypt(password, source):
     kdf = PBKDF2HMAC(
-      algorithm=hashes.SHA256(),
-      length=32,
-      salt=salt.encode(),
-      iterations=10,
-      backend=default_backend()
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt.encode(),
+        iterations=10,
+        backend=default_backend()
     )
     key = base64.urlsafe_b64encode(kdf.derive(password))
     cipher_suite = Fernet(key)
@@ -43,7 +46,7 @@ def decrypt(password, source):
 
 def update_config_with_credentials(config):
     print("API Credentials needed")
-    public_key  = input("Public Key: ")
+    public_key = input("Public Key: ")
     private_key = input("Private Key: ")
     config['public_api_key'] = public_key
     config['private_api_key'] = private_key
@@ -72,11 +75,11 @@ def get_config_selection():
 
 
 def create_price_data(orders, order):
-    price_data             = {}
-    price_data['total']    = float(orders[order]["total"])
-    price_data['amount']   = float(orders[order]["amount"])
+    price_data = {}
+    price_data['total'] = float(orders[order]["total"])
+    price_data['amount'] = float(orders[order]["amount"])
     price_data['id'] = orders[order]["id"]
-    price_data['type']     = orders[order]["type"]
+    price_data['type'] = orders[order]["type"]
     return price_data
 
 
@@ -101,7 +104,7 @@ def generate_complete_merkato_configs(merkato_tuples):
         complete_config = {}
         config = {"limit_only": True}
         exchange = get_exchange_from_db(tuple[0])
-        
+
         config['exchange'] = tuple[0]
         config['public_api_key'] = exchange['public_api_key']
         config['private_api_key'] = exchange['private_api_key']
@@ -139,19 +142,21 @@ def check_reserve_balances(total_balances, allocated_balances, coin_reserve, bas
         'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin']
     }
     if remaining_balances['base'] < base_reserve:
-        raise ValueError('Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
+        raise ValueError(
+            'Cannot create merkato, the suggested base reserve will exceed the amount of the base asset on the exchange.')
     if remaining_balances['coin'] < coin_reserve:
-        raise ValueError('Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
+        raise ValueError(
+            'Cannot create merkato, the suggested coin reserve will exceed the amount of the coin asset on the exchange.')
 
 
-def get_last_order( UUID):
+def get_last_order(UUID):
     merkato = get_merkato(UUID)
     last_order = merkato[6]
     print('last order', last_order)
     return last_order
 
 
-def get_first_order( UUID):
+def get_first_order(UUID):
     merkato = get_merkato(UUID)
     first_order = merkato[7]
     print('first order', first_order)
@@ -166,21 +171,23 @@ def get_new_history(current_history, last_order):
         if is_last_order:
             print('found last order', is_last_order)
             new_history = current_history[:index]
-            new_history.reverse() # need to reverse due to the newest order at start of the list, we want oldest
+            new_history.reverse()  # need to reverse due to the newest order at start of the list, we want oldest
             return new_history
     return []
 
+
 def get_time_of_last_order(ordered_transactions):
-    index_of_last_tx = len(ordered_transactions) -1
+    index_of_last_tx = len(ordered_transactions) - 1
     last_tx_data = ordered_transactions[index_of_last_tx]['date']
     pattern = '%Y-%m-%d %H:%M:%S'
     epoch = int(time.mktime(time.strptime(last_tx_data, pattern)))
     return epoch
 
-def get_market_results(history): 
+
+def get_market_results(history):
     results = {
-        'amount_executed': 0, # This is in the quote asset
-        'total_gotten': 0 # This is in the base asset
+        'amount_executed': 0,  # This is in the quote asset
+        'total_gotten': 0  # This is in the base asset
 
     }
     for order in history:
@@ -189,6 +196,7 @@ def get_market_results(history):
 
     results['last_orderid'] = history[-1]['orderId']
     return results
+
 
 def ensure_bytes(password, public_key, private_key):
     if isinstance(password, str):
@@ -205,6 +213,7 @@ def log_on_call(f):
         log = logging.getLogger()
         log.debug("Entering {}".format(f.__name__))
         return f(self, *args, **kwargs)
+
     return wrapped
 
 
@@ -214,6 +223,3 @@ def log_all_methods(cls):
         if callable(attr):
             setattr(cls, name, log_on_call(attr))
     return cls
-
-
-
