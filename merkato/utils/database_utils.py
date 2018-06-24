@@ -2,13 +2,14 @@ import sqlite3
 
 from pprint import pprint
 
+
 def drop_merkatos_table():
     try:
         conn = sqlite3.connect('merkato.db')
 
     except Exception as e:
         print(str(e))
-        
+
     finally:
         c = conn.cursor()
         c.execute('''DROP TABLE merkatos''')
@@ -24,7 +25,7 @@ def create_merkatos_table():
 
     except Exception as e:
         print(str(e))
-        
+
     finally:
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS merkatos
@@ -53,7 +54,8 @@ def no_merkatos_table_exists():
         return number_of_mutex_tables == 0
 
 
-def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', spread='.1', bid_reserved_balance=0, ask_reserved_balance=0, first_order='', profit_limit=10, last_order='', profit_margin=0):
+def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', spread='.1', bid_reserved_balance=0,
+                   ask_reserved_balance=0, first_order='', profit_limit=10, last_order='', profit_margin=0):
     ''' TODO: Function Comment
     '''
     try:
@@ -65,8 +67,9 @@ def insert_merkato(exchange, exchange_pair='tuxBTC_ETH', base='BTC', alt='XMR', 
     finally:
         c = conn.cursor()
         c.execute("""REPLACE INTO merkatos 
-                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, first_order, ask_reserved_balance, bid_reserved_balance, profit_margin, base_partials_balance, quote_partials_balance) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""", 
-                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, first_order, ask_reserved_balance, bid_reserved_balance, profit_margin, 0, 0))
+                    (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, first_order, ask_reserved_balance, bid_reserved_balance, profit_margin, base_partials_balance, quote_partials_balance) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                  (exchange, exchange_pair, base, alt, spread, profit_limit, last_order, first_order,
+                   ask_reserved_balance, bid_reserved_balance, profit_margin, 0, 0))
         conn.commit()
         conn.close()
 
@@ -83,7 +86,7 @@ def update_merkato(exchange_pair, key, value):
     finally:
         c = conn.cursor()
         query = "UPDATE merkatos SET {} = ? WHERE exchange_pair = ?".format(key)
-        c.execute(query, (value, exchange_pair) )
+        c.execute(query, (value, exchange_pair))
         conn.commit()
         conn.close()
 
@@ -153,8 +156,8 @@ def insert_exchange(exchange, public_api_key='', private_api_key='', limit_only=
     finally:
         c = conn.cursor()
         c.execute("""REPLACE INTO exchanges 
-                    (exchange, public_api_key, private_api_key, limit_only) VALUES (?,?,?,?)""", 
-                    (exchange, public_api_key, private_api_key, limit_only))
+                    (exchange, public_api_key, private_api_key, limit_only) VALUES (?,?,?,?)""",
+                  (exchange, public_api_key, private_api_key, limit_only))
         conn.commit()
         conn.close()
 
@@ -171,7 +174,7 @@ def update_exchange(exchange, key, value):
     finally:
         c = conn.cursor()
         query = "UPDATE exchanges SET {} = ? WHERE exchange = ?".format(key)
-        c.execute(query, (value, exchange) )
+        c.execute(query, (value, exchange))
         conn.commit()
         conn.close()
 
@@ -192,8 +195,8 @@ def get_all_exchanges():
         all_exchanges = c.fetchall()
         conn.commit()
         conn.close()
-        exchange_index = {config["exchange"]:dict(config) for config in all_exchanges}
-        exchange_menu = [name for name,config in exchange_index.items()]
+        exchange_index = {config["exchange"]: dict(config) for config in all_exchanges}
+        exchange_menu = [name for name, config in exchange_index.items()]
         pprint(exchange_index)
 
         return exchange_menu, exchange_index

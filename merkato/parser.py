@@ -1,11 +1,13 @@
 import argparse
-from merkato.constants import known_exchanges, implemented_exchanges
 import json
 import os.path
+
+from merkato.constants import known_exchanges, implemented_exchanges
 
 
 def skip(args):
     return None
+
 
 def new(args):
     print("...Generating New Config File...")
@@ -27,8 +29,10 @@ def new(args):
             print("written to {}".format(args.outfile[o]))
             return config
 
+
 def load(args):
     return json.load(args.infile[0])
+
 
 def parse():
     parser = argparse.ArgumentParser()
@@ -47,11 +51,13 @@ def parse():
     parser_new.set_defaults(func=new)
 
     args = parser.parse_args()
-    config  = args.func(args)
+    config = args.func(args)
     return config
+
 
 if __name__ == "__main__":
     from pprint import pprint
+
     print("------------\nTesting parser:\n")
     config = parse()
     print(type(config))
