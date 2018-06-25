@@ -167,7 +167,7 @@ class BinanceExchange(ExchangeBase):
     def get_my_open_orders(self, context_formatted=False):
         ''' Returns all open orders for the authenticated user '''
                 
-        orders = self.client.get_open_orders(symbol=self.ticker)
+        orders = self.client.get_open_orders(symbol=self.ticker, recvWindow=10000000)
         # orders is an array of dicts we need to transform it to an dict of dicts to conform to binance
         new_dict = {}
         for order in orders:
@@ -237,8 +237,8 @@ class BinanceExchange(ExchangeBase):
         '''
 
         # also keys go unused, also coin...
-        base_balance = self.client.get_asset_balance(asset=self.base)
-        coin_balance = self.client.get_asset_balance(asset=self.coin)
+        base_balance = self.client.get_asset_balance(asset=self.base, recvWindow=10000000)
+        coin_balance = self.client.get_asset_balance(asset=self.coin, recvWindow=10000000)
         base = float(base_balance['free']) + float(base_balance['locked'])
         coin = float(coin_balance['free']) + float(coin_balance['locked'])
 
@@ -258,11 +258,12 @@ class BinanceExchange(ExchangeBase):
         ''' TODO Function Definition
         '''
         log.info("Getting trade history...")
-        start_is_provided = start != 0 and start != ''
-        if start_is_provided:
-            trades = self.client.get_my_trades(symbol=self.ticker, fromId=start, recvWindow=10000000)
-        else:
-            trades = self.client.get_my_trades(symbol=self.ticker, recvWindow=10000000)
+        # start_is_provided = start != 0 and start != ''
+        # print('start', start)
+        # if start_is_provided:
+        #     trades = self.client.get_my_trades(symbol=self.ticker, fromId=int(start), recvWindow=10000000)
+        # else:
+        trades = self.client.get_my_trades(symbol=self.ticker, recvWindow=10000000)
 
         for trade in trades:
             if trade['isBuyer'] == True:
@@ -270,6 +271,7 @@ class BinanceExchange(ExchangeBase):
             else:
                 trade['type'] = 'sell'
             trade['amount'] = trade['qty']
+        trades.reverse()
         return trades
 
 
