@@ -47,7 +47,7 @@ class Merkato(object):
             history = self.exchange.get_my_trade_history()
             print('initial history', history)
             if len(history) > 0:
-                print('updateing history', history[0]['orderId'])
+                print('updating history', history[0]['orderId'])
                 new_last_order = history[0]['orderId']
                 update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
