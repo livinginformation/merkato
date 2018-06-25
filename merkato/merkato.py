@@ -386,7 +386,6 @@ class Merkato(object):
         new_history = get_new_history(current_history, last_order)
         print('first_order', first_order)
         print('last_order', last_order)
-        print('current_history', current_history)
         print('new_history', new_history)
         new_transactions = []
         

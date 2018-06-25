@@ -271,6 +271,9 @@ class BinanceExchange(ExchangeBase):
             else:
                 trade['type'] = 'sell'
             trade['amount'] = trade['qty']
+            if 'time' in trade:
+                date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(trade['time'])))
+                trade['date'] = date
         trades.reverse()
         return trades
 
