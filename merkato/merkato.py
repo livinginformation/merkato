@@ -45,7 +45,9 @@ class Merkato(object):
             check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
             insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance, first_order)
             history = self.exchange.get_my_trade_history()
+            print('initial history', history)
             if len(history) > 0:
+                print('updateing history', history[0]['orderId'])
                 new_last_order = history[0]['orderId']
                 update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
@@ -382,7 +384,10 @@ class Merkato(object):
         current_history = self.exchange.get_my_trade_history(first_order)
         last_order = get_last_order(self.mutex_UUID)
         new_history = get_new_history(current_history, last_order)
-
+        print('first_order', first_order)
+        print('last_order', last_order)
+        print('current_history', current_history)
+        print('new_history', new_history)
         new_transactions = []
         
         if len(new_history) > 0:
