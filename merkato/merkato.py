@@ -162,9 +162,6 @@ class Merkato(object):
                 # If the order is a partial fill (and the rest of the fill happens
                 # within the for loop), it will sum up to zero when adding the other
                 # executed orders (and considering the secondary reserves)
-                self.base_partials_balance += filled_amount
-                self.base_partials_balance -= total_amount
-                update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
                 amount = float(total_amount) * float(tx[PRICE])*(1-factor)
                 price = tx[PRICE]
@@ -185,6 +182,10 @@ class Merkato(object):
                 if market == MARKET:
                     log.info('market buy {}'.format(market))
                     self.handle_market_order(amount, buy_price, BUY)
+                
+                self.base_partials_balance += filled_amount
+                self.base_partials_balance -= total_amount
+                update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
             if tx['type'] == BUY:
                 print('buy partial fill', partial_fill)
@@ -221,9 +222,6 @@ class Merkato(object):
                 # If the order is a partial fill (and the rest of the fill happens
                 # within the for loop), it will sum up to zero when adding the other
                 # executed orders (and considering the secondary reserves)
-                self.quote_partials_balance += filled_amount
-                self.quote_partials_balance -= total_amount
-                update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
 
                 amount = float(total_amount)*float((1-factor))
                 price = tx[PRICE]
@@ -238,6 +236,9 @@ class Merkato(object):
                     log.info('market sell {}'.format(market))
                     self.handle_market_order(amount, sell_price, SELL)
 
+                self.quote_partials_balance += filled_amount
+                self.quote_partials_balance -= total_amount
+                update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
 
             if market != MARKET: 
                 log.info('market != MARKET')
@@ -408,8 +409,18 @@ class Merkato(object):
         last_orderid    = market_data['last_orderid']
         log.info('market data: {}'.format(market_data))
 
-        self.exchange.sell(amount_executed, price) # Should never market order
-
+        if amount == amount_executed:
+            self.exchange.sell(amount_executed, price) # Should never market order
+        
+        else:
+            if type == BUY:
+                self.quote_partials_balance += amount_executed
+                update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
+                log.info('market buy partials after'.format(self.quote_partials_balance))
+            else:
+                self.base_partials_balance += amount_executed * price
+                update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
+                log.info('market sell partials after {}'.format(self.base_partials_balance))
         # A market buy occurred, so we need to update the db with the latest tx
         update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
