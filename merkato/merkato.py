@@ -128,18 +128,10 @@ class Merkato(object):
                 partial_fill = self.exchange.is_partial_fill(orderid) # todo implement for tux (binance done)
 
             if tx['type'] == SELL:
+                log.info('amount: {}'.format(type(tx['amount']), type(tx[PRICE])))
 
                 if partial_fill:
-                    # This was a sell, so we gained more of the base asset. 
-                    # This was a partial fill, so the user's balance is increased by that amount. 
-                    # However, that amount is 'reserved' (will be placed on the books once the 
-                    # rest of the order is filled), and therefore is unavailable when creating new
-                    # Merkatos. Add this amount to a field 'base_partials_balance'.
-                    self.base_partials_balance += filled_amount
-                    update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
-
-                    # Update the last orderId (actually the id of the transaction)
-                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+                    self.handle_partial_fill(filled_amount, tx_id)
 
                     # 3. Skip everything else
                     continue
@@ -181,42 +173,22 @@ class Merkato(object):
                 market = self.exchange.buy(amount, buy_price)
                 # A lock is probably needed somewhere near here in case of unexpected shutdowns
                 
+                amount = float(tx['amount']) * float(tx[PRICE])*(1-factor)
+                price = float(tx[PRICE])
+                buy_price = price * ( 1  - self.spread)
+
+                log.info("found sell {}; corresponding buy {}".format(tx, buy_price))
+
+                market = self.exchange.buy(amount, buy_price)
+
                 if market == MARKET:
-
-                    log.info('market sell', market)
-                    last_order_time = str(int(time.time()))
-
-                    self.exchange.market_buy(amount, buy_price)
-                    market_history = self.exchange.get_my_trade_history(start=last_order_time)
-                    market_data = get_market_results(market_history)
-
-                    # The sell gave us some BTC. The buy is executed with that BTC.
-                    # The market buy will get us X xmr in return. All of that xmr
-                    # should be placed at the original order's matching price.
-                    #
-                    # We need to do something here about the partials if it doesnt fully fill
-                    amount_executed = float(market_data['amount_executed'])
-                    last_orderid    = market_data['last_orderid']
-                    log.info('market data: {}'.format(market_data))
-
-                    self.exchange.sell(amount_executed, price) # Should never market order
-
-                    # A market buy occurred, so we need to update the db with the latest tx
-                    update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
+                    log.info('market buy {}'.format(market))
+                    self.handle_market_order(amount, buy_price, BUY)
 
             if tx['type'] == BUY:
 
                 if partial_fill:
-                    # This was a buy, so we gained more of the quote asset. 
-                    # This was a partial fill, so the user's balance is increased by that amount. 
-                    # However, that amount is 'reserved' (will be placed on the books once the 
-                    # rest of the order is filled), and therefore is unavailable when creating new
-                    # Merkatos. Add this amount to a field 'quote_partials_balance'.
-                    self.quote_partials_balance += filled_amount # may need a multiply by price
-                    update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
-
-                    # 2. update the last order
-                    update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+                    self.handle_partial_fill(filled_amount, tx_id)
 
                     # 3. Skip everything else
                     continue
@@ -252,37 +224,12 @@ class Merkato(object):
                 log.info("Found buy {} corresponding sell {}".format(tx, sell_price))
 
                 market = self.exchange.sell(amount, sell_price)
-
-                # A lock is probably needed somewhere near here in case of unexpected shutdowns
                 
                 if market == MARKET:
 
-                    log.info('market buy {}'.format(market))
-                    last_order_time = str(int(time.time()))
+                    log.info('market sell {}'.format(market))
+                    self.handle_market_order(amount, sell_price, SELL)
 
-                    self.exchange.market_sell(amount, sell_price)
-                    market_history = self.exchange.get_my_trade_history(start=last_order_time)
-                    market_data = get_market_results(market_history)
-
-                    # We have a buy executed. We want to place a matching sell order.
-                    # If the whole order is executed, no edge case.
-                    # If the order has a remainder, the remainder will be on the books at
-                    # the appropriate price. So no problem. 
-                    # If the remainder is too small to have a matching order, it could 
-                    # disappear, but this is such a minor edge case we can ignore it.
-                    # 
-                    # The buy gave us some alt. The sell is executed with that alt.
-                    # The market sell will get us X btc in return. All of that btc
-                    # should be placed at the original order's matching price.
-                    amount_executed = float(market_data['total_gotten'])
-                    last_orderid    = market_data['last_orderid']
-
-                    log.info('market data {}'.format(market_data))
-
-                    self.exchange.buy(amount_executed, float(price)) # Should never market order
-
-                    # A market buy occurred, so we need to update the db with the latest tx
-                    update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
             if market != MARKET: 
                 log.info('market != MARKET')
@@ -421,90 +368,41 @@ class Merkato(object):
         self.distribute_bids(bid_start, total_base)
         self.distribute_asks(ask_start, total_alt)
 
+    def handle_partial_fill(self, filled_amount, tx_id):
+        # This was a buy, so we gained more of the quote asset. 
+        # This was a partial fill, so the user's balance is increased by that amount. 
+        # However, that amount is 'reserved' (will be placed on the books once the 
+        # rest of the order is filled), and therefore is unavailable when creating new
+        # Merkatos. Add this amount to a field 'quote_partials_balance'.
+        self.quote_partials_balance += filled_amount # may need a multiply by price
+        update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
 
-    def merge_orders(self):
-        # Takes all bids/asks that are at the same price, and combines them.
+        # 2. update the last order
+        update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+
+
+    def handle_market_order(self, amount, price, type):
+        if type == BUY
+            self.exchange.market_buy(amount, price)
+        elif type == SELL:
+            self.exchange.market_sell(amount, price)
+
+        market_history = self.exchange.get_my_trade_history()
+        market_data = get_market_results(market_history)
+
+        # The sell gave us some BTC. The buy is executed with that BTC.
+        # The market buy will get us X xmr in return. All of that xmr
+        # should be placed at the original order's matching price.
         #
-        # Consider changing semantics from existing_order and order to order and new_order.
-        # That is, existing_order currently becomes order, and order becomes new_order.
-        # Coin is a string
-        # TODO: Make orders/orderbook variables less semantically similar
+        # We need to do something here about the partials if it doesnt fully fill
+        amount_executed = float(market_data['amount_executed'])
+        last_orderid    = market_data['last_orderid']
+        log.info('market data: {}'.format(market_data))
 
-        orders = self.exchange.get_my_open_orders()
+        self.exchange.sell(amount_executed, price) # Should never market order
 
-        # Create a dictionary to store our desired orderbook
-        orderbook = dict()
-
-        for order in orders:
-
-            log.info('order {}'.format(order))
-
-            price    = orders[order][PRICE]
-            coin     = orders[order]["coin"]
-            amount   = float(orders[order]["amount"]) # Amount in asset
-            total    = float(orders[order]["total"])  # Total in BTC
-            order_id = orders[order]['id']
-
-            log.debug(orders[order])
-
-
-            if coin != self.exchange.ticker:
-                continue
-
-            if price not in orderbook:
-
-                price_data = create_price_data(orders, order)
-
-                orderbook[price] = price_data
-
-                log.debug("Found new bid at {}".format(price))
-
-            else:
-
-                log.info("Collision at {}".format(price))
-
-
-                existing_order        = orderbook[price]
-                existing_order_id     = existing_order['id']
-                existing_order_type   = existing_order['type']
-                existing_order_total  = float(existing_order['total'])
-                existing_order_amount = float(existing_order['amount'])
-
-                # Cancel the colliding orders
-                self.exchange.cancel_order(order_id)
-                self.exchange.cancel_order(existing_order_id)
-
-                # Update the totals to represent the new totals
-                existing_order['total']  = str(existing_order_total + total)
-                existing_order['amount'] = str(existing_order_amount + amount)
-
-                # Place a new order on the books with the sum
-                if existing_order_type == "buy":
-
-                    log.info("Placing buy for {} - {} of {} at a price of {}".format(
-                        existing_order['total'], self.exchange.base, self.exchange.ticker, price
-                    ))
-                    new_id = self.exchange.buy(float(existing_order['total'])/float(price), float(price), self.exchange.ticker)
-
-                else: # existing_order_type is sell
-                    log.info("Placing sell for {} - {} of {} at a price of {}".format(
-                        existing_order['total'], self.exchange.base, self.exchange.ticker, price
-                    ))
-                    new_id = self.exchange.sell(float(existing_order['amount']), float(price), self.exchange.ticker)
-
-                if new_id == 0:
-                    log.warning("Something went wrong.")
-                    return 1
-                else: update_merkato(self.mutex_UUID, LAST_ORDER, new_id)
-
-                log.debug("consolidation successful")
-                existing_order['id'] = new_id
-
-                log.debug(existing_order)
-
-        log.info("Consolidation Successful")
-
-        return 0
+        # A market buy occurred, so we need to update the db with the latest tx
+        update_merkato(self.mutex_UUID, LAST_ORDER, last_orderid)
 
 
     def update(self):
