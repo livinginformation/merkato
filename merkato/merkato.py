@@ -117,7 +117,7 @@ class Merkato(object):
 
         for tx in ordered_transactions:
             tx_id = tx['orderId'] # executed transaction
-            filled_amount = tx['amount']
+            filled_amount = float(tx['amount'])
             orderid = tx['id'] # The id of the limit order on the books
 
             # Do a check for whether this particular tx refers to a filled order
@@ -152,10 +152,10 @@ class Merkato(object):
 
                 if self.exchange.name == "tux":
                     # This is a band-aid. Remove once we can get total_amount from tux.
-                    total_amount = tx['initamount']
+                    total_amount = float(tx['initamount'])
 
                 else:
-                    total_amount = get_total_amount(orderid) # todo unimplemented on tux
+                    total_amount = self.exchange.get_total_amount(orderid) # todo unimplemented on tux
 
                 # This next part cancels out if the entire order is filled at once.
                 # If the order is a partial fill (and the rest of the fill happens
@@ -207,7 +207,12 @@ class Merkato(object):
                 # We need to place a matching order
                 # We want to get the total amount of that order
 
-                total_amount = get_total_amount(orderid) # todo implement for tux (binance done)
+                if self.exchange.name == "tux":
+                    # This is a band-aid. Remove once we can get total_amount from tux.
+                    total_amount = float(tx['initamount'])
+
+                else:
+                    total_amount = self.exchange.get_total_amount(orderid) # todo unimplemented on tux
 
                 # This next part cancels out if the entire order is filled at once.
                 # If the order is a partial fill (and the rest of the fill happens
@@ -285,7 +290,7 @@ class Merkato(object):
             current_order += 1
             self.avoid_blocking()
 
-        log.info('allocated amount', prior_reserve - self.bid_reserved_balance)
+        log.info('allocated amount {}'.format(prior_reserve - self.bid_reserved_balance))
 
 
     def distribute_bids(self, price, total_to_distribute, step=1.04):
@@ -382,7 +387,7 @@ class Merkato(object):
 
 
     def handle_market_order(self, amount, price, type):
-        if type == BUY
+        if type == BUY:
             self.exchange.market_buy(amount, price)
         elif type == SELL:
             self.exchange.market_sell(amount, price)
