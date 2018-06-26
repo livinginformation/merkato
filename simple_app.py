@@ -204,15 +204,7 @@ if __name__ == "__main__":
                        fg="black",
                        selectcolor="lightblue"
                        )
-    for i in range(1):
-        bot = Bot(root, app(), app, stub=0, starting_stats=fake_start())
-        app.add_screen(bot,
-            "null", 
-            textvariable=bot.title_var,
-            bg="gray75",
-            fg="black",
-            selectcolor="lightblue"
-        )
+
     root.after(1000, app.update_frames)
     root.after(100, app.finish_new_button())
 
