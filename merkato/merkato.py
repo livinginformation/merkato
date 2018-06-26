@@ -65,8 +65,8 @@ class Merkato(object):
             print('initial history', history)
 
             if len(history) > 0:
-                print('updating history', history[0]['orderId'])
-                new_last_order = history[0]['orderId']
+                print('updating history', history[0]['id'])
+                new_last_order = history[0]['id']
                 update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
 
@@ -116,9 +116,9 @@ class Merkato(object):
             open_orders = self.exchange.get_my_open_orders()
 
         for tx in ordered_transactions:
-            tx_id = tx['orderId'] # executed transaction
+            orderid = tx['orderId'] # executed transaction
             filled_amount = float(tx['amount'])
-            orderid = tx['id'] # The id of the limit order on the books
+            tx_id = tx['id'] # The id of the limit order on the books
 
             # Do a check for whether this particular tx refers to a filled order
             if self.exchange.name == 'tux':
@@ -129,7 +129,7 @@ class Merkato(object):
 
             if tx['type'] == SELL:
                 log.info('amount: {}'.format(type(tx['amount']), type(tx[PRICE])))
-
+                print('sell partial fill', partial_fill)
                 if partial_fill:
                     self.handle_partial_fill(filled_amount, tx_id)
 
@@ -152,6 +152,7 @@ class Merkato(object):
 
                 if self.exchange.name == "tux":
                     # This is a band-aid. Remove once we can get total_amount from tux.
+                    print('tx tx', tx)
                     total_amount = float(tx['initamount'])
 
                 else:
@@ -165,7 +166,7 @@ class Merkato(object):
                 self.base_partials_balance -= total_amount
                 update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
-                amount = float(filled_amount) * float(tx[PRICE])*(1-factor)
+                amount = float(total_amount) * float(tx[PRICE])*(1-factor)
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
                 log.info("Found sell {} corresponding buy {}".format(tx, buy_price))
@@ -186,6 +187,7 @@ class Merkato(object):
                     self.handle_market_order(amount, buy_price, BUY)
 
             if tx['type'] == BUY:
+                print('buy partial fill', partial_fill)
 
                 if partial_fill:
                     self.handle_partial_fill(filled_amount, tx_id)
@@ -209,6 +211,7 @@ class Merkato(object):
 
                 if self.exchange.name == "tux":
                     # This is a band-aid. Remove once we can get total_amount from tux.
+                    print('tx tx', tx)
                     total_amount = float(tx['initamount'])
 
                 else:
@@ -222,7 +225,7 @@ class Merkato(object):
                 self.quote_partials_balance -= total_amount
                 update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
 
-                amount = float(filled_amount)*float((1-factor))
+                amount = float(total_amount)*float((1-factor))
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
 
@@ -249,7 +252,8 @@ class Merkato(object):
                 update_merkato(self.mutex_UUID, FIRST_ORDER, tx_id)
 
         self.log_new_transactions(ordered_transactions)
-        
+        print('self.base_partials_balance', self.base_partials_balance)
+        print('self.quote_partials_balance ', self.quote_partials_balance )
         return ordered_transactions
 
 
@@ -428,6 +432,7 @@ class Merkato(object):
         new_history = get_new_history(current_history, last_order)
         print('first_order', first_order)
         print('last_order', last_order)
+        # print('current history', current_history)
         print('new_history', new_history)
         new_transactions = []
         

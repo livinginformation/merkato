@@ -165,7 +165,7 @@ def get_first_order( UUID):
 
 def get_new_history(current_history, last_order):
     for index, order in enumerate(current_history):
-        is_last_order = str(order['orderId']) == str(last_order)
+        is_last_order = str(order['id']) == str(last_order)
         if is_last_order:
             new_history = current_history[:index]
             new_history.reverse() # need to reverse due to the newest order at start of the list, we want oldest
