@@ -89,7 +89,7 @@ class Merkato(object):
         for tx in ordered_transactions:
             log.info('length of ordered_transactions length length: {}'.format(len(ordered_transactions)))
             if tx['type'] == SELL:
-                log.info('amount: {}'.format(type(tx['amount']), type(tx[PRICE])))
+                log.info("Found sell {} corresponding buy {}".format(tx, sell_price))
                 
                 amount = float(tx['amount']) * float(tx[PRICE])*(1-factor)
                 price = float(tx[PRICE])
@@ -126,7 +126,7 @@ class Merkato(object):
                 amount = float(tx['amount'])*float((1-factor))
                 price = tx[PRICE]
                 sell_price = float(price) * ( 1  + self.spread)
-                log.info("found buy",tx, "corresponding sell", sell_price)
+                log.info("Found buy {} corresponding sell {}".format(tx, sell_price))
                 market = self.exchange.sell(amount, sell_price)
                 if market == MARKET:
                     log.info('market buy {}'.format(market))
