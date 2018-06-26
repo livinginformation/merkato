@@ -14,7 +14,7 @@ XMR_PRICE_PRECISION = 6
 
 class BinanceExchange(ExchangeBase):
     url = "https://api.binance.com"
-
+    #todo coin
     def __init__(self, config, coin, base, password='password'):
         self.client = Client(config['public_api_key'], config['private_api_key'])
         self.limit_only = config['limit_only']
@@ -300,12 +300,8 @@ class BinanceExchange(ExchangeBase):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
         amount_placed = float(order_info['origQty'])
         amount_executed = float(order_info['executedQty'])
-        print('order info', order_info)
-        print('amount executed', amount_executed)
-        print('amount placed', amount_placed)
         return amount_placed > amount_executed and amount_executed > 0
 
     def get_total_amount(self, order_id):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
-        print('get toal amount', order_info)
         return float(order_info['origQty'])
