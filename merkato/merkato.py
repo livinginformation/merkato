@@ -110,13 +110,22 @@ class Merkato(object):
 
         filled_orders = []
 
+        if self.exchange.name == 'tux':
+            # Band-aid until tux writes their function
+            # Get all open orders
+            open_orders = self.exchange.get_my_open_orders
+
         for tx in ordered_transactions:
             tx_id = tx['orderId'] # executed transaction
             filled_amount = tx['amount']
             orderid = tx['id'] # The id of the limit order on the books
 
             # Do a check for whether this particular tx refers to a filled order
-            partial_fill = self.exchange.is_partial_fill(orderid) # todo implement for tux (binance done)
+            if self.exchange.name == 'tux':
+                partial_fill = orderid in open_orders
+
+            else:
+                partial_fill = self.exchange.is_partial_fill(orderid) # todo implement for tux (binance done)
 
             if tx['type'] == SELL:
 
@@ -149,7 +158,12 @@ class Merkato(object):
                 # We need to place a matching order
                 # We want to get the total amount of that order
 
-                total_amount = get_total_amount(orderid) # todo unimplemented
+                if self.exchange.name == "tux":
+                    # This is a band-aid. Remove once we can get total_amount from tux.
+                    total_amount = tx['initamount']
+
+                else:
+                    total_amount = get_total_amount(orderid) # todo unimplemented on tux
 
                 # This next part cancels out if the entire order is filled at once.
                 # If the order is a partial fill (and the rest of the fill happens

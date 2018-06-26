@@ -283,6 +283,16 @@ class TuxExchange(ExchangeBase):
         return self.get_ticker(self.ticker)["highestBid"]
 
 
+    def is_partial_fill(self, order_id):
+        # Todo when tux implements the function
+        pass
+
+
+    def get_total_amount(self, order_id):
+        # Todo when tux implements the function
+        pass
+
+
     def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
         ''' Signs provided query parameters with API keys
             :param query_parameters: dictionary
