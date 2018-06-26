@@ -113,7 +113,7 @@ class Merkato(object):
         if self.exchange.name == 'tux':
             # Band-aid until tux writes their function
             # Get all open orders
-            open_orders = self.exchange.get_my_open_orders
+            open_orders = self.exchange.get_my_open_orders()
 
         for tx in ordered_transactions:
             tx_id = tx['orderId'] # executed transaction
