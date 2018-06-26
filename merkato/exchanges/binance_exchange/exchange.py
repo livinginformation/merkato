@@ -300,8 +300,12 @@ class BinanceExchange(ExchangeBase):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
         amount_placed = float(order_info['origQty'])
         amount_executed = float(order_info['executedQty'])
+        print('order info', order_info)
+        print('amount executed', amount_executed)
+        print('amount placed', amount_placed)
         return amount_placed > amount_executed and amount_executed > 0
 
     def get_total_amount(self, order_id):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
+        print('get toal amount', order_info)
         return float(order_info['origQty'])
