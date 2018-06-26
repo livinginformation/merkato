@@ -1,7 +1,6 @@
 import hashlib
 import hmac
 import json
-import math
 import requests
 import time
 import urllib.parse
@@ -10,44 +9,35 @@ from merkato.constants import MARKET
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class TuxExchange(ExchangeBase):
     url = "https://tuxexchange.com/api"
 
-    def __init__(self, config, coin, base, password='password'):
+    def __init__(self, config, coin, base):
         self.privatekey = config['private_api_key']
         self.publickey  = config['public_api_key']
         self.limit_only = config['limit_only']
-        print('TuxExchange config', config)
+        log.info('TuxExchange config', config)
         self.retries = 5
         self.coin = coin
         self.base = base
         self.ticker = translate_ticker(coin=coin, base=base)
         self.name = 'tux'
-        self.debug = 100
-        
-    def _debug(self, level, header, *args):
-        if level <= self.debug:
-            print("-"*10)
-            print("{}---> {}:".format(level, header))
-
-            for arg in args:
-                print("\t\t" + repr(arg))
-
-            print("-" * 10)
 
 
-    def _sell(self, amount, ask,):
+    def _sell(self, amount, ask):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
             :param amount: string
             :param ask: float
             :param ticker: string
         '''
         query_parameters = getQueryParameters(SELL, self.coin, amount, ask)
-        print('query params', query_parameters)
+        log.info(query_parameters)
         response = self._create_signed_request(query_parameters)
-        print('response', response)
-
+        log.info(response)
         return response['success']
 
 
@@ -59,18 +49,18 @@ class TuxExchange(ExchangeBase):
                 # If ask price is lower than the highest bid, return.
 
                 if float(self.get_highest_bid()) > ask:
-                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "tux"))
+                    log.info("SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "tux"))
                     return MARKET # Maybe needs failed or something
 
             try:
                 success = self._sell(amount, ask)
 
                 if success:
-                    self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
+                    log.info("SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
                     return success
 
                 else:
-                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
+                    log.info("SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -84,11 +74,11 @@ class TuxExchange(ExchangeBase):
             try:
                 success = self._buy(bid_amount, bid)
                 if success:
-                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "tux"))
+                    log.info("BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "tux"))
                     return success
 
                 else:
-                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
+                    log.info("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -101,11 +91,11 @@ class TuxExchange(ExchangeBase):
             success = self._sell(amount, ask)
 
             if success:
-                self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
+                log.info("SELL {} {} at {} on {}".format(amount, self.ticker, ask, "tux"))
                 return success
 
             else:
-                self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
+                log.info("SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "tux", attempt, self.retries))
                 attempt += 1
                 time.sleep(1)
 
@@ -119,9 +109,9 @@ class TuxExchange(ExchangeBase):
             :param ticker: string
         '''
         query_parameters = getQueryParameters(BUY, self.coin, amount, bid)
-        print('query params', query_parameters)
+        log.info(query_parameters)
         response = self._create_signed_request(query_parameters)
-        print('response', response)
+        log.info(response)
         return response['success']
 
 
@@ -135,17 +125,17 @@ class TuxExchange(ExchangeBase):
 
                 if float(self.get_lowest_ask()) < bid:
 
-                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
+                    log.info("BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
                     return MARKET # Maybe needs failed or something
 
             try:
                 success = self._buy(bid_amount, bid)
                 if success:
-                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "tux"))
+                    log.info("BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "tux"))
                     return success
 
                 else:
-                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
+                    log.info("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "tux", attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -163,7 +153,7 @@ class TuxExchange(ExchangeBase):
         response = requests.get(self.url, params=params)
 
         response_json = json.loads(response.text)
-        self._debug(10, "get_all_orders", response.text)
+        log.info(response.text)
 
         return response_json
 
@@ -188,11 +178,10 @@ class TuxExchange(ExchangeBase):
             :param order_id: string
         '''
 
-        self._debug(10, "cancel_order","---> cancelling order")
-
+        log.info("---> cancelling order")
 
         if order_id == 0:
-            self._debug(3, "cancel_order","---> Order ID was zero, bailing")
+            log.warning("Cancel order ID zero, bailing")
 
             return False
 
@@ -217,7 +206,7 @@ class TuxExchange(ExchangeBase):
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
-        self._debug(10, "get_ticker", response_json[coin])
+        log.info(response_json[coin])
 
         return response_json[coin]
 
@@ -235,7 +224,7 @@ class TuxExchange(ExchangeBase):
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
-        self._debug(10, "get_24h_volume", response_json[coin])
+        log.info(response_json[coin])
 
         return response_json[coin]
 
@@ -248,7 +237,7 @@ class TuxExchange(ExchangeBase):
         tuxParams = {"method" : "getmybalances"}
 
         response = self._create_signed_request(tuxParams)
-        self._debug(10, "get_balances", response)
+        log.info(response)
         pair_balances = {"base" : {"amount": response[self.base],
                                    "name" : self.base},
                          "coin": {"amount": response[self.coin],
@@ -261,21 +250,18 @@ class TuxExchange(ExchangeBase):
     def get_my_trade_history(self, start=0, end=0):
         ''' TODO Function Definition
         '''
-        self._debug(10, "get_my_trade_history","---> Getting trade history...")
+        log.info("Getting trade history...")
 
         query_parameters = { "method": "getmytradehistory" }
 
-        if start != 0:
-            query_parameters["start"] = str(start)
+        # if start != 0:
+        #     query_parameters["start"] = str(start)
             
-        if start !=0 and end != 0:
-            query_parameters["end"] = str(end)
+        # if start !=0 and end != 0:
+        #     query_parameters["end"] = str(end)
 
-        print('query_parameters', query_parameters)
         response = self._create_signed_request(query_parameters)
-
         filtered_history =  [trade for trade in response if self.ticker in trade["market_pair"]]
-        print('filtered history', filtered_history)
         return filtered_history
 
 

@@ -1,16 +1,16 @@
-import hashlib
-import hmac
 import json
-import math
 import requests
 import time
-import urllib.parse
 from merkato.exchanges.exchange_base import ExchangeBase
-from merkato.constants import BUY, SELL
 from binance.client import Client
 from binance.enums import *
+
+import logging
+log = logging.getLogger(__name__)
+
 XMR_AMOUNT_PRECISION = 3
 XMR_PRICE_PRECISION = 6
+
 
 class BinanceExchange(ExchangeBase):
     url = "https://api.binance.com"
@@ -18,24 +18,11 @@ class BinanceExchange(ExchangeBase):
     def __init__(self, config, coin, base, password='password'):
         self.client = Client(config['public_api_key'], config['private_api_key'])
         self.limit_only = config['limit_only']
-        print('TuxExchange config', config)
         self.retries = 5
         self.coin = coin
         self.base = base
         self.ticker = coin + base
         self.name = 'bina'
-        self.debug = 100
-        
-    def _debug(self, level, header, *args):
-        if level <= self.debug:
-            print("-"*10)
-            print("{}---> {}:".format(level, header))
-
-            for arg in args:
-                print("\t\t" + repr(arg))
-
-            print("-" * 10)
-
 
     def _sell(self, amount, ask):
         ''' Places a sell for a number of an asset at the indicated price (0.00000503 for example)
@@ -64,18 +51,18 @@ class BinanceExchange(ExchangeBase):
                 # If ask price is lower than the highest bid, return.
 
                 if float(self.get_highest_bid()) > ask:
-                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "binance"))
+                    log.info("SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "binance"))
                     return False # Maybe needs failed or something
 
             try:
                 success = self._sell(amount, ask)
 
                 if success:
-                    self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "binance"))
+                    log.info("SELL {} {} at {} on {}".format(amount, self.ticker, ask, "binance"))
                     return success
 
                 else:
-                    self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "binance", attempt, self.retries))
+                    log.info("SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "binance", attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -91,9 +78,8 @@ class BinanceExchange(ExchangeBase):
         '''
         amt_str = "{:0.0{}f}".format(amount, XMR_AMOUNT_PRECISION)
         bid_str = "{:0.0{}f}".format(bid, XMR_PRICE_PRECISION)
-        print('amt', amt_str)
-        print('bid', bid_str)
         info = self.client.get_symbol_info(symbol=self.ticker)
+        log.info("TEST ONE TWO")
         order = self.client.create_order(
             symbol=self.ticker,
             side=SIDE_BUY,
@@ -114,17 +100,17 @@ class BinanceExchange(ExchangeBase):
 
                 if float(self.get_lowest_ask()) < bid:
 
-                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "binance"))
+                    log.info("BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "binance"))
                     return False # Maybe needs failed or something
 
             try:
                 success = self._buy(bid_amount, bid)
                 if success:
-                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "binance"))
+                    log.info("BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "binance"))
                     return success
 
                 else:
-                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "binance", attempt, self.retries))
+                    log.info("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "binance", attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -138,11 +124,11 @@ class BinanceExchange(ExchangeBase):
             try:
                 success = self._buy(bid_amount, bid)
                 if success:
-                    self._debug(2, "buy", "BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "binance"))
+                    log.info("BUY {} {} at {} on {}".format(bid_amount, self.ticker, bid, "binance"))
                     return success
 
                 else:
-                    self._debug(1, "buy", "BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "binance", attempt, self.retries))
+                    log.info("BUY {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, bid, "binance", attempt, self.retries))
                     attempt += 1
                     time.sleep(1)
 
@@ -155,11 +141,11 @@ class BinanceExchange(ExchangeBase):
             success = self._sell(amount, ask)
 
             if success:
-                self._debug(2, "sell", "SELL {} {} at {} on {}".format(amount, self.ticker, ask, "binance"))
+                log.info("SELL {} {} at {} on {}".format(amount, self.ticker, ask, "binance"))
                 return success
 
             else:
-                self._debug(1, "sell","SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "binance", attempt, self.retries))
+                log.info("SELL {} {} at {} on {} FAILED - attempt {} of {}".format(amount, self.ticker, ask, "binance", attempt, self.retries))
                 attempt += 1
                 time.sleep(1)
 
@@ -174,14 +160,14 @@ class BinanceExchange(ExchangeBase):
 
         orders = self.client.get_order_book(symbol=self.ticker)
 
-        self._debug(10, "get_all_orders", orders)
+        log.info("get_all_orders", orders)
         return orders
 
 
     def get_my_open_orders(self, context_formatted=False):
         ''' Returns all open orders for the authenticated user '''
                 
-        orders = self.client.get_open_orders(symbol=self.ticker)
+        orders = self.client.get_open_orders(symbol=self.ticker, recvWindow=10000000)
         # orders is an array of dicts we need to transform it to an dict of dicts to conform to binance
         new_dict = {}
         for order in orders:
@@ -201,12 +187,10 @@ class BinanceExchange(ExchangeBase):
             :param order_id: string
         '''
 
-        self._debug(10, "cancel_order","---> cancelling order")
-
+        log.info("Cancelling order.")
 
         if order_id == 0:
-            self._debug(3, "cancel_order","---> Order ID was zero, bailing")
-
+            log.warning("Cancel order id 0. Bailing")
             return False
 
         return self.client.cancel_order(
@@ -224,9 +208,8 @@ class BinanceExchange(ExchangeBase):
 
         # if not coin:
         #     return json.loads(response.text)
-        print('tickers', ticker)
         # response_json = json.loads(response.text)
-        self._debug(10, "get_ticker", ticker)
+        log.info(ticker)
 
         return ticker
 
@@ -244,7 +227,7 @@ class BinanceExchange(ExchangeBase):
             return json.loads(response.text)
 
         response_json = json.loads(response.text)
-        self._debug(10, "get_24h_volume", response_json[coin])
+        log.info(response_json[coin])
 
         return response_json[coin]
 
@@ -254,13 +237,13 @@ class BinanceExchange(ExchangeBase):
         '''
 
         # also keys go unused, also coin...
-        base_balance = self.client.get_asset_balance(asset=self.base)
-        coin_balance = self.client.get_asset_balance(asset=self.coin)
+        base_balance = self.client.get_asset_balance(asset=self.base, recvWindow=10000000)
+        coin_balance = self.client.get_asset_balance(asset=self.coin, recvWindow=10000000)
         base = float(base_balance['free']) + float(base_balance['locked'])
         coin = float(coin_balance['free']) + float(coin_balance['locked'])
 
-        self._debug(10, "get_balances", base_balance)
-        self._debug(10, "get_balances", coin_balance)
+        log.info("Base balance: {}".format(base_balance))
+        log.info("Coin balance: {}".format(coin_balance))
 
         pair_balances = {"base" : {"amount": {'balance': base},
                                    "name" : self.base},
@@ -274,13 +257,13 @@ class BinanceExchange(ExchangeBase):
     def get_my_trade_history(self, start=0, end=0):
         ''' TODO Function Definition
         '''
-        self._debug(10, "get_my_trade_history","---> Getting trade history...")
-        start_is_provided = start != 0 and start != ''
-        print('start', start)
-        if start_is_provided:
-            trades = self.client.get_my_trades(symbol=self.ticker, fromId=start)
-        else:
-            trades = self.client.get_my_trades(symbol=self.ticker)
+        log.info("Getting trade history...")
+        # start_is_provided = start != 0 and start != ''
+        # print('start', start)
+        # if start_is_provided:
+        #     trades = self.client.get_my_trades(symbol=self.ticker, fromId=int(start), recvWindow=10000000)
+        # else:
+        trades = self.client.get_my_trades(symbol=self.ticker, recvWindow=10000000)
 
         for trade in trades:
             if trade['isBuyer'] == True:
@@ -288,6 +271,10 @@ class BinanceExchange(ExchangeBase):
             else:
                 trade['type'] = 'sell'
             trade['amount'] = trade['qty']
+            if 'time' in trade:
+                date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(trade['time'])))
+                trade['date'] = date
+        trades.reverse()
         return trades
 
 
@@ -318,21 +305,3 @@ class BinanceExchange(ExchangeBase):
     def get_total_amount(self, order_id):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
         return float(order_info['origQty'])
-
-    def _create_signed_request(self, query_parameters, nonce=None, timeout=15):
-        ''' Signs provided query parameters with API keys
-            :param query_parameters: dictionary
-            :param nonce: int
-            :param timeout: int
-        '''
-
-        # return response needing signature, nonce created if not supplied
-        if not nonce:
-            nonce = int(time.time() * 1000)
-        query_parameters.update({"nonce": nonce})
-        post = urllib.parse.urlencode(query_parameters)
-        signature = hmac.new(self.privatekey.encode('utf-8'), post.encode('utf-8'), hashlib.sha512).hexdigest()
-        head = {'Key': self.publickey, 'Sign': signature}
-
-        response = requests.post(self.url, data=query_parameters, headers=head, timeout=timeout).json()
-        return response

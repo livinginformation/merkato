@@ -1,4 +1,4 @@
-import json
+import logging
 from merkato.exchanges.test_exchange.exchange import TestExchange
 from merkato.exchanges.tux_exchange.exchange import TuxExchange
 from merkato.exchanges.binance_exchange.exchange import BinanceExchange
@@ -154,24 +154,19 @@ def check_reserve_balances(total_balances, allocated_balances, coin_reserve, bas
 def get_last_order( UUID):
     merkato = get_merkato(UUID)
     last_order = merkato[6]
-    print('last order', last_order)
     return last_order
 
 
 def get_first_order( UUID):
     merkato = get_merkato(UUID)
     first_order = merkato[7]
-    print('first order', first_order)
     return first_order
 
 
 def get_new_history(current_history, last_order):
-    if last_order == '':
-        return current_history
     for index, order in enumerate(current_history):
-        is_last_order = order['orderId'] == last_order
+        is_last_order = str(order['orderId']) == str(last_order)
         if is_last_order:
-            print('found last order', is_last_order)
             new_history = current_history[:index]
             new_history.reverse() # need to reverse due to the newest order at start of the list, we want oldest
             return new_history
@@ -205,3 +200,22 @@ def ensure_bytes(password, public_key, private_key):
     if isinstance(private_key, str):
         private_key = private_key.encode('utf-8')
     return (password, public_key, private_key)
+
+
+def log_on_call(f):
+    def wrapped(self, *args, **kwargs):
+        log = logging.getLogger()
+        log.debug("Entering {}".format(f.__name__))
+        return f(self, *args, **kwargs)
+    return wrapped
+
+
+def log_all_methods(cls):
+    for name in cls.__dict__:
+        attr = getattr(cls, name)
+        if callable(attr):
+            setattr(cls, name, log_on_call(attr))
+    return cls
+
+
+

@@ -4,11 +4,13 @@ import requests
 import time
 import hashlib
 
+import logging
+log = logging.getLogger(__name__)
 
 def getQueryParameters(type, ticker, amount, price):
     formatted_amount = "{:.8f}".format(float(amount))
     formatted_price = "{:.8f}".format(float(price))
-    print('ticker', ticker)
+    log.info("Ticker: {}".format(ticker))
     return {
         "method": type,
         "market": "BTC",
