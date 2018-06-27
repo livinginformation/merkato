@@ -4,7 +4,7 @@ import time
 from merkato.exchanges.exchange_base import ExchangeBase
 from binance.client import Client
 from binance.enums import *
-
+from math import floor
 import logging
 log = logging.getLogger(__name__)
 
@@ -253,6 +253,23 @@ class BinanceExchange(ExchangeBase):
 
         return pair_balances
 
+    def process_new_transactions(self, new_txs):
+        for trade in new_txs:
+
+            if trade['isBuyer'] == True:
+                trade['type'] = 'buy'
+            else:
+                trade['type'] = 'sell'
+
+            if 'time' in trade:
+
+                date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(floor(trade['time']/1000))))
+                trade['date'] = date
+
+            trade['total'] = float(trade['price']) * float(trade['qty'])
+            trade['amount'] = float(trade['qty'])
+            order_info = self.client.get_order(symbol=self.ticker, orderId=trade['orderId'])
+            trade['initamount'] = order_info['origQty']
 
     def get_my_trade_history(self, start=0, end=0):
         ''' TODO Function Definition
@@ -264,16 +281,6 @@ class BinanceExchange(ExchangeBase):
         #     trades = self.client.get_my_trades(symbol=self.ticker, fromId=int(start), recvWindow=10000000)
         # else:
         trades = self.client.get_my_trades(symbol=self.ticker, recvWindow=10000000)
-
-        for trade in trades:
-            if trade['isBuyer'] == True:
-                trade['type'] = 'buy'
-            else:
-                trade['type'] = 'sell'
-            trade['amount'] = trade['qty']
-            if 'time' in trade:
-                date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(trade['time'])))
-                trade['date'] = date
         trades.reverse()
         return trades
 
@@ -300,7 +307,8 @@ class BinanceExchange(ExchangeBase):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
         amount_placed = float(order_info['origQty'])
         amount_executed = float(order_info['executedQty'])
-        return amount_placed > amount_executed and amount_executed > 0
+        log.info('Binance is_partial_fill order_id: {} amount_placed: {} amount_executed: {}'.format(order_id, amount_placed, amount_executed))
+        return amount_placed > amount_executed
 
     def get_total_amount(self, order_id):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
