@@ -184,7 +184,7 @@ if __name__ == "__main__":
     app = App(master=root, block_on_error=args.blockOnError, password=password, delay = args.delay, side=tk.RIGHT)
 
     for persisted in complete_merkato_configs:
-        pprint(persisted)
+        # pprint(persisted)
         konfig.decrypt_keys(config=persisted['configuration'], password=password)
         bot = Bot(root, app(), app, persist=persisted)
         app.add_screen(bot,

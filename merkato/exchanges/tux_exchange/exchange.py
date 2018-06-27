@@ -254,7 +254,7 @@ class TuxExchange(ExchangeBase):
 
         query_parameters = { "method": "getmytradehistory" }
 
-        # if start != 0:
+        # if start != 0 and end != 0:
         #     query_parameters["start"] = str(start)
             
         # if start !=0 and end != 0:

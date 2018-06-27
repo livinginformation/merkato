@@ -54,6 +54,6 @@ if __name__ == "__main__":
     from pprint import pprint
     print("------------\nTesting parser:\n")
     config = parse()
-    print(type(config))
-    pprint(config)
+    # print(type(config))
+    # pprint(config)
     print("\n----------- End of test--------")

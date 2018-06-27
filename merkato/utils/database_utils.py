@@ -1,7 +1,5 @@
 import sqlite3
 
-from pprint import pprint
-
 def drop_merkatos_table():
     try:
         conn = sqlite3.connect('merkato.db')
@@ -194,7 +192,6 @@ def get_all_exchanges():
         conn.close()
         exchange_index = {config["exchange"]:dict(config) for config in all_exchanges}
         exchange_menu = [name for name,config in exchange_index.items()]
-        pprint(exchange_index)
 
         return exchange_menu, exchange_index
 
