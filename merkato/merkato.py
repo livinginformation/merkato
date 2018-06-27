@@ -6,7 +6,7 @@ import os
 import time
 
 from merkato.constants import BUY, SELL, ID, PRICE, LAST_ORDER, ASK_RESERVE, BID_RESERVE, EXCHANGE, ONE_BITCOIN, \
-    ONE_SATOSHI, FIRST_ORDER, MARKET
+    ONE_SATOSHI, FIRST_ORDER, MARKET, TYPE
 from merkato.utils.database_utils import update_merkato, insert_merkato, merkato_exists, kill_merkato
 from merkato.utils import create_price_data, validate_merkato_initialization, get_relevant_exchange, \
     get_allocated_pair_balances, check_reserve_balances, get_last_order, get_new_history, \
@@ -65,8 +65,8 @@ class Merkato(object):
             print('initial history', history)
 
             if len(history) > 0:
-                print('updating history', history[0]['id'])
-                new_last_order = history[0]['id']
+                print('updating history', history[0][ID])
+                new_last_order = history[0][ID]
                 update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
 
@@ -95,12 +95,8 @@ class Merkato(object):
         # This function places a matching order for every new transaction since last run
         #
         # profit_margin is a number from 0 to 1 representing the percent of the spread to return
-        # to the user's balance before placing the matching order.
-        #
-        # TODO: Modify so that the parent function only passes in the new transactions, don't
-        # do the index check internally.
+        # to the user's balance before placing the matching order
 
-        # new_history is an array of transactions
         # new_txes is the number of new transactions contained in new_history
 
         factor = self.spread*self.profit_margin/2
@@ -115,38 +111,37 @@ class Merkato(object):
             # Band-aid until tux writes their function
             # Get all open orders
             open_orders = self.exchange.get_my_open_orders()
+        
+        if self.exchange.name != 'tux':
+            self.exchange.process_new_transactions(ordered_transactions)
 
         for tx in ordered_transactions:
             orderid = tx['orderId'] # executed transaction
             filled_amount = float(tx['amount'])
             filled_total = float(tx['total'])
-            tx_id = tx['id'] # The id of the limit order on the books
-
-            # Do a check for whether this particular tx refers to a filled order
+            tx_id = tx[ID] # The id of the limit order on the books
+            init_amount = float(tx['initamount'])
+            
             if self.exchange.name == 'tux':
                 partial_fill = orderid in open_orders
 
             else:
                 partial_fill = self.exchange.is_partial_fill(orderid) # todo implement for tux (binance done)
 
-            if tx['type'] == SELL:
+            if tx[TYPE] == SELL:
                 log.info('amount: {}'.format(type(tx['amount']), type(tx[PRICE])))
-                print('sell partial fill', partial_fill)
                 if partial_fill:
                     self.handle_partial_fill(SELL, filled_total, tx_id)
-
-                    # 3. Skip everything else
                     continue
 
                 if orderid in filled_orders:
                     # Matching order has already been placed
-                    print('increasing base partials1', orderid)
+                    log.info('SELL, orderid in filled_orders filled_orders:{} orderid:{}'.format(filled_orders, orderid))
                     self.base_partials_balance += filled_total
                     update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
                     # Update the last orderId (actually the id of the transaction)
                     update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
-
                     continue
 
                 # We need to place a matching order
@@ -155,7 +150,7 @@ class Merkato(object):
                 if self.exchange.name == "tux":
                     # This is a band-aid. Remove once we can get total_amount from tux.
                     print('tx tx', tx)
-                    total_amount = float(tx['initamount'])
+                    total_amount = float(init_amount)
 
                 else:
                     total_amount = self.exchange.get_total_amount(orderid) # todo unimplemented on tux
@@ -174,7 +169,7 @@ class Merkato(object):
                 market = self.exchange.buy(amount, buy_price)
                 # A lock is probably needed somewhere near here in case of unexpected shutdowns
                 
-                amount = float(tx['amount']) * float(tx[PRICE])*(1-factor)
+                amount = float(filled_amount) * float(tx[PRICE])*(1-factor)
                 price = float(tx[PRICE])
                 buy_price = price * ( 1  - self.spread)
 
@@ -185,25 +180,28 @@ class Merkato(object):
                 if market == MARKET:
                     log.info('market buy {}'.format(market))
                     market_orders.append((amount, buy_price, BUY,))
-                # if the initamount != amount, get the remaining amount from partial reserves
 
-            if tx['type'] == BUY:
-                print('buy partial fill', partial_fill)
+                filled_difference = total_amount - filled_amount
+                if filled_difference > 0:
+                    self.quote_partials_balance -= filled_difference
+                    self.base_partials_balance -= filled_difference * float(tx[PRICE])
+                    update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
+                    print('end base_partials_balance', self.base_partials_balance)
+
+            if tx[TYPE] == BUY:
 
                 if partial_fill:
                     self.handle_partial_fill(BUY, filled_amount, tx_id)
-
-                    # 3. Skip everything else
                     continue
 
                 if orderid in filled_orders:
+                    log.info('BUY, orderid in filled_orders filled_orders:{} orderid:{}'.format(filled_orders, orderid))
                     # Matching order has already been placed
                     self.quote_partials_balance += filled_amount
                     update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
 
                     # Update the last orderId (actually the id of the transaction)
                     update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
-
                     continue
 
 
@@ -213,7 +211,7 @@ class Merkato(object):
                 if self.exchange.name == "tux":
                     # This is a band-aid. Remove once we can get total_amount from tux.
                     print('tx tx', tx)
-                    total_amount = float(tx['initamount'])
+                    total_amount = float(init_amount)
 
                 else:
                     total_amount = self.exchange.get_total_amount(orderid) # todo unimplemented on tux
@@ -236,11 +234,15 @@ class Merkato(object):
                     log.info('market sell {}'.format(market))
                     market_orders.append((amount, sell_price, SELL,))
 
-                # if the initamount != amount, get the remaining amount from partial reserves
+                filled_difference = total_amount - filled_amount
+                if filled_difference > 0:
+                    self.quote_partials_balance -= filled_difference
+                    update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
+                    print('end quote_partials_balance', self.quote_partials_balance)
 
             if market != MARKET: 
                 log.info('market != MARKET')
-                update_merkato(self.mutex_UUID, LAST_ORDER, tx['id'])
+                update_merkato(self.mutex_UUID, LAST_ORDER, tx[ID])
 
             # A buy or a sell have executed with this id. Don't re-execute more.
             filled_orders.append(orderid)
@@ -386,6 +388,7 @@ class Merkato(object):
         # However, that amount is 'reserved' (will be placed on the books once the 
         # rest of the order is filled), and therefore is unavailable when creating new
         # Merkatos. Add this amount to a field 'quote_partials_balance'.
+        log.info('handle_partial_fill type {} filledqty {} tx_id {}'.format(type, filled_qty, tx_id))
         if type == BUY:
             self.quote_partials_balance += filled_qty # may need a multiply by price
             update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
@@ -398,7 +401,7 @@ class Merkato(object):
 
 
     def handle_market_order(self, amount, price, type):
-        newest_tx_id = self.exchange.get_my_trade_history()[0]['id']
+        newest_tx_id = self.exchange.get_my_trade_history()[0][ID]
         if type == BUY:
             self.exchange.market_buy(amount, price)
 
@@ -424,12 +427,12 @@ class Merkato(object):
             self.exchange.sell(amount_executed, price) # Should never market order
         
         else:
+            log.info('handle_market_order: partials affected, amount: {} amount_executed: {}'.format(amount, amount_executed))
             if type == BUY:
                 self.quote_partials_balance += amount_executed
                 update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
                 log.info('market buy partials after'.format(self.quote_partials_balance))
             else:
-                print('increasing base partials 3')
                 self.base_partials_balance += amount_executed * price_numerator
                 update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
                 log.info('market sell partials after {}'.format(self.base_partials_balance))
