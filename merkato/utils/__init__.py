@@ -164,6 +164,7 @@ def get_first_order( UUID):
 
 
 def get_new_history(current_history, last_order):
+    print('get new history')
     for index, order in enumerate(current_history):
         is_last_order = str(order['id']) == str(last_order)
         if is_last_order:
@@ -182,15 +183,16 @@ def get_time_of_last_order(ordered_transactions):
 def get_market_results(history): 
     results = {
         'amount_executed': 0, # This is in the quote asset
-        'initial_amount': 0 # This is in the base asset
-
+        'initial_amount': 0, # This is in the base asset
+        'price_numerator': 0
     }
     print('get market reseults', history)
     for order in history:
         results['amount_executed'] += float(order['amount'])
         results['initial_amount'] += float(order['initamount'])
-
-    results['last_orderid'] = history[-1]['orderId']
+        results['price_numerator'] += float(order['amount']) * float(order['price'])
+    results['last_txid'] = history[-1]['id']
+    results['price_numerator'] /= results['amount_executed']
     return results
 
 def ensure_bytes(password, public_key, private_key):
