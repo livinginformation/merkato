@@ -109,6 +109,7 @@ class Merkato(object):
         log.info('ordered transactions rebalanced: {}'.format(ordered_transactions))
 
         filled_orders = []
+        market_orders = []
 
         if self.exchange.name == 'tux':
             # Band-aid until tux writes their function
@@ -138,7 +139,7 @@ class Merkato(object):
 
                 if orderid in filled_orders:
                     # Matching order has already been placed
-
+                    print('increasing base partials1', orderid)
                     self.base_partials_balance += filled_amount
                     update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
@@ -181,11 +182,7 @@ class Merkato(object):
 
                 if market == MARKET:
                     log.info('market buy {}'.format(market))
-                    self.handle_market_order(amount, buy_price, BUY)
-                
-                self.base_partials_balance += filled_amount
-                self.base_partials_balance -= total_amount
-                update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
+                    market_orders.append((amount, buy_price, BUY,))
 
             if tx['type'] == BUY:
                 print('buy partial fill', partial_fill)
@@ -236,13 +233,9 @@ class Merkato(object):
                     log.info('market sell {}'.format(market))
                     self.handle_market_order(amount, sell_price, SELL)
 
-                self.quote_partials_balance += filled_amount
-                self.quote_partials_balance -= total_amount
-                update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
-
             if market != MARKET: 
                 log.info('market != MARKET')
-                update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
+                market_orders.append((amount, buy_price, BUY,))
 
             # A buy or a sell have executed with this id. Don't re-execute more.
             filled_orders.append(orderid)
@@ -251,6 +244,9 @@ class Merkato(object):
             no_first_order = first_order == ''
             if no_first_order:
                 update_merkato(self.mutex_UUID, FIRST_ORDER, tx_id)
+
+        for order in market_orders:
+            self.handle_market_order(*order)
 
         self.log_new_transactions(ordered_transactions)
         print('self.base_partials_balance', self.base_partials_balance)
@@ -392,12 +388,15 @@ class Merkato(object):
 
 
     def handle_market_order(self, amount, price, type):
+        newest_tx_id = self.exchange.get_my_trade_history()[0]['id']
         if type == BUY:
             self.exchange.market_buy(amount, price)
-        elif type == SELL:
-            self.exchange.market_sell(amount, price)
 
-        market_history = self.exchange.get_my_trade_history()
+        elif type == SELL:
+            self.exchange.market_sell(amount, price)        
+
+        current_history = self.exchange.get_my_trade_history()
+        market_history = get_new_history(current_history, newest_tx_id)
         market_data = get_market_results(market_history)
 
         # The sell gave us some BTC. The buy is executed with that BTC.
@@ -409,7 +408,8 @@ class Merkato(object):
         last_orderid    = market_data['last_orderid']
         log.info('market data: {}'.format(market_data))
 
-        if amount == amount_executed:
+        market_order_filled = amount == amount_executed
+        if market_order_filled:
             self.exchange.sell(amount_executed, price) # Should never market order
         
         else:
@@ -418,6 +418,7 @@ class Merkato(object):
                 update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
                 log.info('market buy partials after'.format(self.quote_partials_balance))
             else:
+                print('increasing base partials 3')
                 self.base_partials_balance += amount_executed * price
                 update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
                 log.info('market sell partials after {}'.format(self.base_partials_balance))

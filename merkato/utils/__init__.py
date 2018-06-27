@@ -182,12 +182,13 @@ def get_time_of_last_order(ordered_transactions):
 def get_market_results(history): 
     results = {
         'amount_executed': 0, # This is in the quote asset
-        'total_gotten': 0 # This is in the base asset
+        'initial_amount': 0 # This is in the base asset
 
     }
+    print('get market reseults', history)
     for order in history:
         results['amount_executed'] += float(order['amount'])
-        results['total_gotten'] += float(order['total'])
+        results['initial_amount'] += float(order['initamount'])
 
     results['last_orderid'] = history[-1]['orderId']
     return results
