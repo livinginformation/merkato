@@ -185,15 +185,17 @@ class Merkato(object):
                 if market == MARKET:
                     log.info('market buy {}'.format(market))
                     market_orders.append((amount, buy_price, BUY,))
-                # if the initamount != amount, get the remaining amount from partial reserves
+
+                filled_difference = total_amount != amount
+                if filled_difference != 0:
+                    self.base_partials_balance -= filled_difference * tx['price']
+                    update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
             if tx['type'] == BUY:
                 print('buy partial fill', partial_fill)
 
                 if partial_fill:
                     self.handle_partial_fill(BUY, filled_amount, tx_id)
-
-                    # 3. Skip everything else
                     continue
 
                 if orderid in filled_orders:
@@ -203,7 +205,6 @@ class Merkato(object):
 
                     # Update the last orderId (actually the id of the transaction)
                     update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
-
                     continue
 
 
@@ -236,7 +237,10 @@ class Merkato(object):
                     log.info('market sell {}'.format(market))
                     market_orders.append((amount, sell_price, SELL,))
 
-                # if the initamount != amount, get the remaining amount from partial reserves
+                filled_difference = total_amount != amount
+                if filled_difference != 0:
+                    self.quote_partials_balance -= filled_difference
+                    update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
 
             if market != MARKET: 
                 log.info('market != MARKET')
