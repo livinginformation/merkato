@@ -147,13 +147,7 @@ class Merkato(object):
                 # We need to place a matching order
                 # We want to get the total amount of that order
 
-                if self.exchange.name == "tux":
-                    # This is a band-aid. Remove once we can get total_amount from tux.
-                    print('tx tx', tx)
-                    total_amount = float(init_amount)
-
-                else:
-                    total_amount = self.exchange.get_total_amount(orderid) # todo unimplemented on tux
+                total_amount = self.get_total_amount(init_amount, orderid)
 
                 # This next part cancels out if the entire order is filled at once.
                 # If the order is a partial fill (and the rest of the fill happens
@@ -181,12 +175,7 @@ class Merkato(object):
                     log.info('market buy {}'.format(market))
                     market_orders.append((amount, buy_price, BUY,))
 
-                filled_difference = total_amount - filled_amount
-                if filled_difference > 0:
-                    self.quote_partials_balance -= filled_difference
-                    self.base_partials_balance -= filled_difference * float(tx[PRICE])
-                    update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
-                    print('end base_partials_balance', self.base_partials_balance)
+                self.apply_filled_difference(tx, total_amount, SELL)
 
             if tx[TYPE] == BUY:
 
@@ -207,14 +196,7 @@ class Merkato(object):
 
                 # We need to place a matching order
                 # We want to get the total amount of that order
-
-                if self.exchange.name == "tux":
-                    # This is a band-aid. Remove once we can get total_amount from tux.
-                    print('tx tx', tx)
-                    total_amount = float(init_amount)
-
-                else:
-                    total_amount = self.exchange.get_total_amount(orderid) # todo unimplemented on tux
+                total_amount = self.get_total_amount(init_amount, orderid)
 
                 # This next part cancels out if the entire order is filled at once.
                 # If the order is a partial fill (and the rest of the fill happens
@@ -234,11 +216,8 @@ class Merkato(object):
                     log.info('market sell {}'.format(market))
                     market_orders.append((amount, sell_price, SELL,))
 
-                filled_difference = total_amount - filled_amount
-                if filled_difference > 0:
-                    self.quote_partials_balance -= filled_difference
-                    update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
-                    print('end quote_partials_balance', self.quote_partials_balance)
+                self.apply_filled_difference(tx, total_amount, BUY)
+
 
             if market != MARKET: 
                 log.info('market != MARKET')
@@ -261,6 +240,17 @@ class Merkato(object):
         print('self.quote_partials_balance ', self.quote_partials_balance )
         return ordered_transactions
 
+    def apply_filled_difference(self, tx, total_amount, BUY):
+        filled_difference = total_amount - float(tx['amount'])
+        if filled_difference > 0:
+            if tx_type == SELL:
+                self.base_partials_balance -= filled_difference * float(tx[PRICE])
+                update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
+                log.info('apply_filled_difference base_partials_balance: {}'.format(self.base_partials_balance)):
+            if tx_type == BUY:
+                self.quote_partials_balance -= filled_difference
+                update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
+                log.info('apply_filled_difference quote_partials_balance: {}'.format(self.quote_partials_balance))
 
     def decaying_bid_ladder(self, total_amount, step, start_price):
         # Places an bid ladder from the start_price to 1/2 the start_price.
@@ -315,6 +305,12 @@ class Merkato(object):
         #    start_price, and halving the total_amount
         self.decaying_bid_ladder(total_to_distribute/4, step, price/2)
 
+    def get_total_amount(self, init_amount, orderid):
+        if self.exchange.name == "tux":
+            return float(init_amount)
+
+        else:
+            return self.exchange.get_total_amount(orderid) # todo unimplemented on tux
 
     def decaying_ask_ladder(self, total_amount, step, start_price):
         # Places an ask ladder from the start_price to 2x the start_price.
