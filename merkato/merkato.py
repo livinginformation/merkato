@@ -342,6 +342,7 @@ class Merkato(object):
         if type == BUY:
             self.quote_partials_balance += filled_qty # may need a multiply by price
             update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
+
         elif type == SELL:
             self.base_partials_balance += filled_qty
             update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
@@ -351,6 +352,7 @@ class Merkato(object):
 
 
     def handle_market_order(self, amount, price, type):
+        log.info('handle market order')
         newest_tx_id = self.exchange.get_my_trade_history()[0][ID]
         if type == BUY:
             self.exchange.market_buy(amount, price)
@@ -359,8 +361,8 @@ class Merkato(object):
             self.exchange.market_sell(amount, price)        
 
         current_history = self.exchange.get_my_trade_history()
-        market_history = get_new_history(current_history, newest_tx_id)
-        market_data = get_market_results(market_history)
+        market_history  = get_new_history(current_history, newest_tx_id)
+        market_data     = get_market_results(market_history)
 
         # The sell gave us some BTC. The buy is executed with that BTC.
         # The market buy will get us X xmr in return. All of that xmr
@@ -399,8 +401,9 @@ class Merkato(object):
         last_trade_price = self.exchange.get_last_trade_price()
 
         first_order = get_first_order(self.mutex_UUID)
+        last_order  = get_last_order(self.mutex_UUID)
+        
         current_history = self.exchange.get_my_trade_history(first_order)
-        last_order = get_last_order(self.mutex_UUID)
         new_history = get_new_history(current_history, last_order)
         log.debug('first_order', first_order)
         log.debug('last_order', last_order)
