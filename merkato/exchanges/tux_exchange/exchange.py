@@ -69,7 +69,7 @@ class TuxExchange(ExchangeBase):
 
     def market_buy(self, amount, bid):
         attempt = 0
-        bid_amount = amount / bid
+        bid_amount = amount
         while attempt < self.retries:
             try:
                 success = self._buy(bid_amount, bid)
@@ -117,7 +117,7 @@ class TuxExchange(ExchangeBase):
 
     def buy(self, amount, bid):
         attempt = 0
-        bid_amount = amount / bid
+        bid_amount = amount
         while attempt < self.retries:
             if self.limit_only:
                 # Get current lowest ask on the orderbook

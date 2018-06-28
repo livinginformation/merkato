@@ -269,7 +269,7 @@ class BinanceExchange(ExchangeBase):
 
             trade['total'] = float(trade['price']) * float(trade['qty'])
             trade['amount'] = float(trade['qty'])
-            order_info = self.client.get_order(symbol=self.ticker, orderId=trade['orderId'])
+            order_info = self.client.get_order(symbol=self.ticker, orderId=trade['orderId'], recvWindow=10000000)
             trade['initamount'] = order_info['origQty']
 
     def get_my_trade_history(self, start=0, end=0):
@@ -305,12 +305,12 @@ class BinanceExchange(ExchangeBase):
     
     
     def is_partial_fill(self, order_id): 
-        order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
+        order_info = self.client.get_order(symbol=self.ticker, orderId=order_id, recvWindow=10000000)
         amount_placed = float(order_info['origQty'])
         amount_executed = float(order_info['executedQty'])
         log.info('Binance is_partial_fill order_id: {} amount_placed: {} amount_executed: {}'.format(order_id, amount_placed, amount_executed))
         return amount_placed > amount_executed
 
     def get_total_amount(self, order_id):
-        order_info = self.client.get_order(symbol=self.ticker, orderId=order_id)
+        order_info = self.client.get_order(symbol=self.ticker, orderId=order_id, recvWindow=10000000)
         return float(order_info['origQty'])
