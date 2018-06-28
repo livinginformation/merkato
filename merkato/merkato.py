@@ -154,7 +154,6 @@ class Merkato(object):
                 # within the for loop), it will sum up to zero when adding the other
                 # executed orders (and considering the secondary reserves)
 
-
                 amount = float(total_amount) * float(tx[PRICE])*(1-factor)
                 price = tx[PRICE]
                 buy_price = float(price) * ( 1  - self.spread)
@@ -162,14 +161,6 @@ class Merkato(object):
 
                 market = self.exchange.buy(amount, buy_price)
                 # A lock is probably needed somewhere near here in case of unexpected shutdowns
-                
-                amount = float(filled_amount) * float(tx[PRICE])*(1-factor)
-                price = float(tx[PRICE])
-                buy_price = price * ( 1  - self.spread)
-
-                log.info("found sell {}; corresponding buy {}".format(tx, buy_price))
-
-                market = self.exchange.buy(amount, buy_price)
 
                 if market == MARKET:
                     log.info('market buy {}'.format(market))
