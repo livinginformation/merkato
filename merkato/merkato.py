@@ -137,7 +137,7 @@ class Merkato(object):
                     continue
 
                 buy_price = float(price) * ( 1  - self.spread)
-                log.info("Found sell {} corresponding buy {}".format(tx, buy_price))
+                log.info("Found sell {} corresponding buy price: {} amount: {}".format(tx, buy_price, amount))
 
                 market = self.exchange.buy(amount, buy_price)
                 # A lock is probably needed somewhere near here in case of unexpected shutdowns
@@ -158,10 +158,9 @@ class Merkato(object):
                     self.handle_is_in_filled_orders(BUY, filled_amount, tx_id)
                     continue
 
-
                 sell_price = float(price) * ( 1  + self.spread)
 
-                log.info("Found buy {} corresponding sell {}".format(tx, sell_price))
+                log.info("Found buy {} corresponding sell price: {} amount: {}".format(tx, sell_price, amount))
 
                 market = self.exchange.sell(amount, sell_price)
                 
@@ -171,7 +170,6 @@ class Merkato(object):
                     market_orders.append((amount, sell_price, SELL,))
 
                 self.apply_filled_difference(tx, total_amount, BUY)
-
 
             if market != MARKET: 
                 log.info('market != MARKET')
@@ -191,6 +189,7 @@ class Merkato(object):
         self.log_new_transactions(ordered_transactions)
         log.info('ending partials base: {} quote: {}'.format(self.base_partials_balance, self.quote_partials_balance))
         return ordered_transactions
+
 
     def apply_filled_difference(self, tx, total_amount, BUY):
         filled_difference = total_amount - float(tx['amount'])
