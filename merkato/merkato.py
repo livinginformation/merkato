@@ -54,18 +54,18 @@ class Merkato(object):
 
             total_pair_balances = self.exchange.get_balances()
 
-            log.info("total pair balances", total_pair_balances)
+            log.info("total pair balances: {}".format(total_pair_balances))
 
             allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
-            funds_available = check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
+            check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
 
             insert_merkato(configuration[EXCHANGE], self.mutex_UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance, first_order)
             history = self.exchange.get_my_trade_history()
 
-            log.debug('initial history', history)
+            log.debug('initial history: {}'.format(history))
 
             if len(history) > 0:
-                log.debug('updating history', history[0][ID])
+                log.debug('updating history first ID: {}'.format(history[0][ID]))
                 new_last_order = history[0][ID]
                 update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
             self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
@@ -172,13 +172,14 @@ class Merkato(object):
         for order in market_orders:
             self.handle_market_order(*order)
 
-        self.log_new_transactions(ordered_transactions)
+        self.log_new_cointrackr_transactions(ordered_transactions)
         log.info('ending partials base: {} quote: {}'.format(self.base_partials_balance, self.quote_partials_balance))
         return ordered_transactions
 
 
     def apply_filled_difference(self, tx, total_amount, BUY):
         filled_difference = total_amount - float(tx['amount'])
+        tx_type = tx['type']
         if filled_difference > 0:
             if tx_type == SELL:
                 self.base_partials_balance -= filled_difference * float(tx[PRICE])
@@ -383,7 +384,7 @@ class Merkato(object):
             if type == BUY:
                 self.quote_partials_balance += amount_executed
                 update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
-                log.info('market buy partials after'.format(self.quote_partials_balance))
+                log.info('market buy partials after: {}'.format(self.quote_partials_balance))
             else:
                 self.base_partials_balance += amount_executed * price_numerator
                 update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
@@ -405,9 +406,9 @@ class Merkato(object):
         
         current_history = self.exchange.get_my_trade_history(first_order)
         new_history = get_new_history(current_history, last_order)
-        log.debug('first_order', first_order)
-        log.debug('last_order', last_order)
-        log.debug('new_history', new_history)
+        log.debug('first_order: {}'.format(first_order))
+        log.debug('last_order: {}'.format(last_order))
+        log.debug('new_history: {}'.format(new_history))
         new_transactions = []
         
         if len(new_history) > 0:
@@ -529,7 +530,8 @@ class Merkato(object):
                 writer.writerow(tx)
 
 
-    def log_new_cointrackr_transactions(self, newTransactionHistory, path="my_merkato_tax_audit_logs.csv"):
+    def log_new_cointrackr_transactions(self, newTransactionHistory):
+        path="{}my_merkato_tax_audit_logs.csv".format(self.exchange.name)
         scrubbed_history = []
         for dirty_tx in newTransactionHistory:
             scrubbed_tx = []
