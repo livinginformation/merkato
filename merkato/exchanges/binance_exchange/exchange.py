@@ -32,6 +32,7 @@ class BinanceExchange(ExchangeBase):
         '''
         amt_str = "{:0.0{}f}".format(amount, XMR_AMOUNT_PRECISION)
         ask_str = "{:0.0{}f}".format(ask, XMR_PRICE_PRECISION)
+        log.info("Bina placing sell ask: {} amount: {}".format(ask_str, amt_str))
         order = self.client.create_order(
             symbol=self.ticker,
             side=SIDE_SELL,
@@ -79,7 +80,7 @@ class BinanceExchange(ExchangeBase):
         amt_str = "{:0.0{}f}".format(amount, XMR_AMOUNT_PRECISION)
         bid_str = "{:0.0{}f}".format(bid, XMR_PRICE_PRECISION)
         info = self.client.get_symbol_info(symbol=self.ticker)
-        log.info("TEST ONE TWO")
+        log.info("Bina placing buy bid: {} amount: {}".format(bid_str, amt_str))
         order = self.client.create_order(
             symbol=self.ticker,
             side=SIDE_BUY,
@@ -92,7 +93,7 @@ class BinanceExchange(ExchangeBase):
 
     def buy(self, amount, bid):
         attempt = 0
-        bid_amount = amount / bid
+        bid_amount = amount
         while attempt < self.retries:
             if self.limit_only:
                 # Get current lowest ask on the orderbook
@@ -119,7 +120,7 @@ class BinanceExchange(ExchangeBase):
 
     def market_buy(self, amount, bid):
         attempt = 0
-        bid_amount = amount / bid
+        bid_amount = amount
         while attempt < self.retries:
             try:
                 success = self._buy(bid_amount, bid)
