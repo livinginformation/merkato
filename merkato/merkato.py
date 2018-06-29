@@ -404,9 +404,7 @@ class Merkato(object):
         
         current_history = self.exchange.get_my_trade_history(first_order)
         new_history = get_new_history(current_history, last_order)
-        log.debug('first_order: {}'.format(first_order))
-        log.debug('last_order: {}'.format(last_order))
-        log.debug('new_history: {}'.format(new_history))
+        log.info('update new_history: {} first_order: {} last_order: {}'.format(new_history, first_order, last_order))
         new_transactions = []
         
         if len(new_history) > 0:
