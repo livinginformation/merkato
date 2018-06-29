@@ -2,6 +2,7 @@ import json
 import requests
 import time
 from merkato.exchanges.exchange_base import ExchangeBase
+from merkato.constants import MARKET
 from binance.client import Client
 from binance.enums import *
 from math import floor
@@ -53,7 +54,7 @@ class BinanceExchange(ExchangeBase):
 
                 if float(self.get_highest_bid()) > ask:
                     log.info("SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "binance"))
-                    return False # Maybe needs failed or something
+                    return MARKET # Maybe needs failed or something
 
             try:
                 success = self._sell(amount, ask)
@@ -102,7 +103,7 @@ class BinanceExchange(ExchangeBase):
                 if float(self.get_lowest_ask()) < bid:
 
                     log.info("BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "binance"))
-                    return False # Maybe needs failed or something
+                    return MARKET # Maybe needs failed or something
 
             try:
                 success = self._buy(bid_amount, bid)
@@ -308,7 +309,7 @@ class BinanceExchange(ExchangeBase):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id, recvWindow=10000000)
         amount_placed = float(order_info['origQty'])
         amount_executed = float(order_info['executedQty'])
-        log.info('Binance is_partial_fill order_id: {} amount_placed: {} amount_executed: {}'.format(order_id, amount_placed, amount_executed))
+        log.info('Binance checking_is_partial_fill order_id: {} amount_placed: {} amount_executed: {}'.format(order_id, amount_placed, amount_executed))
         return amount_placed > amount_executed
 
     def get_total_amount(self, order_id):
