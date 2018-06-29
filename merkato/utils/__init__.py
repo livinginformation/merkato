@@ -164,7 +164,6 @@ def get_first_order( UUID):
 
 
 def get_new_history(current_history, last_order):
-    print('get new history')
     for index, order in enumerate(current_history):
         is_last_order = str(order['id']) == str(last_order)
         if is_last_order:
