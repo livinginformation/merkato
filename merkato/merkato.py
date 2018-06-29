@@ -192,10 +192,8 @@ class Merkato(object):
 
 
     def decaying_bid_ladder(self, total_amount, step, start_price):
-        # Places an bid ladder from the start_price to 1/2 the start_price.
-        # The first order in the ladder is half the amount (in the base currency) of the last
-        # order in the ladder. The amount allocated at each step decays as
-        # orders are placed.
+        '''total_amount is denominated in the base asset (BTC)
+        '''
         # Abandon all hope, ye who enter here. This function uses black magic (math).
 
         scaling_factor = 0
@@ -213,8 +211,8 @@ class Merkato(object):
         prior_reserve = self.bid_reserved_balance
         while current_order < total_orders:
             step_adjusted_factor = step**current_order
-            current_bid_amount = float(total_amount/(scaling_factor * step_adjusted_factor))
             current_bid_price = float(start_price/step_adjusted_factor)
+            current_bid_amount = float(total_amount/(scaling_factor * step_adjusted_factor))/current_bid_price
             amount += current_bid_amount
             
             # TODO Create lock

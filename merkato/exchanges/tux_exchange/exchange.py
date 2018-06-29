@@ -42,6 +42,8 @@ class TuxExchange(ExchangeBase):
 
 
     def sell(self, amount, ask):
+        ''' Amount is denominated in the quote asset
+        '''
         attempt = 0
         while attempt < self.retries:
             if self.limit_only:
@@ -68,8 +70,10 @@ class TuxExchange(ExchangeBase):
                 raise ValueError(e)
 
     def market_buy(self, amount, bid):
+        ''' Amount is denominated in the quote asset
+        '''
         attempt = 0
-        bid_amount = amount
+        bid_amount = amount 
         while attempt < self.retries:
             try:
                 success = self._buy(bid_amount, bid)
@@ -86,6 +90,8 @@ class TuxExchange(ExchangeBase):
                 raise ValueError(e)
 
     def market_sell(self, amount, ask):
+        ''' Amount is denominated in the quote asset
+        '''
         attempt = 0
         try:
             success = self._sell(amount, ask)
@@ -116,6 +122,8 @@ class TuxExchange(ExchangeBase):
 
 
     def buy(self, amount, bid):
+        ''' Amount is denominated in the quote asset
+        '''
         attempt = 0
         bid_amount = amount
         while attempt < self.retries:
