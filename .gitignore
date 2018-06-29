@@ -10,3 +10,4 @@ trade_history_script.py
 .idea/
 venv/
 quick_query
+binamy_merkato_tax_audit_logs.csv
