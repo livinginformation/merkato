@@ -40,7 +40,8 @@ class BinanceExchange(ExchangeBase):
             type=ORDER_TYPE_LIMIT,
             timeInForce=TIME_IN_FORCE_GTC,
             quantity=amt_str,
-            price=ask_str)
+            price=ask_str,
+            recvWindow=10000000)
 
         return order
 
@@ -88,7 +89,8 @@ class BinanceExchange(ExchangeBase):
             type=ORDER_TYPE_LIMIT,
             timeInForce=TIME_IN_FORCE_GTC,
             quantity=amt_str,
-            price=bid_str)
+            price=bid_str,
+            recvWindow=10000000)
         return order
 
 
