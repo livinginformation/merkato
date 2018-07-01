@@ -128,7 +128,7 @@ class Merkato(object):
                 continue
 
             if orderid in filled_orders:
-                self.handle_is_in_filled_orders(tx[TYPE], filled_amount, tx_id)
+                self.handle_is_in_filled_orders(tx)
                 continue
 
             if tx[TYPE] == SELL:
@@ -230,14 +230,16 @@ class Merkato(object):
         log.info('allocated amount {}'.format(prior_reserve - self.bid_reserved_balance))
 
 
-    def handle_is_in_filled_orders(self, tx_type, filled_amount, tx_id):
+    def handle_is_in_filled_orders(self, tx):
         log.info('{}, orderid in filled_orders filled_amount: {} tx_id: {} '.format(tx_type, filled_amount, tx_id))
-        
+        tx_type = tx[TYPE]
+        filled_amount = float(tx['amount'])
+        price = float(tx[PRICE])
         if tx_type == BUY:
             self.quote_partials_balance += filled_amount
             update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
-        else:
-            self.base_partials_balance += filled_amount
+        if tx_type == SELL:
+            self.base_partials_balance += filled_amount  * price
             update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
 
         update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
