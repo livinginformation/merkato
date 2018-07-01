@@ -106,7 +106,7 @@ class Merkato(object):
             self.exchange.process_new_transactions(ordered_transactions)
 
         for tx in ordered_transactions:
-
+            log.info('Checking Transaction: {}\n'.format(tx))
             orderid = tx['orderId']
             tx_id   = tx[ID]
             price   = tx[PRICE]
@@ -142,7 +142,7 @@ class Merkato(object):
                     log.info('market buy {}'.format(market))
                     market_orders.append((amount, buy_price, BUY,))
 
-                self.apply_filled_difference(tx, total_amount, SELL)
+                self.apply_filled_difference(tx, total_amount)
 
             if tx[TYPE] == BUY:
                 sell_price = float(price) * ( 1  + self.spread)
@@ -155,7 +155,7 @@ class Merkato(object):
                     log.info('market sell {}'.format(market))
                     market_orders.append((amount, sell_price, SELL,))
 
-                self.apply_filled_difference(tx, total_amount, BUY)
+                self.apply_filled_difference(tx, total_amount)
 
             if market != MARKET: 
                 log.info('market != MARKET')
@@ -177,8 +177,9 @@ class Merkato(object):
         return ordered_transactions
 
 
-    def apply_filled_difference(self, tx, total_amount, BUY):
+    def apply_filled_difference(self, tx, total_amount):
         filled_difference = total_amount - float(tx['amount'])
+        log.info('apply_filled_difference tx: {} total_amount: {}'.format(tx, total_amount))
         tx_type = tx['type']
         if filled_difference > 0:
             if tx_type == SELL:
@@ -394,7 +395,7 @@ class Merkato(object):
     def update(self):
         ''' TODO: Function comment
         '''
-        log.info("Update entered")
+        log.info("Update entered\n")
         
         now = str(datetime.datetime.now().isoformat()[:-7].replace("T", " "))
         last_trade_price = self.exchange.get_last_trade_price()
@@ -404,12 +405,12 @@ class Merkato(object):
         
         current_history = self.exchange.get_my_trade_history(first_order)
         new_history = get_new_history(current_history, last_order)
-        log.info('update new_history: {} first_order: {} last_order: {}'.format(new_history, first_order, last_order))
+        log.info('update new_history: {} first_order: {} last_order: {} \n'.format(new_history, first_order, last_order))
         new_transactions = []
         
         if len(new_history) > 0:
             log.info('we have new history')
-            log.debug("New transactions: {}".format(new_history))
+            log.debug("New transactions: {} \n".format(new_history))
 
             new_transactions = self.rebalance_orders(new_history)
             #self.merge_orders()
