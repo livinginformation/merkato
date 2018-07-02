@@ -231,7 +231,6 @@ class Merkato(object):
 
 
     def handle_is_in_filled_orders(self, tx):
-        log.info('{}, orderid in filled_orders filled_amount: {} tx_id: {} '.format(tx_type, filled_amount, tx_id))
         tx_type = tx[TYPE]
         filled_amount = float(tx['amount'])
         price = float(tx[PRICE])
@@ -241,7 +240,7 @@ class Merkato(object):
         if tx_type == SELL:
             self.base_partials_balance += filled_amount  * price
             update_merkato(self.mutex_UUID, 'base_partials_balance', self.base_partials_balance)
-
+        log.info('{}, orderid in filled_orders filled_amount: {} tx_id: {} '.format(tx_type, filled_amount, tx_id))
         update_merkato(self.mutex_UUID, LAST_ORDER, tx_id)
 
 
