@@ -1,7 +1,7 @@
 from merkato.merkato_config import load_config, get_config, create_config
 from merkato.merkato import Merkato
 from merkato.parser import parse
-from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table, drop_merkatos_table
+from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table, drop_merkatos_table, drop_exchanges_table
 from merkato.utils import generate_complete_merkato_configs
 import sqlite3
 import time
@@ -22,6 +22,11 @@ def main():
 
     if no_exchanges_table_exists():
         create_exchanges_table()
+    else:
+        should_drop_exchanges = input('Do you want to drop exchanges? y/n: ')
+        if should_drop_exchanges == 'y':
+            drop_exchanges_table()
+            create_exchanges_table()
 
     configuration = parse()
 
