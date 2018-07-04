@@ -13,11 +13,13 @@ welcome_txt = """Welcome to Merkato Would you like to run current merkatos, or c
 drop_merkatos_txt = "Do you want to drop merkatos?"
 drop_exchanges_txt = "Do you want to drop exchanges?"
 
+
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.pack()
         self.create_widgets()
+
 
     def create_widgets(self):
 
@@ -34,16 +36,20 @@ class Application(tk.Frame):
         self.run_merkatos["text"] = "Run Merkatos"
         self.run_merkatos.pack(side="bottom")
 
+
     def start_create_frame(self):
         self.remove_all_widgets()
         self.run_remove_tables_prompts()
     
+
     def start_simple_app(self):
         self.remove_all_widgets()
+
 
     def remove_all_widgets(self):
         for widget in self.winfo_children():
             widget.destroy()
+
 
     def run_remove_tables_prompts(self):
         if no_merkatos_table_exists():
@@ -51,6 +57,7 @@ class Application(tk.Frame):
             self.run_remove_exchanges_prompts()
         else:
             self.run_remove_merkatos_prompt()
+
 
     def run_remove_merkatos_prompt(self):
         self.drop_merkatos_message = tk.Label(self, anchor='n', padx = 10, text=drop_merkatos_txt).pack(side="top")
@@ -62,7 +69,8 @@ class Application(tk.Frame):
         self.dont_drop_merkatos = tk.Button(self, command=self.dont_drop_merkatos_table)
         self.dont_drop_merkatos["text"] = "No"
         self.dont_drop_merkatos.pack(side="bottom")
-    
+
+
     def run_remove_exchanges_prompts(self):
         self.drop_merkatos_message = tk.Label(self, anchor='n', padx = 10, text=drop_exchanges_txt).pack(side="top")
 
@@ -73,20 +81,24 @@ class Application(tk.Frame):
         self.dont_drop_exchanges = tk.Button(self, command=self.dont_drop_exchanges_table)
         self.dont_drop_exchanges["text"] = "No"
         self.dont_drop_exchanges.pack(side="bottom")
-    
+
+
     def drop_merkatos_table(self):
         drop_merkatos_table()
         self.remove_all_widgets()
         self.run_remove_exchanges_prompts()
-    
+
+
     def dont_drop_merkatos_table(self):
         self.remove_all_widgets()
         self.run_remove_exchanges_prompts()
-    
+
+
     def drop_exchanges_table(self):
         drop_exchanges_table()
         self.remove_all_widgets()
-    
+
+
     def dont_drop_exchanges_table(self):
         self.remove_all_widgets()
 
