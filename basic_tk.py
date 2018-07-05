@@ -12,6 +12,8 @@ import tkinter as tk
 welcome_txt = """Welcome to Merkato Would you like to run current merkatos, or create a new exchange or merkato?."""
 drop_merkatos_txt = "Do you want to drop merkatos?"
 drop_exchanges_txt = "Do you want to drop exchanges?"
+public_key_text = """Please enter your api public key"""
+private_key_text = """Please enter your api secret key"""
 
 
 class Application(tk.Frame):
@@ -83,6 +85,25 @@ class Application(tk.Frame):
         self.dont_drop_exchanges.pack(side="bottom")
 
 
+    def run_enter_api_key_info(self):
+        self.public_key_field = tk.Entry(self, width=40)
+        self.private_key_field = tk.Entry(self, width=40)
+
+        self.private_key_message = tk.Label(self, anchor='n', padx = 10, text=private_key_text)
+        self.public_key_message = tk.Label(self, anchor='n', padx = 10, text=public_key_text)
+
+        self.submit_keys = tk.Button(self, command=self.submit_api_keys)
+        self.submit_keys["text"] = "Submit keys"
+
+        self.public_key_field.pack(side="top")
+        self.public_key_message.pack(side="top")
+
+        self.private_key_field.pack(side="top")
+        self.private_key_message.pack(side="top")
+
+        self.submit_keys.pack(side="bottom")
+
+
     def drop_merkatos_table(self):
         drop_merkatos_table()
         self.remove_all_widgets()
@@ -97,12 +118,16 @@ class Application(tk.Frame):
     def drop_exchanges_table(self):
         drop_exchanges_table()
         self.remove_all_widgets()
+        self.run_enter_api_key_info()
 
 
     def dont_drop_exchanges_table(self):
         self.remove_all_widgets()
+        self.run_enter_api_key_info()
 
 
+    def submit_api_keys(self):
+        pass
 
 
 root = tk.Tk()

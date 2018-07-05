@@ -11,7 +11,7 @@ def validate_keys(config, url):
     client = Client(public_key, private_key)
 
     try:
-        response = client.get_open_orders(symbol='ETHBTC')
+        response = client.get_open_orders(symbol='ETHBTC', recvWindow=10000000)
     except Exception as e:
         log.error(e)
         return False
