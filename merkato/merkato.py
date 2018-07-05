@@ -234,6 +234,7 @@ class Merkato(object):
         tx_type = tx[TYPE]
         filled_amount = float(tx['amount'])
         price = float(tx[PRICE])
+        tx_id = tx[ID]
         if tx_type == BUY:
             self.quote_partials_balance += filled_amount
             update_merkato(self.mutex_UUID, 'quote_partials_balance', self.quote_partials_balance)
