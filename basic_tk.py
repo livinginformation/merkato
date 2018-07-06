@@ -3,6 +3,7 @@ from merkato.merkato import Merkato
 from merkato.parser import parse
 from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table, drop_merkatos_table, drop_exchanges_table
 from merkato.utils import generate_complete_merkato_configs
+from merkato.exchanges.tux_exchange.utils import validate_credentials
 import sqlite3
 import time
 import pprint
@@ -47,11 +48,10 @@ class Application(tk.Frame):
 
 
     def start_simple_app(self):
-        self.remove_all_widgets()
+        pass
 
 
     def start_create_frame(self):
-        self.remove_all_widgets()
         self.run_remove_tables_prompts()
 
 
@@ -69,6 +69,7 @@ class Application(tk.Frame):
 
 
     def run_remove_merkatos_prompt(self):
+        self.remove_all_widgets()
         drop_merkatos_message = tk.Label(self, anchor='n', padx = 10, text=drop_merkatos_txt).pack(side="top")
         
         drop_merkatos = tk.Button(self, command=self.drop_merkatos_table)
@@ -81,10 +82,11 @@ class Application(tk.Frame):
 
 
     def run_remove_exchanges_prompts(self):
+        self.remove_all_widgets()
         drop_merkatos_message = tk.Label(self, anchor='n', padx = 10, text=drop_exchanges_txt).pack(side="top")
 
         drop_exchanges = tk.Button(self, command=self.drop_exchanges_table)
-        rop_exchanges["text"] = "Yes"
+        drop_exchanges["text"] = "Yes"
         drop_exchanges.pack(side="bottom")
       
         dont_drop_exchanges = tk.Button(self, command=self.dont_drop_exchanges_table)
@@ -92,14 +94,18 @@ class Application(tk.Frame):
         dont_drop_exchanges.pack(side="bottom")
 
 
-    def run_enter_api_key_info(self):
+    def run_enter_api_key_info(self, message=""):
+        self.remove_all_widgets()
+        if message != "":
+            warning = tk.Label(self, anchor='n', padx = 10, text=message, fg="red").pack(side="top")
+
         public_key_field = tk.Entry(self, width=40)
         private_key_field = tk.Entry(self, width=40)
 
         private_key_message = tk.Label(self, anchor='n', padx = 10, text=private_key_text)
         public_key_message = tk.Label(self, anchor='n', padx = 10, text=public_key_text)
 
-        submit_keys = tk.Button(self, command=self.submit_api_keys)
+        submit_keys = tk.Button(self, command= lambda: self.submit_api_keys(public_key_field.get(), private_key_field.get()))
         submit_keys["text"] = "Submit keys"
 
         public_key_field.pack(side="top")
@@ -113,31 +119,40 @@ class Application(tk.Frame):
 
     def drop_merkatos_table(self):
         drop_merkatos_table()
-        self.remove_all_widgets()
         self.run_remove_exchanges_prompts()
 
 
     def dont_drop_merkatos_table(self):
-        self.remove_all_widgets()
         self.run_remove_exchanges_prompts()
 
 
     def drop_exchanges_table(self):
         drop_exchanges_table()
-        self.remove_all_widgets()
         self.run_select_exchange_prompt()
 
 
     def dont_drop_exchanges_table(self):
-        self.remove_all_widgets()
         self.run_select_exchange_prompt()
 
 
-    def submit_api_keys(self):
-        pass
+    def submit_api_keys(self, public_key, private_key):
+        self.public_api_key = public_key
+        self.private_api_key = private_key
+        config = {}
+        config['public_api_key'] = public_key
+        config['private_api_key'] = private_key
+        credentials_are_valid = validate_credentials(config)
+        if not credentials_are_valid:
+            print("API Keys Invalid")
+            self.run_enter_api_key_info("API keys invalid, please try again.")
+            return
+        else:
+            print("stuff")
+            return
 
 
     def run_select_exchange_prompt(self):
+        self.remove_all_widgets()
         select_exchange_message = tk.Label(self, anchor='n', padx = 10, text=exchange_select_txt).pack(side="top")
         
         select_exchange_binance = tk.Button(self, command= lambda: self.choose_exchange('bina'))
@@ -150,7 +165,6 @@ class Application(tk.Frame):
 
 
     def choose_exchange(self, exchange):
-        self.remove_all_widgets()
         self.exchange = exchange
         self.run_enter_api_key_info()
 

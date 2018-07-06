@@ -19,7 +19,8 @@ def getQueryParameters(type, ticker, amount, price):
         "price": formatted_price,
     }
 
-def validate_credentials(config, url):
+def validate_credentials(config):
+    url = "https://tuxexchange.com/api"
     query_parameters = { "method": "getmyopenorders" }
     nonce = int(time.time() * 1000)
     timeout=15

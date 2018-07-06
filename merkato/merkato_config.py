@@ -42,12 +42,12 @@ def create_config():
 
         if exchange == 'tux':
             update_config_with_credentials(config)
-            credentials_are_valid = validate_credentials(config, url)
+            credentials_are_valid = validate_credentials(config)
             print('credentials_are_valid', credentials_are_valid)
 
             while not credentials_are_valid:
                 update_config_with_credentials(config)
-                credentials_are_valid = validate_credentials(config, url)
+                credentials_are_valid = validate_credentials(config)
 
             encrypt_keys(config)
             insert_config_into_exchanges(config)
