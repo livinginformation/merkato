@@ -2,10 +2,11 @@ from merkato.merkato_config import load_config, get_config, create_config
 from merkato.merkato import Merkato
 from merkato.parser import parse
 from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table, drop_merkatos_table, drop_exchanges_table, insert_exchange
-from merkato.utils import generate_complete_merkato_configs
+from merkato.utils import generate_complete_merkato_configs, ensure_bytes, encrypt, decrypt
 from merkato.exchanges.tux_exchange.utils import validate_credentials
 from merkato.exchanges.binance_exchange.utils import validate_keys
 
+import getpass
 import sqlite3
 import time
 import pprint
@@ -72,7 +73,8 @@ def insert_config_into_exchanges(config):
     insert_exchange(exchange, public_key, private_key, limit_only)
 
 
-welcome_txt = """Welcome to Merkato Would you like to run current merkatos, or create a new exchange or merkato?."""
+welcome_txt = """Welcome to Merkato Would you like to run current merkatos, or add a new exchange?."""
+exchange_added_text = "The Exchange has been added, would you like to run current merkatos, or add another exchange?"
 drop_merkatos_txt = "Do you want to drop merkatos?"
 drop_exchanges_txt = "Do you want to drop exchanges?"
 public_key_text = """Please enter your api public key"""
@@ -92,9 +94,12 @@ class Application(tk.Frame):
         self.create_widgets()
 
 
-    def create_widgets(self):
+    def create_widgets(self, message=None):
+        self.remove_all_widgets()
+        if message == None:
+            message = welcome_txt
 
-        welcome_message = tk.Label(self, anchor='n', padx = 10, text=welcome_txt)
+        welcome_message = tk.Label(self, anchor='n', padx = 10, text=message)
         welcome_message.pack(side="top")
       
         run_merkatos = tk.Button(self, command=self.start_simple_app)
@@ -102,7 +107,7 @@ class Application(tk.Frame):
         run_merkatos.pack(side="top")
 
         create_new = tk.Button(self, command=self.start_create_frame)
-        create_new["text"] = "Create New Merk/Exc"
+        create_new["text"] = "Add Exchange"
         create_new.pack(side="top")
 
         quit = tk.Button(self, text="QUIT", fg="red", command=root.destroy)
@@ -207,10 +212,10 @@ class Application(tk.Frame):
         config['exchange'] = self.exchange
         self.config = config
 
-        if exchange == 'tux':
+        if self.exchange == 'tux':
             credentials_are_valid = validate_credentials(config)
 
-        elif exchange == 'bina':
+        elif self.exchange == 'bina':
             credentials_are_valid = validate_keys(config)
 
         else:
@@ -249,7 +254,7 @@ class Application(tk.Frame):
 
     def set_password(self):
         self.remove_all_widgets()
-        password_message = tk.Label(self, anchor='n', padx = 10, text="Choose a password for encryption").pack(side="top")
+        password_message = tk.Label(self, anchor='n', padx = 10, text="Choose a password for encryption")
         password_field = tk.Entry(self, width=40)
         submit_password = tk.Button(self, command=lambda: self.submit_password(password_field.get()))
         submit_password["text"] = "Submit password"
@@ -264,7 +269,7 @@ class Application(tk.Frame):
         encrypt_keys(config, password)
         insert_config_into_exchanges(config)
         decrypt_keys(config, password)
-
+        self.create_widgets(exchange_added_text)
 
 root = tk.Tk()
 app = Application(master=root)
