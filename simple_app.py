@@ -57,7 +57,21 @@ expected bot data format from merkato
                     
 }
 """
+def enter_password():
+    temp_root = tk.Tk()
+    password_message = tk.Label(temp_root, anchor='n', padx = 10, text="Enter password for decryption")
+    password_field = tk.Entry(temp_root, width=40)
+    submit_password = tk.Button(temp_root, command=lambda: confirm_password(password_field.get(), temp_root))
+    submit_password["text"] = "Submit password"
 
+    password_message.pack(side="top")
+    password_field.pack(side="top")
+    submit_password.pack(side="bottom")
+    
+
+def confirm_password(password, root):
+    root.destroy()
+    start_merkatos(password)
 
 def _scrollwheel(event):
     ''' TODO Function Description
@@ -85,7 +99,7 @@ def fake_start():
             "y_highest_buy_order": [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
             }
 
-def start_merkatos():
+def start_merkatos(entered_password):
     if platform.system().lower() == "darwin":
         def mainloop():
             while True:
@@ -112,7 +126,7 @@ def start_merkatos():
 
     args = parser.parse_args()
     if not args.password:
-        password = getpass.getpass("\n\ndatabase password:")
+        password = entered_password
     else:
         password = args.password
 
