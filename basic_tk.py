@@ -14,38 +14,45 @@ drop_merkatos_txt = "Do you want to drop merkatos?"
 drop_exchanges_txt = "Do you want to drop exchanges?"
 public_key_text = """Please enter your api public key"""
 private_key_text = """Please enter your api secret key"""
+exchange_select_txt = """Please select an exchange"""
 
 
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
+        self.base = "BTC"
+        self.coin = "XMR"
+        self.spread = .02
+        self.coin_reserve = 17
+        self.base_reserve = .4
         self.pack()
         self.create_widgets()
 
 
     def create_widgets(self):
 
-        self.welcome_message = tk.Label(self, anchor='n', padx = 10, text=welcome_txt).pack(side="top")
-
-        self.quit = tk.Button(self, text="QUIT", fg="red", command=root.destroy)
-        self.quit.pack(side="bottom")
-
-        self.create_new = tk.Button(self, command=self.start_create_frame)
-        self.create_new["text"] = "Create New Merk/Exc"
-        self.create_new.pack(side="bottom")
+        welcome_message = tk.Label(self, anchor='n', padx = 10, text=welcome_txt)
+        welcome_message.pack(side="top")
       
-        self.run_merkatos = tk.Button(self, command=self.start_simple_app)
-        self.run_merkatos["text"] = "Run Merkatos"
-        self.run_merkatos.pack(side="bottom")
+        run_merkatos = tk.Button(self, command=self.start_simple_app)
+        run_merkatos["text"] = "Run Merkatos"
+        run_merkatos.pack(side="top")
+
+        create_new = tk.Button(self, command=self.start_create_frame)
+        create_new["text"] = "Create New Merk/Exc"
+        create_new.pack(side="top")
+
+        quit = tk.Button(self, text="QUIT", fg="red", command=root.destroy)
+        quit.pack(side="top")
+
+
+    def start_simple_app(self):
+        self.remove_all_widgets()
 
 
     def start_create_frame(self):
         self.remove_all_widgets()
         self.run_remove_tables_prompts()
-    
-
-    def start_simple_app(self):
-        self.remove_all_widgets()
 
 
     def remove_all_widgets(self):
@@ -62,46 +69,46 @@ class Application(tk.Frame):
 
 
     def run_remove_merkatos_prompt(self):
-        self.drop_merkatos_message = tk.Label(self, anchor='n', padx = 10, text=drop_merkatos_txt).pack(side="top")
+        drop_merkatos_message = tk.Label(self, anchor='n', padx = 10, text=drop_merkatos_txt).pack(side="top")
         
-        self.drop_merkatos = tk.Button(self, command=self.drop_merkatos_table)
-        self.drop_merkatos["text"] = "Yes"
-        self.drop_merkatos.pack(side="bottom")
+        drop_merkatos = tk.Button(self, command=self.drop_merkatos_table)
+        drop_merkatos["text"] = "Yes"
+        drop_merkatos.pack(side="bottom")
       
-        self.dont_drop_merkatos = tk.Button(self, command=self.dont_drop_merkatos_table)
-        self.dont_drop_merkatos["text"] = "No"
-        self.dont_drop_merkatos.pack(side="bottom")
+        dont_drop_merkatos = tk.Button(self, command=self.dont_drop_merkatos_table)
+        dont_drop_merkatos["text"] = "No"
+        dont_drop_merkatos.pack(side="bottom")
 
 
     def run_remove_exchanges_prompts(self):
-        self.drop_merkatos_message = tk.Label(self, anchor='n', padx = 10, text=drop_exchanges_txt).pack(side="top")
+        drop_merkatos_message = tk.Label(self, anchor='n', padx = 10, text=drop_exchanges_txt).pack(side="top")
 
-        self.drop_exchanges = tk.Button(self, command=self.drop_exchanges_table)
-        self.drop_exchanges["text"] = "Yes"
-        self.drop_exchanges.pack(side="bottom")
+        drop_exchanges = tk.Button(self, command=self.drop_exchanges_table)
+        rop_exchanges["text"] = "Yes"
+        drop_exchanges.pack(side="bottom")
       
-        self.dont_drop_exchanges = tk.Button(self, command=self.dont_drop_exchanges_table)
-        self.dont_drop_exchanges["text"] = "No"
-        self.dont_drop_exchanges.pack(side="bottom")
+        dont_drop_exchanges = tk.Button(self, command=self.dont_drop_exchanges_table)
+        dont_drop_exchanges["text"] = "No"
+        dont_drop_exchanges.pack(side="bottom")
 
 
     def run_enter_api_key_info(self):
-        self.public_key_field = tk.Entry(self, width=40)
-        self.private_key_field = tk.Entry(self, width=40)
+        public_key_field = tk.Entry(self, width=40)
+        private_key_field = tk.Entry(self, width=40)
 
-        self.private_key_message = tk.Label(self, anchor='n', padx = 10, text=private_key_text)
-        self.public_key_message = tk.Label(self, anchor='n', padx = 10, text=public_key_text)
+        private_key_message = tk.Label(self, anchor='n', padx = 10, text=private_key_text)
+        public_key_message = tk.Label(self, anchor='n', padx = 10, text=public_key_text)
 
-        self.submit_keys = tk.Button(self, command=self.submit_api_keys)
-        self.submit_keys["text"] = "Submit keys"
+        submit_keys = tk.Button(self, command=self.submit_api_keys)
+        submit_keys["text"] = "Submit keys"
 
-        self.public_key_field.pack(side="top")
-        self.public_key_message.pack(side="top")
+        public_key_field.pack(side="top")
+        public_key_message.pack(side="top")
 
-        self.private_key_field.pack(side="top")
-        self.private_key_message.pack(side="top")
+        private_key_field.pack(side="top")
+        private_key_message.pack(side="top")
 
-        self.submit_keys.pack(side="bottom")
+        submit_keys.pack(side="bottom")
 
 
     def drop_merkatos_table(self):
@@ -118,16 +125,34 @@ class Application(tk.Frame):
     def drop_exchanges_table(self):
         drop_exchanges_table()
         self.remove_all_widgets()
-        self.run_enter_api_key_info()
+        self.run_select_exchange_prompt()
 
 
     def dont_drop_exchanges_table(self):
         self.remove_all_widgets()
-        self.run_enter_api_key_info()
+        self.run_select_exchange_prompt()
 
 
     def submit_api_keys(self):
         pass
+
+
+    def run_select_exchange_prompt(self):
+        select_exchange_message = tk.Label(self, anchor='n', padx = 10, text=exchange_select_txt).pack(side="top")
+        
+        select_exchange_binance = tk.Button(self, command= lambda: self.choose_exchange('bina'))
+        select_exchange_binance["text"] = "Binance"
+        select_exchange_binance.pack(side="bottom")
+
+        select_exchange_tux = tk.Button(self, command= lambda: self.choose_exchange('tux'))
+        select_exchange_tux["text"] = "Tux"
+        select_exchange_tux.pack(side="bottom")
+
+
+    def choose_exchange(self, exchange):
+        self.remove_all_widgets()
+        self.exchange = exchange
+        self.run_enter_api_key_info()
 
 
 root = tk.Tk()
