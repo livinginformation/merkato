@@ -35,7 +35,7 @@ from  bot import Bot
 from app import App
 
 LARGE_FONT= ("Liberation Mono", 12)
-print(style.available)
+# print(style.available)
 style.use("dark_background")
 
 """
@@ -85,27 +85,26 @@ def fake_start():
             "y_highest_buy_order": [244, 244, 244, 244, 244, 244, 244, 244, 244, 244, ],
             }
 
+def start_merkatos():
+    if platform.system().lower() == "darwin":
+        def mainloop():
+            while True:
+                try:
+                    root.update_idletasks()
+                    root.update()
+                    time.sleep(1)
+                except UnicodeDecodeError:
+                    print("Caught Scroll Error")
 
-if platform.system().lower() == "darwin":
-    def mainloop():
-        while True:
-            try:
-                root.update_idletasks()
-                root.update()
-                time.sleep(1)
-            except UnicodeDecodeError:
-                print("Caught Scroll Error")
+    else:
+        def mainloop():
+            while True:
+                try:
+                    root.update_idletasks()
+                    root.update()
+                except UnicodeDecodeError:
+                    print("Caught Scroll Error")
 
-else:
-    def mainloop():
-        while True:
-            try:
-                root.update_idletasks()
-                root.update()
-            except UnicodeDecodeError:
-                print("Caught Scroll Error")
-
-if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--blockOnError', action='store_true', help="DEBUGGING ONLY: blocks all bots on error")
     parser.add_argument('-p', '--password', default="", help="password for decrypting db")
@@ -188,22 +187,22 @@ if __name__ == "__main__":
         konfig.decrypt_keys(config=persisted['configuration'], password=password)
         bot = Bot(root, app(), app, persist=persisted)
         app.add_screen(bot,
-                       "null",
-                       textvariable=bot.title_var,
-                       bg="gray75",
-                       fg="black",
-                       selectcolor="lightblue"
-                       )
+                    "null",
+                    textvariable=bot.title_var,
+                    bg="gray75",
+                    fg="black",
+                    selectcolor="lightblue"
+                    )
 
     for i in range(1):
         bot = Bot(root, app(), app,)
         app.add_screen(bot,
-                       "null",
-                       textvariable=bot.title_var,
-                       bg="gray75",
-                       fg="black",
-                       selectcolor="lightblue"
-                       )
+                    "null",
+                    textvariable=bot.title_var,
+                    bg="gray75",
+                    fg="black",
+                    selectcolor="lightblue"
+                    )
 
     root.after(1000, app.update_frames)
     root.after(100, app.finish_new_button())

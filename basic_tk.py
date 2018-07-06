@@ -5,6 +5,7 @@ from merkato.utils.database_utils import no_merkatos_table_exists, create_merkat
 from merkato.utils import generate_complete_merkato_configs, ensure_bytes, encrypt, decrypt
 from merkato.exchanges.tux_exchange.utils import validate_credentials
 from merkato.exchanges.binance_exchange.utils import validate_keys
+from simple_app import start_merkatos
 
 import getpass
 import sqlite3
@@ -115,7 +116,9 @@ class Application(tk.Frame):
 
 
     def start_simple_app(self):
-        pass
+        print('destroying root')
+        root.destroy()
+        start_merkatos()
 
 
     def start_create_frame(self):
