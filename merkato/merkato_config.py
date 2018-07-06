@@ -34,7 +34,6 @@ def insert_config_into_exchanges(config):
 def create_config():
     # Create new config
     config = { "limit_only": True }
-    url = "https://tuxexchange.com/api"
 
     while True:
         exchange = get_exchange()
@@ -71,12 +70,12 @@ def create_config():
         
         elif exchange == 'bina':
             update_config_with_credentials(config)
-            credentials_are_valid = validate_keys(config, url)
+            credentials_are_valid = validate_keys(config)
             print('credentials_are_valid', credentials_are_valid)
 
             while not credentials_are_valid:
                 update_config_with_credentials(config)
-                credentials_are_valid = validate_keys(config, url)
+                credentials_are_valid = validate_keys(config)
 
             encrypt_keys(config)
             insert_config_into_exchanges(config)

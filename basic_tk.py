@@ -1,13 +1,75 @@
 from merkato.merkato_config import load_config, get_config, create_config
 from merkato.merkato import Merkato
 from merkato.parser import parse
-from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table, drop_merkatos_table, drop_exchanges_table
+from merkato.utils.database_utils import no_merkatos_table_exists, create_merkatos_table, insert_merkato, get_all_merkatos, get_exchange, no_exchanges_table_exists, create_exchanges_table, drop_merkatos_table, drop_exchanges_table, insert_exchange
 from merkato.utils import generate_complete_merkato_configs
 from merkato.exchanges.tux_exchange.utils import validate_credentials
+from merkato.exchanges.binance_exchange.utils import validate_keys
+
 import sqlite3
 import time
 import pprint
 import tkinter as tk
+
+
+# Yes, I know we need to abstract these out later. This is me hacking.
+def encrypt_keys(config, password=None):
+    ''' Encrypts the API keys before storing the config in the database
+    '''
+    public_key  = config["public_api_key"]
+    private_key = config["private_api_key"]
+
+    if password is None:
+        password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
+
+    password, public_key, private_key = ensure_bytes(password, public_key, private_key)
+
+    # encrypt(password, data)
+    # Inputs are of type:
+    # - password: bytes
+    # - data:     bytes
+
+    public_key_encrypted  = encrypt(password, public_key)
+    private_key_encrypted = encrypt(password, private_key)
+    config["public_api_key"]  = public_key_encrypted
+    config["private_api_key"] = private_key_encrypted
+    return config
+
+
+def decrypt_keys(config, password=None):
+    ''' Decrypts the API keys before storing the config in the database
+    '''
+    public_key  = config["public_api_key"]
+    private_key = config["private_api_key"]
+
+    if password is None:
+        password = getpass.getpass("\n\ndatabase password:") # Prompt user for password / get password from Nasa. This should be a popup?
+
+    password, public_key, private_key = ensure_bytes(password, public_key, private_key)
+
+    # decrypt(password, data)
+    # Inputs are of type:
+    # - password: bytes
+    # - data:     bytes
+
+    public_key_decrypted  = decrypt(password, public_key)
+    private_key_decrypted = decrypt(password, private_key)
+    config["public_api_key"]  = public_key_decrypted.decode('utf-8')
+    config["private_api_key"] = private_key_decrypted.decode('utf-8')
+
+    return config
+
+
+def insert_config_into_exchanges(config):
+    limit_only = config["limit_only"]
+    public_key = config["public_api_key"]
+    private_key = config["private_api_key"]
+    exchange = config["exchange"]
+
+    if no_exchanges_table_exists():
+        create_exchanges_table()
+
+    insert_exchange(exchange, public_key, private_key, limit_only)
 
 
 welcome_txt = """Welcome to Merkato Would you like to run current merkatos, or create a new exchange or merkato?."""
@@ -141,13 +203,29 @@ class Application(tk.Frame):
         config = {}
         config['public_api_key'] = public_key
         config['private_api_key'] = private_key
-        credentials_are_valid = validate_credentials(config)
+        config['limit_only'] = True
+        config['exchange'] = self.exchange
+        self.config = config
+
+        if exchange == 'tux':
+            credentials_are_valid = validate_credentials(config)
+
+        elif exchange == 'bina':
+            credentials_are_valid = validate_keys(config)
+
+        else:
+            "Exchange not supported, this should never happen"
+            credentials_are_valid = False
+
         if not credentials_are_valid:
             print("API Keys Invalid")
             self.run_enter_api_key_info("API keys invalid, please try again.")
             return
+
         else:
-            print("stuff")
+            print("API keys valid")
+            # Call a new pane here, asking  for a password.
+            self.set_password()
             return
 
 
@@ -167,6 +245,25 @@ class Application(tk.Frame):
     def choose_exchange(self, exchange):
         self.exchange = exchange
         self.run_enter_api_key_info()
+
+
+    def set_password(self):
+        self.remove_all_widgets()
+        password_message = tk.Label(self, anchor='n', padx = 10, text="Choose a password for encryption").pack(side="top")
+        password_field = tk.Entry(self, width=40)
+        submit_password = tk.Button(self, command=lambda: self.submit_password(password_field.get()))
+        submit_password["text"] = "Submit password"
+
+        password_message.pack(side="top")
+        password_field.pack(side="top")
+        submit_password.pack(side="bottom")
+
+
+    def submit_password(self, password):
+        config = self.config
+        encrypt_keys(config, password)
+        insert_config_into_exchanges(config)
+        decrypt_keys(config, password)
 
 
 root = tk.Tk()
