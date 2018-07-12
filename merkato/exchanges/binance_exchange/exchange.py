@@ -7,7 +7,10 @@ from binance.client import Client
 from binance.enums import *
 from math import floor
 import logging
+from decimal import *
+
 log = logging.getLogger(__name__)
+getcontext().prec = 8
 
 XMR_AMOUNT_PRECISION = 3
 XMR_PRICE_PRECISION = 6
@@ -53,7 +56,7 @@ class BinanceExchange(ExchangeBase):
                 # Get current highest bid on the orderbook
                 # If ask price is lower than the highest bid, return.
 
-                if float(self.get_highest_bid()) > ask:
+                if Decimal(self.get_highest_bid()) > ask:
                     log.info("SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "binance"))
                     return MARKET # Maybe needs failed or something
 
@@ -102,7 +105,7 @@ class BinanceExchange(ExchangeBase):
                 # Get current lowest ask on the orderbook
                 # If bid price is higher than the lowest ask, return.
 
-                if float(self.get_lowest_ask()) < bid:
+                if Decimal(self.get_lowest_ask()) < bid:
 
                     log.info("BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "binance"))
                     return MARKET # Maybe needs failed or something
@@ -243,8 +246,8 @@ class BinanceExchange(ExchangeBase):
         # also keys go unused, also coin...
         base_balance = self.client.get_asset_balance(asset=self.base, recvWindow=10000000)
         coin_balance = self.client.get_asset_balance(asset=self.coin, recvWindow=10000000)
-        base = float(base_balance['free']) + float(base_balance['locked'])
-        coin = float(coin_balance['free']) + float(coin_balance['locked'])
+        base = Decimal(base_balance['free']) + Decimal(base_balance['locked'])
+        coin = Decimal(coin_balance['free']) + Decimal(coin_balance['locked'])
 
         log.info("Base balance: {}".format(base_balance))
         log.info("Coin balance: {}".format(coin_balance))
@@ -270,8 +273,8 @@ class BinanceExchange(ExchangeBase):
                 date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(floor(trade['time']/1000))))
                 trade['date'] = date
 
-            trade['total'] = float(trade['price']) * float(trade['qty'])
-            trade['amount'] = float(trade['qty'])
+            trade['total'] = Decimal(trade['price']) * Decimal(trade['qty'])
+            trade['amount'] = Decimal(trade['qty'])
             order_info = self.client.get_order(symbol=self.ticker, orderId=trade['orderId'], recvWindow=10000000)
             trade['initamount'] = order_info['origQty']
 
@@ -309,11 +312,11 @@ class BinanceExchange(ExchangeBase):
     
     def is_partial_fill(self, order_id): 
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id, recvWindow=10000000)
-        amount_placed = float(order_info['origQty'])
-        amount_executed = float(order_info['executedQty'])
+        amount_placed = Decimal(order_info['origQty'])
+        amount_executed = Decimal(order_info['executedQty'])
         log.info('Binance checking_is_partial_fill order_id: {} amount_placed: {} amount_executed: {}'.format(order_id, amount_placed, amount_executed))
         return amount_placed > amount_executed
 
     def get_total_amount(self, order_id):
         order_info = self.client.get_order(symbol=self.ticker, orderId=order_id, recvWindow=10000000)
-        return float(order_info['origQty'])
+        return Decimal(order_info['origQty'])

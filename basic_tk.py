@@ -13,7 +13,6 @@ import time
 import pprint
 import tkinter as tk
 
-
 # Yes, I know we need to abstract these out later. This is me hacking.
 def encrypt_keys(config, password=None):
     ''' Encrypts the API keys before storing the config in the database
