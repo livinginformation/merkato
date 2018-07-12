@@ -11,3 +11,5 @@ trade_history_script.py
 venv/
 quick_query
 binamy_merkato_tax_audit_logs.csv
+tuxmy_merkato_tax_audit_logs.csv
+delete.py

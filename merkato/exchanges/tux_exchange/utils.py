@@ -3,13 +3,16 @@ import hmac
 import requests
 import time
 import hashlib
-
 import logging
+
+from decimal import *
+
 log = logging.getLogger(__name__)
+getcontext().prec = 8
 
 def getQueryParameters(type, ticker, amount, price):
-    formatted_amount = "{:.8f}".format(float(amount))
-    formatted_price = "{:.8f}".format(float(price))
+    formatted_amount = "{:.8f}".format((amount))
+    formatted_price = "{:.8f}".format((price))
     log.info("Ticker: {}".format(ticker))
     return {
         "method": type,

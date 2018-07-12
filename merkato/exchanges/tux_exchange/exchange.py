@@ -4,13 +4,16 @@ import json
 import requests
 import time
 import urllib.parse
+import logging
+
+from decimal import *
 from merkato.exchanges.tux_exchange.utils import getQueryParameters, translate_ticker
 from merkato.constants import MARKET
 from merkato.exchanges.exchange_base import ExchangeBase
 from merkato.constants import BUY, SELL
 
-import logging
 log = logging.getLogger(__name__)
+getcontext().prec = 8
 
 
 class TuxExchange(ExchangeBase):
@@ -50,7 +53,7 @@ class TuxExchange(ExchangeBase):
                 # Get current highest bid on the orderbook
                 # If ask price is lower than the highest bid, return.
 
-                if float(self.get_highest_bid()) > ask:
+                if Decimal(self.get_highest_bid()) > ask:
                     log.info("SELL {} {} at {} on {} FAILED - would make a market order.".format(amount,self.ticker, ask, "tux"))
                     return MARKET # Maybe needs failed or something
 
@@ -131,7 +134,7 @@ class TuxExchange(ExchangeBase):
                 # Get current lowest ask on the orderbook
                 # If bid price is higher than the lowest ask, return.
 
-                if float(self.get_lowest_ask()) < bid:
+                if Decimal(self.get_lowest_ask()) < bid:
 
                     log.info("BUY {} {} at {} on {} FAILED - would make a market order.".format(amount, self.ticker, bid, "tux"))
                     return MARKET # Maybe needs failed or something
@@ -296,10 +299,16 @@ class TuxExchange(ExchangeBase):
         return self.get_ticker(self.ticker)["highestBid"]
 
 
-    def is_partial_fill(self, order_id):
+    def get_partial_info(self, order_id):
         # Todo when tux implements the function
-        pass
+        order_info = self.get_my_order_info(order_id)
+        return order_info[order_id]
 
+    def get_my_order_info(self, order_id):
+        query_parameters = { "method": "getmyorderinfo" }
+        query_parameters.update({"orderid": order_id})
+        response = self._create_signed_request(query_parameters)
+        return response
 
     def get_total_amount(self, order_id):
         # Todo when tux implements the function

@@ -6,11 +6,14 @@ from merkato.constants import known_exchanges
 from merkato.utils.database_utils import get_exchange as get_exchange_from_db, get_merkatos_by_exchange, get_merkato
 import base64
 import time
+
+from decimal import *
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+getcontext().prec = 8
 salt = 'merkato'
 
 def encrypt(password, source):
@@ -73,8 +76,8 @@ def get_config_selection():
 
 def create_price_data(orders, order):
     price_data             = {}
-    price_data['total']    = float(orders[order]["total"])
-    price_data['amount']   = float(orders[order]["amount"])
+    price_data['total']    = Decimal(orders[order]["total"])
+    price_data['amount']   = Decimal(orders[order]["amount"])
     price_data['id'] = orders[order]["id"]
     price_data['type']     = orders[order]["type"]
     return price_data
@@ -138,8 +141,8 @@ def get_allocated_pair_balances(exchange, base, coin):
 
 def check_reserve_balances(total_balances, allocated_balances, coin_reserve, base_reserve):
     remaining_balances = {
-        'base': float(total_balances['base']['amount']['balance']) - allocated_balances['base'],
-        'coin': float(total_balances['coin']['amount']['balance']) - allocated_balances['coin']
+        'base': Decimal(total_balances['base']['amount']['balance']) - allocated_balances['base'],
+        'coin': Decimal(total_balances['coin']['amount']['balance']) - allocated_balances['coin']
     }
 
     if remaining_balances['base'] < base_reserve:
@@ -187,9 +190,9 @@ def get_market_results(history):
     }
     print('get market reseults', history)
     for order in history:
-        results['amount_executed'] += float(order['amount'])
-        results['initial_amount'] += float(order['initamount'])
-        results['price_numerator'] += float(order['amount']) * float(order['price'])
+        results['amount_executed'] += Decimal(order['amount'])
+        results['initial_amount'] += Decimal(order['initamount'])
+        results['price_numerator'] += Decimal(order['amount']) * Decimal(order['price'])
     results['last_txid'] = history[-1]['id']
     results['price_numerator'] /= results['amount_executed']
     return results
