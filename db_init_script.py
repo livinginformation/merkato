@@ -46,6 +46,7 @@ def main():
         return False
 
     merkato = Merkato(configuration, coin, base, spread, base_reserve, coin_reserve)
+    merkato.startup()
     context = merkato.update()
     print('context', context)
     visualize_orderbook(context["orderbook"])
