@@ -15,6 +15,7 @@ from merkato.utils import create_price_data, validate_merkato_initialization, ge
 import logging
 log = logging.getLogger(__name__)
 
+
 @log_all_methods
 class Merkato(object):
     def __init__(self, configuration, coin, base, spread,
@@ -23,44 +24,53 @@ class Merkato(object):
 
         validate_merkato_initialization(configuration, coin, base, spread)
         self.initialized = False
-        UUID = configuration[EXCHANGE] + "coin={}_base={}".format(coin,base)
-        self.mutex_UUID = UUID
-        self.distribution_strategy = 1
+
+        self.configuration = configuration
+        self.coin = coin
+        self.base = base
         self.spread = float(spread)
-        self.profit_margin = profit_margin
-        # Create ladders from the bid and ask bidget here
         self.bid_reserved_balance = bid_reserved_balance
         self.ask_reserved_balance = ask_reserved_balance
         self.user_interface = user_interface
+        self.profit_margin = profit_margin
+        self.first_order = first_order
+
+        UUID = configuration[EXCHANGE] + "coin={}_base={}".format(coin,base)
+        self.mutex_UUID = UUID
+
         exchange_class = get_relevant_exchange(configuration[EXCHANGE])
         self.exchange = exchange_class(configuration, coin=coin, base=base)
-        merkato_does_exist = merkato_exists(UUID)
+
+    def startup(self):
+        merkato_does_exist = merkato_exists(self.mutex_UUID)
 
         if not merkato_does_exist:
             log.info("Creating New Merkato")
             self.cancelrange(ONE_SATOSHI, ONE_BITCOIN)
             total_pair_balances = self.exchange.get_balances()
             log.info("total pair balances", total_pair_balances)
-            allocated_pair_balances = get_allocated_pair_balances(configuration['exchange'], base, coin)
-            check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=ask_reserved_balance, base_reserve=bid_reserved_balance)
-            insert_merkato(configuration[EXCHANGE], UUID, base, coin, spread, bid_reserved_balance, ask_reserved_balance, first_order)
+            allocated_pair_balances = get_allocated_pair_balances(self.configuration['exchange'], self.base, self.coin)
+            check_reserve_balances(total_pair_balances, allocated_pair_balances, coin_reserve=self.ask_reserved_balance,
+                                   base_reserve=self.bid_reserved_balance)
+            insert_merkato(self.configuration[EXCHANGE], self.mutex_UUID, self.base, self.coin, self.spread,
+                           self.bid_reserved_balance, self.ask_reserved_balance, self.first_order)
             history = self.exchange.get_my_trade_history()
-            print('initial history', history)
+            log.info("Initial history: {}".format(history))
             if len(history) > 0:
-                print('updating history', history[0]['orderId'])
+                log.info('Updating history {}'.format(history[0]['orderId']))
                 new_last_order = history[0]['orderId']
                 update_merkato(self.mutex_UUID, LAST_ORDER, new_last_order)
-            self.distribute_initial_orders(total_base=bid_reserved_balance, total_alt=ask_reserved_balance)
+            self.distribute_initial_orders(total_base=self.bid_reserved_balance, total_alt=self.ask_reserved_balance)
 
         else:
-            #self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
+            # self.history = get_old_history(self.exchange.get_my_trade_history(), self.mutex_UUID)
             first_order = get_first_order(self.mutex_UUID)
             current_history = self.exchange.get_my_trade_history(first_order)
             last_order = get_last_order(self.mutex_UUID)
             new_history = get_new_history(current_history, last_order)
             self.rebalance_orders(new_history)
-        self.initialized = True  # to avoid being updated before orders placed
 
+        self.initialized = True  # to avoid being updated before orders placed
 
     def kill(self):
         ''' TODO: Function comment
