@@ -78,6 +78,7 @@ class Bot(ttk.Frame):
             self.name = persist["coin"] + "/" + persist["base"] + "    " + persist["configuration"]["exchange"]
             self.title_var.set(str(self.name))
             self.bot = Merkato(**persist) #presumably from db
+            self.bot.startup()
 
         # --------------------
         self.exchange_frame = ttk.Frame(self, style="app.TFrame")
@@ -168,6 +169,7 @@ class Bot(ttk.Frame):
         if not self.stub:
             try:
               self.bot = Merkato(**self.merk_args)
+              self.bot.startup()
             except Exception as e:
                 e2 = traceback.format_exc()
                 safe_show = self.merk_args.copy()
